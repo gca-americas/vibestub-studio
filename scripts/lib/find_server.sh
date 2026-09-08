@@ -41,27 +41,35 @@ is_our_server() {        # $1 is a live process that is this repo's learning cen
 }
 
 port_pids() {            # who is listening on a port; lsof is absent from some images
+    # Every one of these exits non-zero when it finds nothing, which is the
+    # ordinary case. Under `set -e` with pipefail an unguarded one ends the
+    # calling script on the spot, with no output to say why.
+    local out=""
     if command -v lsof >/dev/null 2>&1; then
-        lsof -a -ti "tcp:$1" -sTCP:LISTEN 2>/dev/null && return 0
+        out="$(lsof -a -ti "tcp:$1" -sTCP:LISTEN 2>/dev/null || true)"
     fi
-    if command -v ss >/dev/null 2>&1; then
-        ss -ltnpH "sport = :$1" 2>/dev/null | grep -o 'pid=[0-9]*' | cut -d= -f2 | sort -u && return 0
+    if [ -z "$out" ] && command -v ss >/dev/null 2>&1; then
+        out="$(ss -ltnpH "sport = :$1" 2>/dev/null | grep -o 'pid=[0-9]*' | cut -d= -f2 | sort -u || true)"
     fi
-    if command -v fuser >/dev/null 2>&1; then
-        fuser -n tcp "$1" 2>/dev/null | tr ' ' '\n' | grep -E '^[0-9]+$' && return 0
+    if [ -z "$out" ] && command -v fuser >/dev/null 2>&1; then
+        out="$(fuser -n tcp "$1" 2>/dev/null | tr ' ' '\n' | grep -E '^[0-9]+$' || true)"
     fi
+    [ -n "$out" ] && printf '%s\n' "$out"
     return 0
 }
 
 lab_pids() {             # every live learning center of this checkout, port or not
-    {
-        port_pids "$PORT"
-        ps -eo pid=,command= 2>/dev/null \
-            | grep -E 'uvicorn +server\.main:app|scripts/start\.sh' \
-            | grep -v grep | awk '{print $1}'
-    } | sort -un | while read -r pid; do
+    local candidates
+    candidates="$( { port_pids "$PORT"
+                     ps -eo pid=,command= 2>/dev/null \
+                       | grep -E 'uvicorn +server\.main:app|scripts/start\.sh' \
+                       | grep -v grep | awk '{print $1}' || true
+                   } | sort -un || true)"
+    local pid
+    for pid in $candidates; do
         is_our_server "$pid" && echo "$pid"
     done
+    return 0
 }
 
 stop_lab() {             # ask this checkout's server to stop, then insist

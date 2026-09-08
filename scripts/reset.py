@@ -119,7 +119,7 @@ def read_user_state() -> dict[str, dict]:
 def write_user_state(carried: dict[str, dict]) -> list[str]:
     """Put the carried keys into whatever store exists now. Returns the keys.
 
-    ADK 2.5.0 has no set_user_state - BaseSessionService exposes the reader and
+    ADK has no set_user_state - BaseSessionService exposes the reader and
     nothing else. The supported write is a state DELTA: every key handed to
     create_session(state=...) goes through _session_util.extract_state_delta(),
     which strips `user:` off the user-scoped ones and merges them into

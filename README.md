@@ -40,6 +40,9 @@ finishes in five seconds, at no cost.
 
 ## Updating a running lab
 
+`scripts/restart.sh` handles the two things a pull cannot: it runs `uv sync` when the dependency lock changed, and rebuilds the page when its sources changed, because neither the venv nor `web/dist` is in the repository.
+
+
 The built page is not in the repository, and the server holds the Python code in memory, so a pull alone changes neither.
 
 ```bash

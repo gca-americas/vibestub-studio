@@ -39,14 +39,19 @@ def build_inspector() -> FastAPI:
 
     from .services import reload as agent_reload
 
-    class _CapturingDevServer(adk_fast_api.DevServer):
+    # ADK renamed this class from DevServer to ApiServer in 2.7; both carry the
+    # agent_loader and runners_to_clean that a save has to reach.
+    base = getattr(adk_fast_api, "ApiServer", None) or adk_fast_api.DevServer
+    name = base.__name__
+
+    class _CapturingServer(base):  # type: ignore[misc, valid-type]
         """Same server; we only keep a handle so a save can evict its caches."""
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             agent_reload.handle.server = self
 
-    adk_fast_api.DevServer = _CapturingDevServer
+    setattr(adk_fast_api, name, _CapturingServer)
     return adk_fast_api.get_fast_api_app(
         agents_dir=str(ROOT),
         session_service_uri=config.DB_URL,

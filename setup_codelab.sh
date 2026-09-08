@@ -66,7 +66,7 @@ uv sync
     "uv sync finished but .venv/bin/python is missing." \
     "Clear the env and let uv rebuild it:" \
     "  rm -rf .venv && ./setup_codelab.sh"
-tick ".venv in sync with uv.lock (google-adk 2.5.0) — activate it with: source .venv/bin/activate"
+tick ".venv in sync with uv.lock (google-adk $(uv run python -c 'import google.adk;print(google.adk.__version__)' 2>/dev/null || echo pinned)) — activate it with: source .venv/bin/activate"
 
 command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1 || die \
     "node and npm are needed to build the learning center's page." \

@@ -65,7 +65,16 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-[ -d .venv ] || uv sync
+# Dependencies, on the same rule as the page: a pull can change uv.lock, and a
+# venv built from the old one would then run the wrong ADK.
+if [ ! -d .venv ]; then
+  uv sync
+  touch .venv/.synced
+elif [ ! -f .venv/.synced ] || [ uv.lock -nt .venv/.synced ] || [ pyproject.toml -nt .venv/.synced ]; then
+  echo "the dependency lock changed since the last sync; running uv sync"
+  uv sync
+  touch .venv/.synced
+fi
 
 # The built page is not in git, so a `git pull` brings new sources and leaves
 # the old build in place. Rebuild when the sources are newer than the build,

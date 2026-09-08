@@ -43,12 +43,10 @@ finishes in five seconds, at no cost.
 The built page is not in the repository, and the server holds the Python code in memory, so a pull alone changes neither.
 
 ```bash
-git pull
-kill $(cat runs/lab.pid)        # stop the learning center
-scripts/start.sh                # rebuilds the page if its sources changed, then starts
+scripts/restart.sh --pull       # git pull, stop, rebuild if needed, start in the background
 ```
 
-Then reload the browser tab. `scripts/start.sh` also stops whatever is already on the port, so running it twice is safe.
+Then reload the browser tab. Without `--pull` it just restarts. It prints the link and leaves the server in the background, with its log in `runs/lab.log`. `scripts/start.sh` is the foreground equivalent, where Ctrl+C stops everything.
 
 The app of step 9 runs on its own:
 
@@ -94,6 +92,7 @@ The scripts around the registry:
 | `python scripts/rescue.py RAG_NODE` | Writes one hole's answer into its file. A section name (`s5`) fills one step; no argument fills every hole. | A student stuck on one edit; or when you want a fully worked tree to rehearse a later step without typing the earlier answers. `carve.py` undoes it. |
 | `python scripts/carve.py` | Puts the shipped `TODO` lines back (the inverse of rescue). | After a rescue, to return to the student state. |
 | `python scripts/reset.py` | Wipes local run state only: `runs/state.json`, the session store, the worker logs. Keeps the `user:` keys unless `--all`. | Between runs, when the session store is confused. |
+| `scripts/restart.sh [--pull]` | Restarts the learning center in the background, rebuilding the page if its sources changed. | After a `git pull`, or after editing the lab's own code. |
 | `python scripts/preflight.py` | Checks the environment: the SDK, the credentials, every stage app imports. | Setup, and whenever something stops loading. |
 
 Note that the app in `vibestudio/` carries its own complete copy of the

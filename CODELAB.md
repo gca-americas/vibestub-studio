@@ -109,7 +109,7 @@ Setup finished. The learning center is already running.
 
 Click that link. The same address is available under **Web Preview → Change port → 4600**.
 
-To re-check the environment at any point, run `python scripts/preflight.py`. To set up again, run `./setup_codelab.sh`; it keeps the answers you gave and the work you have done.
+To re-check the environment at any point, run `python scripts/preflight.py`. To restart the learning center, run `scripts/restart.sh`. To set up again, run `./setup_codelab.sh`; it keeps the answers you gave and the work you have done.
 
 With it open, read **step 1, The story**, for the scenario, and **step 2, What you build**, for the shape of the finished graph. Neither has an exercise. Then return here for step 3.
 

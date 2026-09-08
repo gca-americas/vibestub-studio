@@ -63,3 +63,27 @@ lab_pids() {             # every live learning center of this checkout, port or 
         is_our_server "$pid" && echo "$pid"
     done
 }
+
+stop_lab() {             # ask this checkout's server to stop, then insist
+    local pid stopped=0 n=0
+    for pid in $(lab_pids); do
+        kill "$pid" 2>/dev/null || true
+        printf '  · stopped %s (pid %s)\n' "$(ps -o command= -p "$pid" 2>/dev/null | cut -c1-52)" "$pid"
+        stopped=1
+    done
+    [ "$stopped" = 0 ] && return 0
+    # An open page holds an event stream, and uvicorn's graceful shutdown waits
+    # for connections to close, so a TERM is a request rather than a promise.
+    while [ -n "$(lab_pids)" ] && [ "$n" -lt 12 ]; do sleep 0.5; n=$((n + 1)); done
+    for pid in $(lab_pids); do
+        kill -9 "$pid" 2>/dev/null || true
+        printf '  · it did not stop on its own; killed pid %s\n' "$pid"
+    done
+    return 0
+}
+
+wait_for_free_port() {   # nothing new can bind until the old server lets go
+    local n=0
+    while [ -n "$(port_pids "$1")" ] && [ "$n" -lt 24 ]; do sleep 0.5; n=$((n + 1)); done
+    [ -z "$(port_pids "$1")" ]
+}

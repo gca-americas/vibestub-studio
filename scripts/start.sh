@@ -71,15 +71,35 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
+# uv installs into ~/.local/bin, which a login shell picks up and the shell
+# behind `nohup scripts/start.sh &` does not. Without this, a start that needs
+# uv dies with "command not found" into runs/lab.log and the port stays empty.
+case ":$PATH:" in
+  *":$HOME/.local/bin:"*) ;;
+  *) PATH="$HOME/.local/bin:$PATH"; export PATH ;;
+esac
+
+need_uv() {
+  command -v uv >/dev/null 2>&1 && return 0
+  echo "uv is not on PATH (looked in $HOME/.local/bin)."
+  echo "Install it, or run this in a shell where uv works:  source ~/.local/bin/env"
+  return 1
+}
+
 # Dependencies, on the same rule as the page: a pull can change uv.lock, and a
 # venv built from the old one would then run the wrong ADK.
 if [ ! -d .venv ]; then
+  need_uv || exit 1
   uv sync
   touch .venv/.synced
 elif [ ! -f .venv/.synced ] || [ uv.lock -nt .venv/.synced ] || [ pyproject.toml -nt .venv/.synced ]; then
   echo "the dependency lock changed since the last sync; running uv sync"
-  uv sync
-  touch .venv/.synced
+  if need_uv; then
+    uv sync
+    touch .venv/.synced
+  else
+    echo "carrying on with the venv as it is; it may not match uv.lock"
+  fi
 fi
 
 # The built page is not in git, so a `git pull` brings new sources and leaves
@@ -97,7 +117,8 @@ if [ "$needs_build" = 1 ]; then
 fi
 
 stop_port "$PORT"
-.venv/bin/uvicorn server.main:app --host 0.0.0.0 --port "$PORT" &
+.venv/bin/uvicorn server.main:app --host 0.0.0.0 --port "$PORT" \
+  --timeout-graceful-shutdown 3 &
 SERVER_PID=$!
 echo "Vibe Studio on http://localhost:$PORT  (Ctrl+C stops everything)"
 wait "$SERVER_PID"

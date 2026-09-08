@@ -15,21 +15,9 @@ warn() { printf '  ! %s\n' "$1" >&2; }
 
 printf '\n\033[1mStopping the learning center\033[0m\n'
 
-found=0
-for pid in $(lab_pids); do
-    found=1
-    kill "$pid" 2>/dev/null || true
-    info "stopped $(ps -o command= -p "$pid" 2>/dev/null | cut -c1-52) (pid $pid)"
-done
-
-if [ "$found" = 0 ]; then
-    info "nothing of this checkout was running"
-else
-    sleep 1
-    for pid in $(lab_pids); do
-        kill -9 "$pid" 2>/dev/null || true
-        info "it ignored the first signal; killed pid $pid"
-    done
+stop_lab || true
+if [ -z "$(port_pids "$PORT")" ]; then
+    info "port $PORT is free"
 fi
 
 for pid in $(port_pids "$PORT"); do

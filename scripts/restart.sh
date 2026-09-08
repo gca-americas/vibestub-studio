@@ -32,21 +32,17 @@ if [ "${1:-}" = "--pull" ]; then
     git pull --ff-only || { printf '\n  git pull failed; nothing was restarted.\n\n' >&2; exit 1; }
 fi
 
-stopped=0
-for pid in $(lab_pids); do
-    kill "$pid" 2>/dev/null || true
-    info "stopped $(ps -o command= -p "$pid" 2>/dev/null | cut -c1-52) (pid $pid)"
-    stopped=1
-done
-# Anything still holding the port after that is not ours to touch.
-for pid in $(port_pids "$PORT"); do
-    if ! is_our_server "$pid" && ! is_ancestor "$pid"; then
-        warn "port $PORT is held by pid $pid, which is not this repo's server; leaving it alone"
-        warn "$(ps -o command= -p "$pid" 2>/dev/null | cut -c1-90)"
-    fi
-done
-[ "$stopped" = 1 ] || info "nothing was running"
-sleep 1
+stop_lab
+
+# Whatever still holds the port is not ours, or has not let go yet.
+if ! wait_for_free_port "$PORT"; then
+    printf '\n\033[1m✗ Port %s is still held; nothing was restarted.\033[0m\n\n' "$PORT" >&2
+    for pid in $(port_pids "$PORT"); do
+        warn "pid $pid  $(ps -o command= -p "$pid" 2>/dev/null | cut -c1-70)"
+    done
+    warn "stop it yourself, then run this again"
+    exit 1
+fi
 
 mkdir -p runs
 PORT="$PORT" nohup scripts/start.sh > runs/lab.log 2>&1 &
@@ -57,7 +53,9 @@ for _ in $(seq 1 90); do
 done
 
 if ! curl -s -o /dev/null "http://localhost:$PORT/api/lab/inspector"; then
-    printf '\n\033[1m✗ It did not answer on port %s.\033[0m\n\n  Read runs/lab.log for the reason.\n\n' "$PORT" >&2
+    printf '\n\033[1m✗ It did not answer on port %s.\033[0m\n\n' "$PORT" >&2
+    warn "the last lines of runs/lab.log:"
+    tail -6 runs/lab.log 2>/dev/null | sed 's/^/      /' >&2
     exit 1
 fi
 

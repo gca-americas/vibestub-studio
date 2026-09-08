@@ -940,6 +940,31 @@ async def quarantine_skeleton():
     return {"ok": True, "state": "skeleton"}
 
 
+def _git(*args: str) -> str:
+    import subprocess
+    try:
+        r = subprocess.run(["git", *args], cwd=config.ROOT, capture_output=True,
+                           text=True, timeout=5)
+        return r.stdout.strip()
+    except Exception:
+        return ""
+
+
+#: The commit this process loaded its code from. A pull moves the checkout but
+#: not a running interpreter, so this is the only honest answer to "does the
+#: server have the fix I just pulled".
+RUNNING_COMMIT = _git("rev-parse", "--short", "HEAD")
+
+
+@router.get("/version")
+async def version():
+    """What this server is running, and whether the checkout has moved since."""
+    head = _git("rev-parse", "--short", "HEAD")
+    return {"running": RUNNING_COMMIT, "head": head,
+            "stale": bool(head and RUNNING_COMMIT and head != RUNNING_COMMIT),
+            "subject": _git("log", "-1", "--format=%s")}
+
+
 WORKER_VERBS = ("bank", "rag", "deliver", "deploy")
 
 

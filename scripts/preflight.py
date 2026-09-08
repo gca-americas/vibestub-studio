@@ -1,5 +1,6 @@
 """One command, all the ticks - run this before the lab starts.
 Run: python scripts/preflight.py [--ping]   (--ping spends one tiny model call)"""
+import json
 import os
 import pathlib
 import sys
@@ -112,6 +113,19 @@ try:
 except Exception:
     up = False
 tick(f"learning center running on port {port}", up, "./setup_codelab.sh starts it in the background; or scripts/start.sh")
+
+if up:
+    # A pull moves the checkout, not a running interpreter.
+    try:
+        with urllib.request.urlopen(f"http://localhost:{port}/api/lab/version", timeout=3) as r:
+            v = json.loads(r.read())
+    except Exception:
+        v = {}
+    if v.get("stale"):
+        print(f"  ! it is running {v['running']}, the checkout is at {v['head']}")
+        print("    run scripts/restart.sh to load the code you pulled")
+    elif v.get("running"):
+        print(f"  · code {v['running']} \u00b7 {v.get('subject', '')[:56]}")
 
 print("\nPREFLIGHT " + ("GREEN" if ok else "NOT READY - fix the ✗ lines above"))
 if up:

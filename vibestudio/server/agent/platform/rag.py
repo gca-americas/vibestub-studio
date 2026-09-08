@@ -57,8 +57,14 @@ def _rag():
 
 
 def comments() -> list[str]:
-    """The comments in agent/comments.md, one per line."""
-    return [l[2:].strip() for l in COMMENTS_FILE.read_text().splitlines() if l.startswith("- ")]
+    """The comments in agent/comments.md, one per line. A missing file is no
+    comments, not an exception: this is read while reporting on the corpus, and
+    a raised error there tells the page nothing about the corpus."""
+    try:
+        text = COMMENTS_FILE.read_text()
+    except OSError:
+        return []
+    return [l[2:].strip() for l in text.splitlines() if l.startswith("- ")]
 
 
 # ── the corpus ──────────────────────────────────────────────────────────────

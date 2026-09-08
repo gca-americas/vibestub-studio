@@ -26,7 +26,13 @@ stop_port() {            # stop whatever from THIS repo is listening on a port
   # lsof ORs its selectors unless -a is given: without it, this would list
   # every listening socket on the machine, not just the one on our port.
   local pids ours=""
-  pids=$(lsof -a -ti "tcp:$1" -sTCP:LISTEN 2>/dev/null || true)
+  if command -v lsof >/dev/null 2>&1; then
+    pids=$(lsof -a -ti "tcp:$1" -sTCP:LISTEN 2>/dev/null || true)
+  elif command -v ss >/dev/null 2>&1; then      # lsof is absent from some images
+    pids=$(ss -ltnpH "sport = :$1" 2>/dev/null | grep -o 'pid=[0-9]*' | cut -d= -f2 | sort -u)
+  else
+    pids=$(fuser -n tcp "$1" 2>/dev/null | tr ' ' '\n' | grep -E '^[0-9]+$' || true)
+  fi
   for pid in $pids; do
     [ "$pid" = "$$" ] && continue
     is_ancestor "$pid" && continue

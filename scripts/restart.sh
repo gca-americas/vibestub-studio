@@ -68,9 +68,26 @@ if [ -f runs/lab.pid ]; then
     fi
 fi
 
-# Whatever holds the port, on the same terms: a server started by hand has no
-# pid file, and a stale file must not be the only way to find it.
-for pid in $(lsof -a -ti "tcp:$PORT" -sTCP:LISTEN 2>/dev/null || true); do
+# Who is listening on the port. lsof is absent from some images (Cloud Shell
+# among them); without a fallback nothing is found, nothing is stopped, the new
+# server cannot bind, and the old one answers the health check below, so a
+# restart that changed nothing looks like it worked.
+port_pids() {
+    if command -v lsof >/dev/null 2>&1; then
+        lsof -a -ti "tcp:$1" -sTCP:LISTEN 2>/dev/null && return 0
+    fi
+    if command -v ss >/dev/null 2>&1; then
+        ss -ltnpH "sport = :$1" 2>/dev/null | grep -o 'pid=[0-9]*' | cut -d= -f2 | sort -u && return 0
+    fi
+    if command -v fuser >/dev/null 2>&1; then
+        fuser -n tcp "$1" 2>/dev/null | tr ' ' '\n' | grep -E '^[0-9]+$' && return 0
+    fi
+    return 0
+}
+
+# A server started by hand has no pid file, and a stale file must not be the
+# only way to find it.
+for pid in $(port_pids "$PORT"); do
     if is_our_server "$pid"; then
         kill "$pid" 2>/dev/null || true
         info "stopped what was on port $PORT (pid $pid)"
@@ -97,6 +114,21 @@ if ! curl -s -o /dev/null "http://localhost:$PORT/api/lab/inspector"; then
     exit 1
 fi
 
+# Something answers. Whether it is the code in this directory is another
+# question: if the old server kept the port, the new one exited on bind and the
+# answer above came from the process this restart meant to replace.
+HEAD_SHA="$(git rev-parse --short HEAD 2>/dev/null || true)"
+SERVING="$(curl -s "http://localhost:$PORT/api/lab/version" 2>/dev/null | sed -n 's/.*"running":"\([^"]*\)".*/\1/p')"
+if [ -n "$HEAD_SHA" ] && [ -n "$SERVING" ] && [ "$HEAD_SHA" != "$SERVING" ]; then
+    printf '\n\033[1m✗ Port %s is still served by the old code (%s), not this checkout (%s).\033[0m\n\n' "$PORT" "$SERVING" "$HEAD_SHA" >&2
+    warn "the process holding the port was not stopped; these are the candidates:"
+    for pid in $(port_pids "$PORT"); do
+        warn "  pid $pid  $(ps -o command= -p "$pid" 2>/dev/null | cut -c1-70)"
+    done
+    warn "stop it yourself, then run this again"
+    exit 1
+fi
+
 if [ -n "${WEB_HOST:-}" ]; then
     LAB_URL="https://$PORT-$WEB_HOST"
 else
@@ -104,6 +136,8 @@ else
 fi
 
 tick "running in the background on port $PORT"
+COMMIT="$(git rev-parse --short HEAD 2>/dev/null || true)"
+[ -n "$COMMIT" ] && info "code     $COMMIT $(git log -1 --format=%s 2>/dev/null | cut -c1-58)"
 printf '\n  %s\n\n' "$LAB_URL"
 info "reload the browser tab to pick up the new page"
 info "log      runs/lab.log"

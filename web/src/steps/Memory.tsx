@@ -157,7 +157,14 @@ function BankLedger({ title, refreshKey = 0 }: { title: string; refreshKey?: num
       setBank(await api.labMemory());
     } catch (e) {
       // a server error answers in plain text, so this used to leave the panel blank
-      setFailed((e as Error).message);
+      let why = (e as Error).message;
+      try {
+        const v = await api.version();
+        if (v.stale) why += ` · this server is running ${v.running} but the checkout is at ${v.head}: run scripts/restart.sh`;
+      } catch {
+        /* the message stands on its own */
+      }
+      setFailed(why);
     } finally {
       setLoading(false);
     }

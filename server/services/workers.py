@@ -29,11 +29,18 @@ class Proc:
     argv: list[str]
     process: asyncio.subprocess.Process
     started_at: float = field(default_factory=time.time)
+    #: Identifies this run to the page that started it. The page cannot compare
+    #: timestamps with the server: in Cloud Shell the browser and the server are
+    #: two machines with two clocks, and a few seconds of skew is enough to make
+    #: a running command look finished. This token is minted here and comes back
+    #: in the exit record, so a page can recognise its own run and nothing else.
+    run: str = ""
 
 
 class Workers:
     def __init__(self) -> None:
         self._running: dict[str, Proc] = {}
+        self._seq = 0
 
     # ── queries ────────────────────────────────────────────────────────────
     def busy(self) -> str | None:
@@ -43,6 +50,11 @@ class Workers:
 
     def running(self) -> list[str]:
         return [v for v, p in self._running.items() if p.process.returncode is None]
+
+    def run_id(self, verb: str) -> str | None:
+        """The token of the live run of one verb, or None if nothing is live."""
+        proc = self._running.get(verb)
+        return proc.run if proc and proc.process.returncode is None else None
 
     @staticmethod
     def last_exit() -> dict | None:
@@ -95,7 +107,9 @@ class Workers:
         process = await asyncio.create_subprocess_exec(
             *argv, cwd=str(config.ROOT), env=env,
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT)
-        proc = Proc(verb=verb, argv=argv, process=process)
+        self._seq += 1
+        proc = Proc(verb=verb, argv=argv, process=process,
+                    run=f"{verb}-{int(time.time() * 1000)}-{self._seq}")
         self._running[verb] = proc
         LAST.unlink(missing_ok=True)           # no stale outcome while this one runs
         bus.publish({"type": "worker", "event": "started", "verb": verb, "at": time.time()})
@@ -112,9 +126,10 @@ class Workers:
                 log.flush()
                 bus.publish({"type": "log", "verb": proc.verb, "line": line, "at": time.time()})
         code = await proc.process.wait()
-        LAST.write_text(json.dumps({"verb": proc.verb, "code": code, "at": time.time()}))
+        LAST.write_text(json.dumps({"verb": proc.verb, "code": code,
+                                    "at": time.time(), "run": proc.run}))
         bus.publish({"type": "worker", "event": "exited", "verb": proc.verb,
-                     "code": code, "at": time.time()})
+                     "code": code, "at": time.time(), "run": proc.run})
         bus.mark_dirty()
 
 

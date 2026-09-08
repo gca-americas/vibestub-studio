@@ -554,7 +554,8 @@ function DeliverRunner({ onDone, onShow }: { onDone: () => void; onShow: () => v
   const [running, setRunning] = useState(false);
   const [copied, setCopied] = useState<VideoCmd | null>(null);
   const [exit, setExit] = useState<number | null>(null);
-  const startedAt = useRef(0);        // when this page started the run, in the server's clock
+  const runId = useRef<string | null>(null);  // the token the server minted for this run
+  const waitedFor = useRef(0);        // polls spent without the server admitting to a run
   const seenRunning = useRef(false);  // the worker was observed live at least once
   const [overlay, setOverlay] = useState(false);
   const lastCmd = useRef<VideoCmd>("deliver");
@@ -565,7 +566,7 @@ function DeliverRunner({ onDone, onShow }: { onDone: () => void; onShow: () => v
     api.videoStatus().then((st) => {
       if (st.running) {
         // a command started elsewhere: any exit that follows is its own
-        startedAt.current = 0;
+        runId.current = null;
         seenRunning.current = true;
         setRunning(true);
         setLines(["a deliver command is already running on this server; its remaining output appears here"]);
@@ -578,15 +579,28 @@ function DeliverRunner({ onDone, onShow }: { onDone: () => void; onShow: () => v
       const st = await api.videoStatus();
       if (st.running) {
         seenRunning.current = true;
+        waitedFor.current = 0;
         return;
       }
-      // A worker takes a moment to register. Until it does, the status still
-      // carries the PREVIOUS command's exit, and reading that would report
-      // this run as finished before it has begun.
-      const fresh = (st.last_exit?.at ?? 0) >= startedAt.current;
-      if (!fresh && !seenRunning.current && Date.now() / 1000 - startedAt.current < 20) return;
+      // Finish on the server's own word, never on a clock. The page's clock and
+      // the server's are two different machines in Cloud Shell, so a comparison
+      // of timestamps calls a running command finished. The exit record has to
+      // name the run this page started.
+      const mine = runId.current;
+      if (mine) {
+        if (st.last_exit?.run !== mine) {
+          // Either the worker has not registered yet or it is still going.
+          if (++waitedFor.current > 120) {
+            setRunning(false);
+            setLines((l) => [...l, `lost track of the command · read runs/deliver_run.log`]);
+          }
+          return;
+        }
+      } else if (!seenRunning.current) {
+        return;                                    // watching someone else's run
+      }
       setRunning(false);
-      setExit(fresh ? st.last_exit?.code ?? null : null);
+      setExit(st.last_exit?.code ?? null);
       // The stream can be held back by a proxy, so take the whole output from
       // the log the worker wrote rather than trusting what arrived live.
       try {
@@ -604,9 +618,9 @@ function DeliverRunner({ onDone, onShow }: { onDone: () => void; onShow: () => v
     setExit(null);
     lastCmd.current = cmd;
     setOverlay(true);  // every command opens a window: a click has to show something
-    let r: { ok: boolean; detail: string };
+    let r: { ok: boolean; detail: string; run?: string };
     try {
-      r = (await api.videoRun(cmd)) as { ok: boolean; detail: string };
+      r = (await api.videoRun(cmd)) as { ok: boolean; detail: string; run?: string };
     } catch (e) {
       // a failed request used to reject inside the click handler, so the page
       // showed nothing at all and the button looked dead
@@ -619,13 +633,14 @@ function DeliverRunner({ onDone, onShow }: { onDone: () => void; onShow: () => v
     if (!r.ok) {
       setLines([`could not start: ${r.detail}. Wait for it to finish; the buttons enable again when it exits.`]);
       // refused because another worker is live: watch that one instead
-      startedAt.current = 0;
+      runId.current = null;
       seenRunning.current = true;
       setRunning(true);
       return;
     }
-    startedAt.current = Date.now() / 1000;
+    runId.current = r.run ?? null;
     seenRunning.current = false;
+    waitedFor.current = 0;
     setRunning(true);
   };
   return (

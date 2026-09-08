@@ -630,7 +630,7 @@ async def bank_run(cmd: str):
     if "bank" in workers.running():
         return {"ok": False, "detail": "a bank command is still running"}
     ok, detail = await workers.start("bank", *BANK_CMDS[cmd], exclusive=False)
-    return {"ok": ok, "detail": detail, "cmd": cmd}
+    return {"ok": ok, "detail": detail, "cmd": cmd, "run": workers.run_id("bank")}
 
 
 @router.get("/bank/status")
@@ -638,6 +638,7 @@ async def bank_status():
     from ..services.workers import workers
     last = workers.last_exit() or {}
     return {"running": "bank" in workers.running(),
+            "run": workers.run_id("bank"),
             "last_exit": last if last.get("verb") == "bank" else None}
 
 
@@ -723,7 +724,7 @@ async def rag_run(cmd: str, body: dict | None = None):
     if "rag" in workers.running():
         return {"ok": False, "detail": "a rag command is still running"}
     ok, detail = await workers.start("rag", *args, exclusive=False)
-    return {"ok": ok, "detail": detail, "cmd": cmd}
+    return {"ok": ok, "detail": detail, "cmd": cmd, "run": workers.run_id("rag")}
 
 
 @router.get("/rag/status")
@@ -731,6 +732,7 @@ async def rag_status():
     from ..services.workers import workers
     last = workers.last_exit() or {}
     return {"running": "rag" in workers.running(),
+            "run": workers.run_id("rag"),
             "last_exit": last if last.get("verb") == "rag" else None}
 
 
@@ -839,7 +841,7 @@ async def video_run(cmd: str):
     if "deliver" in workers.running():
         return {"ok": False, "detail": "a deliver command is still running"}
     ok, detail = await workers.start("deliver", *VIDEO_CMDS[cmd], exclusive=False)
-    return {"ok": ok, "detail": detail, "cmd": cmd}
+    return {"ok": ok, "detail": detail, "cmd": cmd, "run": workers.run_id("deliver")}
 
 
 @router.get("/video/status")
@@ -847,6 +849,7 @@ async def video_status():
     from ..services.workers import workers
     last = workers.last_exit() or {}
     return {"running": "deliver" in workers.running(),
+            "run": workers.run_id("deliver"),
             "last_exit": last if last.get("verb") == "deliver" else None}
 
 

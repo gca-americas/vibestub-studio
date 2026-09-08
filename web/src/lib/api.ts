@@ -11,7 +11,7 @@ import type { InspectorStatus, RunEvent, RunSnapshot, Stage0Status, Stage1Status
  *  reading it as JSON throws inside whatever called it and the page renders
  *  nothing; every caller gets a readable Error instead. */
 async function get<T = unknown>(path: string): Promise<T> {
-  const res = await fetch(path);
+  const res = await fetch(path, { cache: "no-store" });
   if (!res.ok) throw new Error(`${path} failed: ${res.status} ${(await res.text()).slice(0, 200)}`);
   return res.json() as Promise<T>;
 }
@@ -19,6 +19,7 @@ async function get<T = unknown>(path: string): Promise<T> {
 async function post<T = unknown>(path: string, body?: unknown): Promise<T> {
   const res = await fetch(path, {
     method: "POST",
+    cache: "no-store",
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
@@ -34,20 +35,20 @@ export const api = {
   labStage3: () => get<Stage3Status>("/api/lab/stage3"),
   labStage4: () => get<Stage4Status>("/api/lab/stage4"),
   labStage4Load: () => get<{ ok: boolean; edges?: number; error: string }>("/api/lab/stage4/load"),
-  bankRun: (cmd: "connect" | "load" | "list" | "reset") => post(`/api/lab/bank/${cmd}`, {}),
-  bankStatus: () => get<{ running: boolean; last_exit: { code: number; at: number } | null }>("/api/lab/bank/status"),
+  bankRun: (cmd: "connect" | "load" | "list" | "reset") => post<{ ok: boolean; detail: string; run?: string }>(`/api/lab/bank/${cmd}`, {}),
+  bankStatus: () => get<{ running: boolean; run: string | null; last_exit: { code: number; at: number; run?: string } | null }>("/api/lab/bank/status"),
   labMemory: () => get<MemoryBank>("/api/lab/memory"),
   labStage5: () => get<Stage5Status>("/api/lab/stage5"),
   labStage5Load: () => get<{ ok: boolean; edges?: number; error: string }>("/api/lab/stage5/load"),
-  ragRun: (cmd: "connect" | "load" | "list" | "reset" | "query", text?: string) => post(`/api/lab/rag/${cmd}`, text === undefined ? {} : { text }),
-  ragStatus: () => get<{ running: boolean; last_exit: { code: number; at: number } | null }>("/api/lab/rag/status"),
+  ragRun: (cmd: "connect" | "load" | "list" | "reset" | "query", text?: string) => post<{ ok: boolean; detail: string; run?: string }>(`/api/lab/rag/${cmd}`, text === undefined ? {} : { text }),
+  ragStatus: () => get<{ running: boolean; run: string | null; last_exit: { code: number; at: number; run?: string } | null }>("/api/lab/rag/status"),
   labRag: () => get<RagCorpus>("/api/lab/rag"),
   labStage6: () => get<Stage6Status>("/api/lab/stage6"),
   labStage6Load: () => get<{ ok: boolean; edges?: number; error: string }>("/api/lab/stage6/load"),
-  videoRun: (cmd: "deliver" | "status") => post(`/api/lab/video/${cmd}`, {}),
+  videoRun: (cmd: "deliver" | "status") => post<{ ok: boolean; detail: string; run?: string }>(`/api/lab/video/${cmd}`, {}),
   deployRun: () => post<{ ok: boolean; detail: string }>("/api/lab/deploy", {}),
   deployStatus: () => get<DeployStatus>("/api/lab/deploy/status"),
-  videoStatus: () => get<{ running: boolean; last_exit: { code: number; at: number } | null }>("/api/lab/video/status"),
+  videoStatus: () => get<{ running: boolean; run: string | null; last_exit: { code: number; at: number; run?: string } | null }>("/api/lab/video/status"),
   labStage3Load: () => get<{ ok: boolean; edges?: number; error: string }>("/api/lab/stage3/load"),
   labStage1: () => get<Stage1Status>("/api/lab/stage1"),
   labStage0: () => get<Stage0Status>("/api/lab/stage0"),

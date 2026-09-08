@@ -78,6 +78,18 @@ def create_app() -> FastAPI:
                 await workers.stop_all()
 
     app = FastAPI(title="Vibe Studio", lifespan=lifespan)
+
+    @app.middleware("http")
+    async def never_cache_the_api(request, call_next):
+        """Every /api answer describes the state of this moment. Cloud Shell
+        reaches the server through a proxy, and a status served from a cache
+        is a command that looks finished, or output that looks empty."""
+        response = await call_next(request)
+        if request.url.path.startswith("/api"):
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+        return response
+
     app.include_router(code.router)
     app.include_router(lab.router)
     app.mount("/inspector", inspector)

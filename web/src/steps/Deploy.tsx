@@ -133,7 +133,16 @@ function DeployRunner() {
   }, [running]);
   const run = async () => {
     setLines([]);
-    const r = await api.deployRun();
+    let r: { ok: boolean; detail: string };
+    try {
+      r = await api.deployRun();
+    } catch (e) {
+      // a failed request used to reject inside the click handler, so the page
+      // showed nothing at all and the button looked dead
+      setLines([`could not reach the learning center: ${(e as Error).message}`,
+                "Is it still running? Its log is runs/lab.log; scripts/start.sh starts it again."]);
+      return;
+    }
     if (!r.ok) {
       setLines([`could not start: ${r.detail}`]);
       return;

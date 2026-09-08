@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, RefreshCw } from "lucide-react";
 import { In, StepHeader } from "../components/shared";
 import { CatchUp } from "../components/CatchUp";
+import { DoneBanner } from "../components/DoneBanner";
 import { LoadCheck } from "../components/LoadCheck";
 import { api, useRunEvents } from "../lib/api";
 import type { MemoryBank, Stage4Status } from "../lib/types";
@@ -202,6 +203,14 @@ function BankLedger({ title, refreshKey = 0 }: { title: string; refreshKey?: num
 }
 
 type BankCmd = "connect" | "load" | "list" | "reset";
+/** What each command leaves behind, said when it finishes. */
+const BANK_DONE: Record<BankCmd, string> = {
+  connect: "The bank exists in your project and this lab is connected to it. Next: load the creator's history.",
+  load: "The creator's history is in the bank, consolidated into facts. Next: list what it kept.",
+  list: "That is everything the bank holds for this creator, oldest first.",
+  reset: "Every memory in the creator's scope is deleted. The bank itself is still there.",
+};
+
 const BANK_COMMANDS: { cmd: BankCmd; line: string; what: string }[] = [
   { cmd: "connect", line: "python -m agent.platform.bank", what: "Creates the Agent Engine that hosts the bank, once, and prints the scope and the topics. Runs again as connect." },
   { cmd: "load", line: "python -m agent.platform.bank load", what: "Seeds four past sessions, oldest first: two picks of animals with one stated rule, one of gadgets, one of fantasy. Under a minute." },
@@ -215,6 +224,8 @@ function BankRunner({ onDone }: { onDone: () => void }) {
   const [running, setRunning] = useState(false);
   const [copied, setCopied] = useState<BankCmd | null>(null);
   const [exit, setExit] = useState<number | null>(null);
+  const startedAt = useRef(0);        // when this page started the run, in the server's clock
+  const seenRunning = useRef(false);  // the worker was observed live at least once
   const [overlay, setOverlay] = useState<BankCmd | null>(null);
   useRunEvents((verb, line) => {
     if (verb === "bank") setLines((l) => [...l.slice(-199), line]);
@@ -224,6 +235,9 @@ function BankRunner({ onDone }: { onDone: () => void }) {
     // tab or a terminal): show it as running so the buttons explain themselves
     api.bankStatus().then((st) => {
       if (st.running) {
+        // a command started elsewhere: any exit that follows is its own
+        startedAt.current = 0;
+        seenRunning.current = true;
         setRunning(true);
         setLines(["a bank command is already running on this server; its remaining output appears here"]);
       }
@@ -233,23 +247,46 @@ function BankRunner({ onDone }: { onDone: () => void }) {
     if (!running) return;
     const t = setInterval(async () => {
       const st = await api.bankStatus();
-      if (!st.running) {
-        setRunning(false);
-        setExit(st.last_exit?.code ?? null);
-        onDone();
+      if (st.running) {
+        seenRunning.current = true;
+        return;
       }
+      // A worker takes a moment to register. Until it does, the status still
+      // carries the PREVIOUS command's exit, and reading that would report
+      // this run as finished before it has begun.
+      const fresh = (st.last_exit?.at ?? 0) >= startedAt.current;
+      if (!fresh && !seenRunning.current && Date.now() / 1000 - startedAt.current < 20) return;
+      setRunning(false);
+      setExit(fresh ? st.last_exit?.code ?? null : null);
+      onDone();
     }, 1500);
     return () => clearInterval(t);
   }, [running, onDone]);
   const run = async (cmd: BankCmd) => {
     setLines([]);
-    setExit(null);
-    const r = (await api.bankRun(cmd)) as { ok: boolean; detail: string };
+    setExit(null);                       // open at once: a click has to show something
+    let r: { ok: boolean; detail: string };
+    try {
+      r = (await api.bankRun(cmd)) as { ok: boolean; detail: string };
+    } catch (e) {
+      // a failed request used to reject inside the click handler, so the page
+      // showed nothing at all and the button looked dead
+      setLines([`could not reach the learning center: ${(e as Error).message}`,
+                "Is it still running? Its log is runs/lab.log; scripts/start.sh starts it again."]);
+      setExit(1);
+      setRunning(false);
+      return;
+    }
     if (!r.ok) {
       setLines([`could not start: ${r.detail}. Wait for it to finish; the buttons enable again when it exits.`]);
+      // refused because another worker is live: watch that one instead
+      startedAt.current = 0;
+      seenRunning.current = true;
       setRunning(true);
       return;
     }
+    startedAt.current = Date.now() / 1000;
+    seenRunning.current = false;
     setRunning(true);
     if (cmd !== "list") setOverlay(cmd);
   };
@@ -322,7 +359,7 @@ function BankOverlay({ cmd, lines, running, exit, onClose }: { cmd: BankCmd; lin
         <div className="flex items-center justify-between border-b border-hairline px-5 py-3">
           <div className="flex items-center gap-3">
             {!done && <RefreshCw size={14} className="animate-spin" style={{ color: PURPLE }} />}
-            <span className="font-mono text-xs text-fg">{cmd === "connect" ? "python -m agent.platform.bank" : "python -m agent.platform.bank load"}</span>
+            <span className="font-mono text-xs text-fg">{BANK_COMMANDS.find((c) => c.cmd === cmd)?.line}</span>
           </div>
           <span className="font-mono text-[11px]" style={{ color: failed ? RED : done ? GREEN : "var(--fg-muted)" }}>
             {done ? (failed ? `exited with ${exit}` : "done") : "running on this server…"}
@@ -333,14 +370,15 @@ function BankOverlay({ cmd, lines, running, exit, onClose }: { cmd: BankCmd; lin
         </div>
         <div className="border-t border-hairline bg-input">
           <div className="border-b border-hairline px-4 py-1.5 font-mono text-[10px] uppercase tracking-wider text-fg-muted">output</div>
-          <pre className="max-h-40 overflow-auto px-4 py-3 font-mono text-[11px] leading-relaxed text-fg">{clean.slice(-30).join("\n") || "starting…"}</pre>
+          <pre className="max-h-40 overflow-auto px-4 py-3 font-mono text-[11px] leading-relaxed text-fg">{clean.slice(-30).join("\n") || "starting… the first call to your project can take a few seconds"}</pre>
         </div>
-        <div className="flex items-center justify-end gap-3 border-t border-hairline px-5 py-3">
-          {!done && <span className="text-xs text-fg-muted">The page is locked until the command finishes.</span>}
-          <button onClick={onClose} disabled={!done} className="rounded-xl px-4 py-2 font-mono text-xs font-bold text-black disabled:opacity-40" style={{ background: PURPLE }}>
-            Close
-          </button>
-        </div>
+        {done ? (
+          <DoneBanner failed={failed} exit={exit} onClose={onClose} message={BANK_DONE[cmd]} />
+        ) : (
+          <div className="flex items-center justify-end gap-3 border-t border-hairline px-5 py-3">
+            <span className="text-xs text-fg-muted">The page is locked until the command finishes.</span>
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );
@@ -439,7 +477,7 @@ function LoadAnimation({ lines, done }: { lines: string[]; done: boolean }) {
             )}
           </g>
         ))}
-        <text x="360" y="134" textAnchor="middle" fontSize="9.5" fontFamily="var(--font-mono)" fill="currentColor" opacity="0.7">{n}/{total} sessions</text>
+        <text x="360" y="134" textAnchor="middle" fontSize="9.5" fontFamily="var(--font-mono)" fill="currentColor" opacity="0.7">{n}/{total} sessions{done ? " · finished" : ""}</text>
         <path d="M428 70 L 456 60 M428 100 L 456 122" fill="none" stroke="currentColor" strokeOpacity="0.4" strokeWidth="1.2" />
         <g>
           <rect x="458" y="34" width="150" height="52" rx="10" fill={tint(AMBER, 0.08)} stroke={AMBER} strokeOpacity="0.8" />

@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Download, RefreshCw } from "lucide-react";
 import { In, StepHeader } from "../components/shared";
 import { CatchUp } from "../components/CatchUp";
+import { DoneBanner } from "../components/DoneBanner";
 import { LoadCheck } from "../components/LoadCheck";
 import { api, useRunEvents } from "../lib/api";
 import type { Stage6Status } from "../lib/types";
@@ -553,6 +554,8 @@ function DeliverRunner({ onDone, onShow }: { onDone: () => void; onShow: () => v
   const [running, setRunning] = useState(false);
   const [copied, setCopied] = useState<VideoCmd | null>(null);
   const [exit, setExit] = useState<number | null>(null);
+  const startedAt = useRef(0);        // when this page started the run, in the server's clock
+  const seenRunning = useRef(false);  // the worker was observed live at least once
   const [overlay, setOverlay] = useState(false);
   useRunEvents((verb, line) => {
     if (verb === "deliver") setLines((l) => [...l.slice(-199), line]);
@@ -560,6 +563,9 @@ function DeliverRunner({ onDone, onShow }: { onDone: () => void; onShow: () => v
   useEffect(() => {
     api.videoStatus().then((st) => {
       if (st.running) {
+        // a command started elsewhere: any exit that follows is its own
+        startedAt.current = 0;
+        seenRunning.current = true;
         setRunning(true);
         setLines(["a deliver command is already running on this server; its remaining output appears here"]);
       }
@@ -569,23 +575,46 @@ function DeliverRunner({ onDone, onShow }: { onDone: () => void; onShow: () => v
     if (!running) return;
     const t = setInterval(async () => {
       const st = await api.videoStatus();
-      if (!st.running) {
-        setRunning(false);
-        setExit(st.last_exit?.code ?? null);
-        onDone();
+      if (st.running) {
+        seenRunning.current = true;
+        return;
       }
+      // A worker takes a moment to register. Until it does, the status still
+      // carries the PREVIOUS command's exit, and reading that would report
+      // this run as finished before it has begun.
+      const fresh = (st.last_exit?.at ?? 0) >= startedAt.current;
+      if (!fresh && !seenRunning.current && Date.now() / 1000 - startedAt.current < 20) return;
+      setRunning(false);
+      setExit(fresh ? st.last_exit?.code ?? null : null);
+      onDone();
     }, 1500);
     return () => clearInterval(t);
   }, [running, onDone]);
   const run = async (cmd: VideoCmd) => {
     setLines([]);
-    setExit(null);
-    const r = (await api.videoRun(cmd)) as { ok: boolean; detail: string };
+    setExit(null);   // open at once: a click has to show something
+    let r: { ok: boolean; detail: string };
+    try {
+      r = (await api.videoRun(cmd)) as { ok: boolean; detail: string };
+    } catch (e) {
+      // a failed request used to reject inside the click handler, so the page
+      // showed nothing at all and the button looked dead
+      setLines([`could not reach the learning center: ${(e as Error).message}`,
+                "Is it still running? Its log is runs/lab.log; scripts/start.sh starts it again."]);
+      setExit(1);
+      setRunning(false);
+      return;
+    }
     if (!r.ok) {
       setLines([`could not start: ${r.detail}. Wait for it to finish; the buttons enable again when it exits.`]);
+      // refused because another worker is live: watch that one instead
+      startedAt.current = 0;
+      seenRunning.current = true;
       setRunning(true);
       return;
     }
+    startedAt.current = Date.now() / 1000;
+    seenRunning.current = false;
     setRunning(true);
     if (cmd === "deliver") setOverlay(true);
   };
@@ -717,20 +746,25 @@ function DeliverOverlay({ lines, running, exit, onClose, onShow }: { lines: stri
         </div>
         <div className="border-t border-hairline bg-input">
           <div className="border-b border-hairline px-4 py-1.5 font-mono text-[10px] uppercase tracking-wider text-fg-muted">output</div>
-          <pre className="max-h-40 overflow-auto whitespace-pre-wrap px-4 py-3 font-mono text-[11px] leading-relaxed text-fg">{clean.slice(-30).join("\n") || "starting…"}</pre>
+          <pre className="max-h-40 overflow-auto whitespace-pre-wrap px-4 py-3 font-mono text-[11px] leading-relaxed text-fg">{clean.slice(-30).join("\n") || "starting… finding the pending render in the session store"}</pre>
         </div>
-        <div className="flex items-center justify-end gap-3 border-t border-hairline px-5 py-3">
-          {!done && <span className="text-xs text-fg-muted">The page is locked until the command finishes.</span>}
-          {done && !failed && <span className="text-xs text-fg-muted">adk web still shows the run ending at the receipt until the session is reloaded.</span>}
-          <button onClick={onClose} disabled={!done} className="rounded-xl border border-hairline px-4 py-2 font-mono text-xs font-bold text-fg disabled:opacity-40">
-            Close
-          </button>
-          {done && !failed && (
-            <button onClick={onShow} className="flex items-center gap-2 rounded-xl px-4 py-2 font-mono text-xs font-bold text-black" style={{ background: AMBER }}>
-              <RefreshCw size={13} /> Refresh adk web
-            </button>
-          )}
-        </div>
+        {done ? (
+          <DoneBanner
+            failed={failed}
+            exit={exit}
+            onClose={onClose}
+            message="The clip was delivered to the pending call and the run finished. adk web still shows the run ending at the receipt until the session is reloaded."
+            extra={
+              <button onClick={onShow} className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-black" style={{ background: AMBER }}>
+                <RefreshCw size={14} /> Refresh adk web
+              </button>
+            }
+          />
+        ) : (
+          <div className="flex items-center justify-end gap-3 border-t border-hairline px-5 py-3">
+            <span className="text-xs text-fg-muted">The page is locked until the command finishes.</span>
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );

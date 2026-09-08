@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, RefreshCw } from "lucide-react";
 import { In, StepHeader } from "../components/shared";
 import { CatchUp } from "../components/CatchUp";
+import { LoadCheck } from "../components/LoadCheck";
 import { api, useRunEvents } from "../lib/api";
 import type { MemoryBank, Stage4Status } from "../lib/types";
 import { COLORS, tint } from "./colors";
@@ -859,8 +860,6 @@ function TheCallbacks() {
   const [status, setStatus] = useState<Stage4Status | null>(null);
   const [checking, setChecking] = useState(false);
   const [open, setOpen] = useState(false);
-  const [load, setLoad] = useState<{ ok: boolean; edges?: number; error: string } | null>(null);
-  const [loading, setLoading] = useState(false);
   const { snapshot } = useRunEvents();
   const check = useCallback(async () => {
     setChecking(true);
@@ -881,14 +880,6 @@ function TheCallbacks() {
     const t = setInterval(check, 4000);
     return () => clearInterval(t);
   }, [open, check]);
-  const runLoad = async () => {
-    setLoading(true);
-    try {
-      setLoad(await api.labStage4Load());
-    } finally {
-      setLoading(false);
-    }
-  };
   const recallOk = status?.recall_wired ?? false;
   const rememberOk = status?.remember_wired ?? false;
   const facts = status?.memory_facts ?? [];
@@ -1042,22 +1033,7 @@ function TheCallbacks() {
       </In>
 
       <In delay={0.4}>
-        <section className="rounded-3xl border border-hairline bg-card p-6">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Before you run</p>
-              <p className="mt-1 max-w-2xl text-sm text-fg-muted">Save both edits, then click the button. It loads your saved file the way adk web will and tells you either that it loads or what ADK objects to.</p>
-            </div>
-            <button onClick={runLoad} className="flex items-center gap-2 rounded-xl border border-hairline bg-overlay px-4 py-2 font-mono text-xs text-fg-muted hover:text-fg">
-              <RefreshCw size={13} className={loading ? "animate-spin" : ""} /> Check the workflow loads
-            </button>
-          </div>
-          {load && (
-            <div className="mt-3 rounded-xl border p-3 font-mono text-[11.5px]" style={load.ok ? { borderColor: tint(GREEN, 0.4), color: GREEN, background: tint(GREEN, 0.06) } : { borderColor: tint(RED, 0.4), color: RED, background: tint(RED, 0.06) }}>
-              {load.ok ? `loads · ${load.edges} edges` : load.error}
-            </div>
-          )}
-        </section>
+        <LoadCheck app="stage4_memory" intro="Save both edits, then click the button. It loads your saved file the way adk web will and tells you either that it loads or what ADK objects to." />
       </In>
 
       <In delay={0.45}>

@@ -360,8 +360,11 @@ async def _load_app(app: str):
     import asyncio
     proc = await asyncio.create_subprocess_exec(
         sys.executable, "-c",
+        # ADK leaves .graph as None on a Workflow whose edge list is still empty,
+        # so an app with no edges yet must not be reported as an agent.
         f"import {app}.agent as m; r = m.root_agent; g = getattr(r, 'graph', None); "
-        f"print(len(g.edges) if g else 'agent:' + str(len(getattr(r, 'tools', []) or [])))",
+        f"print(len(g.edges) if g is not None else "
+        f"('0' if type(r).__name__ == 'Workflow' else 'agent:' + str(len(getattr(r, 'tools', []) or []))))",
         cwd=str(ROOT), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
         env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
     try:

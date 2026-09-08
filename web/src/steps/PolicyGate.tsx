@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowRight, RefreshCw } from "lucide-react";
 import { In, StepHeader } from "../components/shared";
 import { CatchUp } from "../components/CatchUp";
+import { LoadCheck } from "../components/LoadCheck";
 import { api, useRunEvents } from "../lib/api";
 import type { Stage3Status } from "../lib/types";
 import { COLORS, tint } from "./colors";
@@ -88,36 +89,6 @@ function useStage3() {
   return { status, checking, check, open, setOpen };
 }
 
-function LoadCheck({ intro }: { intro: string }) {
-  const [load, setLoad] = useState<{ ok: boolean; edges?: number; error: string } | null>(null);
-  const [loading, setLoading] = useState(false);
-  const run = async () => {
-    setLoading(true);
-    try {
-      setLoad(await api.labStage3Load());
-    } finally {
-      setLoading(false);
-    }
-  };
-  return (
-    <section className="rounded-3xl border border-hairline bg-card p-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Before you run</p>
-          <p className="mt-1 max-w-2xl text-sm text-fg-muted">{intro}</p>
-        </div>
-        <button onClick={run} className="flex items-center gap-2 rounded-xl border border-hairline bg-overlay px-4 py-2 font-mono text-xs text-fg-muted hover:text-fg">
-          <RefreshCw size={13} className={loading ? "animate-spin" : ""} /> Check the workflow loads
-        </button>
-      </div>
-      {load && (
-        <div className="mt-3 rounded-xl border p-3 font-mono text-[11.5px]" style={load.ok ? { borderColor: tint(GREEN, 0.4), color: GREEN, background: tint(GREEN, 0.06) } : { borderColor: tint(RED, 0.4), color: RED, background: tint(RED, 0.06) }}>
-          {load.ok ? `loads · ${load.edges} edges` : load.error}
-        </div>
-      )}
-    </section>
-  );
-}
 
 /** The router and its two exits; with reroute, the 5c edge back to the scripter. */
 function RouterFigure({ reroute }: { reroute: boolean }) {
@@ -347,7 +318,7 @@ function StateNode() {
       </In>
 
       <In delay={0.4}>
-        <LoadCheck intro="Save both edits, then click the button. It loads your saved file the way adk web will and tells you either that it loads or what ADK objects to." />
+        <LoadCheck app="stage3_router" intro="Save both edits, then click the button. It loads your saved file the way adk web will and tells you either that it loads or what ADK objects to." />
       </In>
 
       <In delay={0.45}>
@@ -578,7 +549,7 @@ function RouterNode() {
       </In>
 
       <In delay={0.5}>
-        <LoadCheck intro="Save both edits above, then click the button. It loads your saved file the way adk web will and tells you either that it loads or what ADK objects to." />
+        <LoadCheck app="stage3_router" intro="Save both edits above, then click the button. It loads your saved file the way adk web will and tells you either that it loads or what ADK objects to." />
       </In>
 
       <In delay={0.55}>
@@ -1060,7 +1031,7 @@ function TaskNode() {
       </In>
 
       <In delay={0.45}>
-        <LoadCheck intro="Save both edits, then click the button. It loads your saved file the way adk web will and tells you either that it loads or what ADK objects to." />
+        <LoadCheck app="stage3_router" intro="Save both edits, then click the button. It loads your saved file the way adk web will and tells you either that it loads or what ADK objects to." />
       </In>
 
       <In delay={0.5}>
@@ -1068,13 +1039,14 @@ function TaskNode() {
           app="stage3_router"
           open={open}
           setOpen={setOpen}
-          title="Run the blocked route again."
-          intro="One run. Answer with 4, the candidate written to be refused. The quarantine agent makes several model calls while it works."
+          title="Run the blocked route again. Answer the form with 4."
+          intro="One run, and it only shows what this part built if you answer the form with 4. Candidate 4 is the one written to be refused; 1, 2 and 3 pass the gate and never reach quarantine. The quarantine agent makes several model calls while it works."
           idea={idea}
           setIdea={setIdea}
+          stepTitles={["Answer the form with 4, not 1, 2 or 3", "Then watch quarantine work"]}
           steps={[
-            "policy_check shows route: BLOCK, then quarantine's events: a find_policy_hits call and its result, suggest_replacement calls, another find_policy_hits, and finally finish_task carrying the cleaned title, angle and hook.",
-            "The scripter runs on the cleaned direction and writes the script. Compare its title with candidate 4's: the scene is the same, the refused words are gone.",
+            "Only candidate 4 trips the policy gate. Pick anything else and policy_check shows route: OK, the scripter runs, and quarantine never gets a turn, so there is nothing to see. With 4, policy_check shows route: BLOCK.",
+            "quarantine's events follow: a find_policy_hits call and its result, suggest_replacement calls, another find_policy_hits, and finally finish_task carrying the cleaned title, angle and hook. The scripter then runs on the cleaned direction. Compare its title with candidate 4's: the scene is the same, the refused words are gone.",
           ]}
         />
       </In>

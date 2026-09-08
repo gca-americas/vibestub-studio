@@ -11,16 +11,31 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 PORT="${PORT:-4600}"
 
+# This shell and its parents are never candidates: a terminal must survive a
+# restart of the server it started.
+is_ancestor() {
+  local target="$1" p="$$"
+  while [ -n "$p" ] && [ "$p" -gt 1 ] 2>/dev/null; do
+    [ "$p" = "$target" ] && return 0
+    p="$(ps -o ppid= -p "$p" 2>/dev/null | tr -d '[:space:]' || true)"
+  done
+  return 1
+}
+
 stop_port() {            # stop whatever from THIS repo is listening on a port
   # lsof ORs its selectors unless -a is given: without it, this would list
   # every listening socket on the machine, not just the one on our port.
   local pids ours=""
   pids=$(lsof -a -ti "tcp:$1" -sTCP:LISTEN 2>/dev/null || true)
   for pid in $pids; do
-    if ps -o command= -p "$pid" | grep -q "vibe-studio-lab\|server.main\|adk web\|vite"; then
+    [ "$pid" = "$$" ] && continue
+    is_ancestor "$pid" && continue
+    if ps -o command= -p "$pid" | grep -q "uvicorn.*server.main\|scripts/start.sh\|adk web\|vite"; then
       echo "stopping stale process $pid on port $1"
       parent=$(ps -o ppid= -p "$pid" | tr -d ' ')
-      if [ -n "$parent" ] && ps -o command= -p "$parent" | grep -q "scripts/\(start\|dev\)\.sh"; then
+      # only a start/dev script of this repo, and never an ancestor of this shell
+      if [ -n "$parent" ] && [ "$parent" != "$$" ] && ! is_ancestor "$parent" \
+         && ps -o command= -p "$parent" | grep -q "scripts/\(start\|dev\)\.sh"; then
         kill "$parent" 2>/dev/null || true      # its exit trap only touches its own children
       fi
       kill "$pid" 2>/dev/null || true

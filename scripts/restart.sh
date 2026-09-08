@@ -8,6 +8,11 @@
 # The built page is not in git, so a pull brings new sources and leaves the old
 # build in place. scripts/start.sh compares the two and rebuilds when needed,
 # which is why a restart is all this has to do.
+#
+# Nothing here kills a pid it has not identified. A pid file survives a machine
+# restart and pids are reused, so a recorded number is a hint, never a licence:
+# every candidate has to look like this repo's server, and must not be this
+# shell or one of its ancestors.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 PORT="${PORT:-4600}"
@@ -15,6 +20,32 @@ PORT="${PORT:-4600}"
 say()  { printf '\n\033[1m%s\033[0m\n' "$1"; }
 tick() { printf '  ✓ %s\n' "$1"; }
 info() { printf '  · %s\n' "$1"; }
+warn() { printf '  ! %s\n' "$1" >&2; }
+
+# ── who may be killed ───────────────────────────────────────────────────────
+is_ancestor() {          # $1 is this shell or one of its parents
+    local target="$1" p="$$"
+    while [ -n "$p" ] && [ "$p" -gt 1 ] 2>/dev/null; do
+        [ "$p" = "$target" ] && return 0
+        p="$(ps -o ppid= -p "$p" 2>/dev/null | tr -d '[:space:]' || true)"
+    done
+    return 1
+}
+
+is_our_server() {        # $1 is a live process that is this repo's learning center
+    local pid="$1" cmd
+    [ -n "$pid" ] || return 1
+    case "$pid" in (*[!0-9]*) return 1 ;; esac
+    [ "$pid" -gt 1 ] || return 1
+    [ "$pid" != "$$" ] || return 1
+    is_ancestor "$pid" && return 1
+    cmd="$(ps -o command= -p "$pid" 2>/dev/null || true)"
+    [ -n "$cmd" ] || return 1
+    case "$cmd" in
+        *uvicorn*server.main*|*scripts/start.sh*|*python*-m*vibestudio*) return 0 ;;
+    esac
+    return 1
+}
 
 say "Restarting the learning center"
 
@@ -23,21 +54,33 @@ if [ "${1:-}" = "--pull" ]; then
     git pull --ff-only || { printf '\n  git pull failed; nothing was restarted.\n\n' >&2; exit 1; }
 fi
 
-# The pid file first, then whatever holds the port: a server started by hand
-# has no pid file, and a stale pid file must not stop the shutdown.
+stopped=0
+
+# The recorded pid, only if it still looks like our server.
 if [ -f runs/lab.pid ]; then
-    OLD="$(tr -d '[:space:]' < runs/lab.pid || true)"
-    if [ -n "$OLD" ] && kill -0 "$OLD" 2>/dev/null; then
+    OLD="$(tr -d '[:space:]' < runs/lab.pid 2>/dev/null || true)"
+    if is_our_server "$OLD"; then
         kill "$OLD" 2>/dev/null || true
         info "stopped the learning center (pid $OLD)"
+        stopped=1
+    elif [ -n "$OLD" ]; then
+        info "runs/lab.pid holds $OLD, which is not this server any more; ignoring it"
     fi
 fi
+
+# Whatever holds the port, on the same terms: a server started by hand has no
+# pid file, and a stale file must not be the only way to find it.
 for pid in $(lsof -a -ti "tcp:$PORT" -sTCP:LISTEN 2>/dev/null || true); do
-    if ps -o command= -p "$pid" | grep -q "vibe-studio\|server.main\|start.sh"; then
+    if is_our_server "$pid"; then
         kill "$pid" 2>/dev/null || true
         info "stopped what was on port $PORT (pid $pid)"
+        stopped=1
+    else
+        warn "port $PORT is held by pid $pid, which is not this repo's server; leaving it alone"
+        warn "$(ps -o command= -p "$pid" 2>/dev/null | cut -c1-90)"
     fi
 done
+[ "$stopped" = 1 ] || info "nothing was running"
 sleep 1
 
 mkdir -p runs

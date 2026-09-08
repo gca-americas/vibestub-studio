@@ -294,7 +294,8 @@ function RagRunner({ onDone }: { onDone: () => void }) {
   }, [running, onDone]);
   const run = async (cmd: RagCmd) => {
     setLines([]);
-    setExit(null);   // open at once: a click has to show something
+    setExit(null);
+    setOverlay(cmd);   // every command opens a window: a click has to show something
     let r: { ok: boolean; detail: string };
     try {
       r = (await api.ragRun(cmd, cmd === "query" ? query : undefined)) as { ok: boolean; detail: string };
@@ -318,14 +319,11 @@ function RagRunner({ onDone }: { onDone: () => void }) {
     startedAt.current = Date.now() / 1000;
     seenRunning.current = false;
     setRunning(true);
-    if (cmd !== "query") setOverlay(cmd);
   };
   const lineFor = (c: (typeof RAG_COMMANDS)[number]) => (c.cmd === "query" ? `python -m agent.platform.rag query "${query}"` : c.line);
   return (
     <>
-      <AnimatePresence>
         {overlay && <RagOverlay cmd={overlay} lines={lines} running={running} exit={exit} onClose={() => setOverlay(null)} />}
-      </AnimatePresence>
       <ol className="mt-4 grid gap-3 md:grid-cols-3">
         {RAG_COMMANDS.map((c) => (
           <li key={c.cmd} className="rounded-2xl border border-hairline bg-overlay p-4">
@@ -389,8 +387,8 @@ function RagOverlay({ cmd, lines, running, exit, onClose }: { cmd: RagCmd; lines
   const done = !running && exit !== null;
   const failed = done && exit !== 0;
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)" }} role="dialog" aria-modal="true" aria-label={cmd === "connect" ? "Creating the corpus" : "Loading the comments"}>
-      <motion.div initial={{ y: 16, scale: 0.98 }} animate={{ y: 0, scale: 1 }} exit={{ y: 16, scale: 0.98 }} className="w-full max-w-3xl overflow-hidden rounded-3xl border border-hairline bg-card shadow-2xl">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)" }} role="dialog" aria-modal="true" aria-label={cmd === "connect" ? "Creating the corpus" : "Loading the comments"}>
+      <motion.div initial={{ y: 16, scale: 0.98 }} animate={{ y: 0, scale: 1 }} className="w-full max-w-3xl overflow-hidden rounded-3xl border border-hairline bg-card shadow-2xl">
         <div className="flex items-center justify-between border-b border-hairline px-5 py-3">
           <div className="flex items-center gap-3">
             {!done && <RefreshCw size={14} className="animate-spin" style={{ color: CYAN }} />}
@@ -400,9 +398,22 @@ function RagOverlay({ cmd, lines, running, exit, onClose }: { cmd: RagCmd; lines
             {done ? (failed ? `exited with ${exit}` : "done") : "running on this server…"}
           </span>
         </div>
-        <div className="p-5">{cmd === "connect" ? <CreateAnimation lines={clean} done={done} /> : <LoadAnimation lines={clean} done={done} />}</div>
+        <div className="p-5">
+          {cmd === "connect" ? (
+            <CreateAnimation lines={clean} done={done} />
+          ) : cmd === "load" ? (
+            <LoadAnimation lines={clean} done={done} />
+          ) : (
+            <p className="text-sm text-fg-muted">
+              The question is embedded with the same model the passages were, and the nearest passages come back with their distance. The results panel below keeps them once you close this.
+            </p>
+          )}
+        </div>
         <div className="border-t border-hairline bg-input">
-          <div className="border-b border-hairline px-4 py-1.5 font-mono text-[10px] uppercase tracking-wider text-fg-muted">output</div>
+          <div className="flex items-center justify-between border-b border-hairline px-4 py-1.5 font-mono text-[10px] uppercase tracking-wider text-fg-muted">
+            <span>output</span>
+            <span className="normal-case tracking-normal">the whole run is in runs/rag_run.log</span>
+          </div>
           <pre className="max-h-40 overflow-auto whitespace-pre-wrap px-4 py-3 font-mono text-[11px] leading-relaxed text-fg">{clean.slice(-30).join("\n") || "starting… the first call to your project can take a few seconds"}</pre>
         </div>
         {done ? (

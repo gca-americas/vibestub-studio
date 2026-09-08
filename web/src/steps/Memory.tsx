@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowRight, RefreshCw } from "lucide-react";
 import { In, StepHeader } from "../components/shared";
 import { CatchUp } from "../components/CatchUp";
@@ -264,7 +264,8 @@ function BankRunner({ onDone }: { onDone: () => void }) {
   }, [running, onDone]);
   const run = async (cmd: BankCmd) => {
     setLines([]);
-    setExit(null);                       // open at once: a click has to show something
+    setExit(null);
+    setOverlay(cmd);   // every command opens a window: a click has to show something
     let r: { ok: boolean; detail: string };
     try {
       r = (await api.bankRun(cmd)) as { ok: boolean; detail: string };
@@ -288,13 +289,10 @@ function BankRunner({ onDone }: { onDone: () => void }) {
     startedAt.current = Date.now() / 1000;
     seenRunning.current = false;
     setRunning(true);
-    if (cmd !== "list") setOverlay(cmd);
   };
   return (
     <>
-      <AnimatePresence>
         {overlay && <BankOverlay cmd={overlay} lines={lines} running={running} exit={exit} onClose={() => setOverlay(null)} />}
-      </AnimatePresence>
       <ol className="mt-4 grid gap-3 md:grid-cols-3">
         {BANK_COMMANDS.map((c) => (
           <li key={c.cmd} className="rounded-2xl border border-hairline bg-overlay p-4">
@@ -354,8 +352,8 @@ function BankOverlay({ cmd, lines, running, exit, onClose }: { cmd: BankCmd; lin
   const done = !running && exit !== null;
   const failed = done && exit !== 0;
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)" }} role="dialog" aria-modal="true" aria-label={cmd === "connect" ? "Creating the Memory Bank" : "Loading the creator's history"}>
-      <motion.div initial={{ y: 16, scale: 0.98 }} animate={{ y: 0, scale: 1 }} exit={{ y: 16, scale: 0.98 }} className="w-full max-w-3xl overflow-hidden rounded-3xl border border-hairline bg-card shadow-2xl">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)" }} role="dialog" aria-modal="true" aria-label={cmd === "connect" ? "Creating the Memory Bank" : "Loading the creator's history"}>
+      <motion.div initial={{ y: 16, scale: 0.98 }} animate={{ y: 0, scale: 1 }} className="w-full max-w-3xl overflow-hidden rounded-3xl border border-hairline bg-card shadow-2xl">
         <div className="flex items-center justify-between border-b border-hairline px-5 py-3">
           <div className="flex items-center gap-3">
             {!done && <RefreshCw size={14} className="animate-spin" style={{ color: PURPLE }} />}
@@ -366,10 +364,23 @@ function BankOverlay({ cmd, lines, running, exit, onClose }: { cmd: BankCmd; lin
           </span>
         </div>
         <div className="p-5">
-          {cmd === "connect" ? <ConnectAnimation lines={clean} done={done} /> : <LoadAnimation lines={clean} done={done} />}
+          {cmd === "connect" ? (
+            <ConnectAnimation lines={clean} done={done} />
+          ) : cmd === "load" ? (
+            <LoadAnimation lines={clean} done={done} />
+          ) : (
+            <p className="text-sm text-fg-muted">
+              {cmd === "list"
+                ? "Everything the bank holds for this creator, oldest first. The ledger below shows the same rows once you close this."
+                : "Deleting every memory in the creator's scope. The bank itself stays."}
+            </p>
+          )}
         </div>
         <div className="border-t border-hairline bg-input">
-          <div className="border-b border-hairline px-4 py-1.5 font-mono text-[10px] uppercase tracking-wider text-fg-muted">output</div>
+          <div className="flex items-center justify-between border-b border-hairline px-4 py-1.5 font-mono text-[10px] uppercase tracking-wider text-fg-muted">
+            <span>output</span>
+            <span className="normal-case tracking-normal">the whole run is in runs/bank_run.log</span>
+          </div>
           <pre className="max-h-40 overflow-auto px-4 py-3 font-mono text-[11px] leading-relaxed text-fg">{clean.slice(-30).join("\n") || "starting… the first call to your project can take a few seconds"}</pre>
         </div>
         {done ? (

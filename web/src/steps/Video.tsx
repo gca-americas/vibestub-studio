@@ -557,6 +557,7 @@ function DeliverRunner({ onDone, onShow }: { onDone: () => void; onShow: () => v
   const startedAt = useRef(0);        // when this page started the run, in the server's clock
   const seenRunning = useRef(false);  // the worker was observed live at least once
   const [overlay, setOverlay] = useState(false);
+  const lastCmd = useRef<VideoCmd>("deliver");
   useRunEvents((verb, line) => {
     if (verb === "deliver") setLines((l) => [...l.slice(-199), line]);
   });
@@ -592,7 +593,9 @@ function DeliverRunner({ onDone, onShow }: { onDone: () => void; onShow: () => v
   }, [running, onDone]);
   const run = async (cmd: VideoCmd) => {
     setLines([]);
-    setExit(null);   // open at once: a click has to show something
+    setExit(null);
+    lastCmd.current = cmd;
+    setOverlay(true);  // every command opens a window: a click has to show something
     let r: { ok: boolean; detail: string };
     try {
       r = (await api.videoRun(cmd)) as { ok: boolean; detail: string };
@@ -616,12 +619,12 @@ function DeliverRunner({ onDone, onShow }: { onDone: () => void; onShow: () => v
     startedAt.current = Date.now() / 1000;
     seenRunning.current = false;
     setRunning(true);
-    if (cmd === "deliver") setOverlay(true);
   };
   return (
     <>
       {overlay && (
         <DeliverOverlay
+          cmd={lastCmd.current}
           lines={lines}
           running={running}
           exit={exit}
@@ -683,7 +686,7 @@ function DeliverRunner({ onDone, onShow }: { onDone: () => void; onShow: () => v
 
 /** The delivery, as a modal: find the receipt, wait for Veo, answer by id,
  *  the graph continues. Progress follows the output lines. */
-function DeliverOverlay({ lines, running, exit, onClose, onShow }: { lines: string[]; running: boolean; exit: number | null; onClose: () => void; onShow: () => void }) {
+function DeliverOverlay({ cmd, lines, running, exit, onClose, onShow }: { cmd: VideoCmd; lines: string[]; running: boolean; exit: number | null; onClose: () => void; onShow: () => void }) {
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -722,9 +725,11 @@ function DeliverOverlay({ lines, running, exit, onClose, onShow }: { lines: stri
         </div>
         <div className="p-5">
           <p className="text-sm text-fg-muted">
-            Another process reads the pending call from the session store, waits for Veo, and resumes the same session with a function_response for that call's
-            id. With a real render this takes a minute or three; the stand-in finishes in seconds.
+            {cmd === "deliver"
+              ? "Another process reads the pending call from the session store, waits for Veo, and resumes the same session with a function_response for that call's id. With a real render this takes a minute or three; the stand-in finishes in seconds."
+              : "Every pending render this server can find in the stage6_video sessions: the session, the call id, and the Veo operation the delivery would ask about."}
           </p>
+          {cmd === "deliver" && (
           <svg viewBox="0 0 620 130" className="mt-3 h-auto w-full text-fg" role="img" aria-label="Four stages: find the receipt, wait for Veo, answer by id, the graph continues.">
             {steps.map((s, i) => {
               const x = 14 + i * 150;
@@ -743,9 +748,13 @@ function DeliverOverlay({ lines, running, exit, onClose, onShow }: { lines: stri
             <rect x="14" y="110" width="592" height="8" rx="4" fill="var(--overlay)" stroke="var(--hairline)" />
             <motion.rect x="14" y="110" height="8" rx="4" fill={AMBER} initial={{ width: 0 }} animate={{ width: (592 * (done ? 4 : stage - 1 + 0.5)) / 4 }} transition={{ duration: 0.6 }} />
           </svg>
+          )}
         </div>
         <div className="border-t border-hairline bg-input">
-          <div className="border-b border-hairline px-4 py-1.5 font-mono text-[10px] uppercase tracking-wider text-fg-muted">output</div>
+          <div className="flex items-center justify-between border-b border-hairline px-4 py-1.5 font-mono text-[10px] uppercase tracking-wider text-fg-muted">
+            <span>output</span>
+            <span className="normal-case tracking-normal">the whole run is in runs/deliver_run.log</span>
+          </div>
           <pre className="max-h-40 overflow-auto whitespace-pre-wrap px-4 py-3 font-mono text-[11px] leading-relaxed text-fg">{clean.slice(-30).join("\n") || "starting… finding the pending render in the session store"}</pre>
         </div>
         {done ? (
@@ -753,12 +762,14 @@ function DeliverOverlay({ lines, running, exit, onClose, onShow }: { lines: stri
             failed={failed}
             exit={exit}
             onClose={onClose}
-            message="The clip was delivered to the pending call and the run finished. adk web still shows the run ending at the receipt until the session is reloaded."
-            extra={
+            message={cmd === "deliver"
+              ? "The clip was delivered to the pending call and the run finished. adk web still shows the run ending at the receipt until the session is reloaded."
+              : "That is every pending render in the session store. Run the delivery to answer the newest one."}
+            extra={cmd !== "deliver" ? null : (
               <button onClick={onShow} className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-black" style={{ background: AMBER }}>
                 <RefreshCw size={14} /> Refresh adk web
               </button>
-            }
+            )}
           />
         ) : (
           <div className="flex items-center justify-end gap-3 border-t border-hairline px-5 py-3">

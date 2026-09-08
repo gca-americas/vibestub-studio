@@ -38,6 +38,18 @@ already has credentials): Memory Bank, RAG Engine, Veo, and Cloud Run.
 `STUDIO_REAL_VIDEO=0` in `.env` replaces the Veo render with a stand-in that
 finishes in five seconds, at no cost.
 
+## Updating a running lab
+
+The built page is not in the repository, and the server holds the Python code in memory, so a pull alone changes neither.
+
+```bash
+git pull
+kill $(cat runs/lab.pid)        # stop the learning center
+scripts/start.sh                # rebuilds the page if its sources changed, then starts
+```
+
+Then reload the browser tab. `scripts/start.sh` also stops whatever is already on the port, so running it twice is safe.
+
 The app of step 9 runs on its own:
 
 ```bash

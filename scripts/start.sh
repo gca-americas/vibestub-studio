@@ -51,7 +51,18 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 [ -d .venv ] || uv sync
-if [ ! -f web/dist/index.html ] || [ "${REBUILD:-0}" = "1" ]; then
+
+# The built page is not in git, so a `git pull` brings new sources and leaves
+# the old build in place. Rebuild when the sources are newer than the build,
+# so starting the server is all anyone has to remember. REBUILD=1 forces it.
+needs_build=0
+[ -f web/dist/index.html ] || needs_build=1
+if [ "$needs_build" = 0 ] && [ -n "$(find web/src web/index.html web/package.json -newer web/dist/index.html -print -quit 2>/dev/null)" ]; then
+  needs_build=1
+  echo "the page sources changed since the last build; rebuilding"
+fi
+[ "${REBUILD:-0}" = "1" ] && needs_build=1
+if [ "$needs_build" = 1 ]; then
   (cd web && ([ -d node_modules ] || npm install) && npm run build)
 fi
 

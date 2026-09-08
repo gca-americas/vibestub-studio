@@ -149,16 +149,21 @@ function SourceToggle({ path, label }: { path: string; label: string }) {
 function BankLedger({ title, refreshKey = 0 }: { title: string; refreshKey?: number }) {
   const [bank, setBank] = useState<MemoryBank | null>(null);
   const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState("");
   const load = useCallback(async () => {
     setLoading(true);
+    setFailed("");
     try {
       setBank(await api.labMemory());
+    } catch (e) {
+      // a server error answers in plain text, so this used to leave the panel blank
+      setFailed((e as Error).message);
     } finally {
       setLoading(false);
     }
   }, []);
   useEffect(() => {
-    if (refreshKey > 0) load();
+    load();          // on arrival too: a panel that says what is there must not start blank
   }, [refreshKey, load]);
   return (
     <section className="rounded-3xl border border-hairline bg-card p-6">
@@ -172,7 +177,13 @@ function BankLedger({ title, refreshKey = 0 }: { title: string; refreshKey?: num
           <RefreshCw size={13} className={loading ? "animate-spin" : ""} /> Show the bank
         </button>
       </div>
-      {bank && (
+      {failed && (
+        <div className="mt-4 rounded-xl border p-3 font-mono text-[11.5px]" style={{ borderColor: tint(RED, 0.4), color: RED, background: tint(RED, 0.06) }}>
+          {failed}
+          <span className="mt-1 block opacity-80">the learning center's log is runs/lab.log</span>
+        </div>
+      )}
+      {bank && !failed && (
         <div className="mt-4 rounded-2xl border border-hairline bg-overlay p-4">
           {!bank.connected ? (
             <p className="text-sm text-fg-muted">No bank yet. Run the first command above.</p>

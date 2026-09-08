@@ -521,16 +521,21 @@ function LoadAnimation({ lines, done }: { lines: string[]; done: boolean }) {
 function CorpusLedger({ refreshKey = 0 }: { refreshKey?: number }) {
   const [corpus, setCorpus] = useState<RagCorpus | null>(null);
   const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState("");
   const load = useCallback(async () => {
     setLoading(true);
+    setFailed("");
     try {
       setCorpus(await api.labRag());
+    } catch (e) {
+      // a server error answers in plain text, so this used to leave the panel blank
+      setFailed((e as Error).message);
     } finally {
       setLoading(false);
     }
   }, []);
   useEffect(() => {
-    if (refreshKey > 0) load();
+    load();          // on arrival too: a panel that says what is there must not start blank
   }, [refreshKey, load]);
   return (
     <section className="rounded-3xl border border-hairline bg-card p-6">
@@ -544,7 +549,13 @@ function CorpusLedger({ refreshKey = 0 }: { refreshKey?: number }) {
           <RefreshCw size={13} className={loading ? "animate-spin" : ""} /> Show the corpus
         </button>
       </div>
-      {corpus && (
+      {failed && (
+        <div className="mt-4 rounded-xl border p-3 font-mono text-[11.5px]" style={{ borderColor: tint(RED, 0.4), color: RED, background: tint(RED, 0.06) }}>
+          {failed}
+          <span className="mt-1 block opacity-80">the learning center's log is runs/lab.log</span>
+        </div>
+      )}
+      {corpus && !failed && (
         <div className="mt-4 rounded-2xl border border-hairline bg-overlay p-4">
           {!corpus.connected ? (
             <p className="text-sm text-fg-muted">No corpus yet. Run the first command above.</p>

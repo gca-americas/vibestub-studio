@@ -7,6 +7,15 @@ import type { InspectorStatus, RunEvent, RunSnapshot, Stage0Status, Stage1Status
  * calls ADK directly.
  */
 
+/** A GET that fails loudly. A server error answers with a plain-text body, so
+ *  reading it as JSON throws inside whatever called it and the page renders
+ *  nothing; every caller gets a readable Error instead. */
+async function get<T = unknown>(path: string): Promise<T> {
+  const res = await fetch(path);
+  if (!res.ok) throw new Error(`${path} failed: ${res.status} ${(await res.text()).slice(0, 200)}`);
+  return res.json() as Promise<T>;
+}
+
 async function post<T = unknown>(path: string, body?: unknown): Promise<T> {
   const res = await fetch(path, {
     method: "POST",
@@ -18,34 +27,34 @@ async function post<T = unknown>(path: string, body?: unknown): Promise<T> {
 }
 
 export const api = {
-  labInspector: () => fetch("/api/lab/inspector").then((r) => r.json() as Promise<InspectorStatus>),
-  labLoad: (app: string) => fetch(`/api/lab/load/${app}`).then((r) => r.json() as Promise<{ ok: boolean; edges?: number | null; tools?: number; error: string }>),
-  labStage2Load: () => fetch("/api/lab/stage2/load").then((r) => r.json() as Promise<{ ok: boolean; edges?: number; error: string }>),
-  labStage2: () => fetch("/api/lab/stage2").then((r) => r.json() as Promise<Stage2Status>),
-  labStage3: () => fetch("/api/lab/stage3").then((r) => r.json() as Promise<Stage3Status>),
-  labStage4: () => fetch("/api/lab/stage4").then((r) => r.json() as Promise<Stage4Status>),
-  labStage4Load: () => fetch("/api/lab/stage4/load").then((r) => r.json() as Promise<{ ok: boolean; edges?: number; error: string }>),
+  labInspector: () => get<InspectorStatus>("/api/lab/inspector"),
+  labLoad: (app: string) => get<{ ok: boolean; edges?: number | null; tools?: number; error: string }>(`/api/lab/load/${app}`),
+  labStage2Load: () => get<{ ok: boolean; edges?: number; error: string }>("/api/lab/stage2/load"),
+  labStage2: () => get<Stage2Status>("/api/lab/stage2"),
+  labStage3: () => get<Stage3Status>("/api/lab/stage3"),
+  labStage4: () => get<Stage4Status>("/api/lab/stage4"),
+  labStage4Load: () => get<{ ok: boolean; edges?: number; error: string }>("/api/lab/stage4/load"),
   bankRun: (cmd: "connect" | "load" | "list" | "reset") => post(`/api/lab/bank/${cmd}`, {}),
-  bankStatus: () => fetch("/api/lab/bank/status").then((r) => r.json() as Promise<{ running: boolean; last_exit: { code: number; at: number } | null }>),
-  labMemory: () => fetch("/api/lab/memory").then((r) => r.json() as Promise<MemoryBank>),
-  labStage5: () => fetch("/api/lab/stage5").then((r) => r.json() as Promise<Stage5Status>),
-  labStage5Load: () => fetch("/api/lab/stage5/load").then((r) => r.json() as Promise<{ ok: boolean; edges?: number; error: string }>),
+  bankStatus: () => get<{ running: boolean; last_exit: { code: number; at: number } | null }>("/api/lab/bank/status"),
+  labMemory: () => get<MemoryBank>("/api/lab/memory"),
+  labStage5: () => get<Stage5Status>("/api/lab/stage5"),
+  labStage5Load: () => get<{ ok: boolean; edges?: number; error: string }>("/api/lab/stage5/load"),
   ragRun: (cmd: "connect" | "load" | "list" | "reset" | "query", text?: string) => post(`/api/lab/rag/${cmd}`, text === undefined ? {} : { text }),
-  ragStatus: () => fetch("/api/lab/rag/status").then((r) => r.json() as Promise<{ running: boolean; last_exit: { code: number; at: number } | null }>),
-  labRag: () => fetch("/api/lab/rag").then((r) => r.json() as Promise<RagCorpus>),
-  labStage6: () => fetch("/api/lab/stage6").then((r) => r.json() as Promise<Stage6Status>),
-  labStage6Load: () => fetch("/api/lab/stage6/load").then((r) => r.json() as Promise<{ ok: boolean; edges?: number; error: string }>),
+  ragStatus: () => get<{ running: boolean; last_exit: { code: number; at: number } | null }>("/api/lab/rag/status"),
+  labRag: () => get<RagCorpus>("/api/lab/rag"),
+  labStage6: () => get<Stage6Status>("/api/lab/stage6"),
+  labStage6Load: () => get<{ ok: boolean; edges?: number; error: string }>("/api/lab/stage6/load"),
   videoRun: (cmd: "deliver" | "status") => post(`/api/lab/video/${cmd}`, {}),
   deployRun: () => post<{ ok: boolean; detail: string }>("/api/lab/deploy", {}),
-  deployStatus: () => fetch("/api/lab/deploy/status").then((r) => r.json() as Promise<DeployStatus>),
-  videoStatus: () => fetch("/api/lab/video/status").then((r) => r.json() as Promise<{ running: boolean; last_exit: { code: number; at: number } | null }>),
-  labStage3Load: () => fetch("/api/lab/stage3/load").then((r) => r.json() as Promise<{ ok: boolean; edges?: number; error: string }>),
-  labStage1: () => fetch("/api/lab/stage1").then((r) => r.json() as Promise<Stage1Status>),
-  labStage0: () => fetch("/api/lab/stage0").then((r) => r.json() as Promise<Stage0Status>),
-  holes: () => fetch("/api/lab/holes").then((r) => r.json() as Promise<Record<string, string>>),
+  deployStatus: () => get<DeployStatus>("/api/lab/deploy/status"),
+  videoStatus: () => get<{ running: boolean; last_exit: { code: number; at: number } | null }>("/api/lab/video/status"),
+  labStage3Load: () => get<{ ok: boolean; edges?: number; error: string }>("/api/lab/stage3/load"),
+  labStage1: () => get<Stage1Status>("/api/lab/stage1"),
+  labStage0: () => get<Stage0Status>("/api/lab/stage0"),
+  holes: () => get<Record<string, string>>("/api/lab/holes"),
   fillHoles: (names: string[]) => post<{ filled: string[] }>("/api/lab/holes/fill", { names }),
   quarantineSkeleton: () => post<{ ok: boolean; state: string; detail?: string }>("/api/lab/quarantine/skeleton"),
-  getCode: (path: string) => fetch(`/api/code?path=${encodeURIComponent(path)}`).then((r) => r.json()),
+  getCode: (path: string) => get<{ content: string; validation?: { valid: boolean; message: string }; symbol?: string; span?: number[] }>(`/api/code?path=${encodeURIComponent(path)}`),
   putCode: (path: string, content: string) => post("/api/code", { path, content }),
 };
 

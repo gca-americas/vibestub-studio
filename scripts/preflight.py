@@ -83,7 +83,9 @@ if shutil.which("gcloud") and project:
     try:
         out = subprocess.run(["gcloud", "services", "list", "--enabled", f"--project={project}", "--format=value(config.name)"],
                              capture_output=True, text=True, timeout=60).stdout.split()
-        for api, what in (("aiplatform.googleapis.com", "Gemini, Veo, Memory Bank, RAG Engine"), ("run.googleapis.com", "Cloud Run"),
+        for api, what in (("aiplatform.googleapis.com", "Gemini, Veo, Memory Bank, RAG Engine"),
+                          ("vectorsearch.googleapis.com", "the vector store a RAG corpus is built on"),
+                          ("run.googleapis.com", "Cloud Run"),
                           ("cloudbuild.googleapis.com", "Cloud Build"), ("artifactregistry.googleapis.com", "Artifact Registry"),
                           ("cloudtrace.googleapis.com", "Cloud Trace")):
             tick(f"{api} enabled ({what})", api in out, f"gcloud services enable {api} --project={project}   (./setup_codelab.sh does this)")
@@ -91,6 +93,17 @@ if shutil.which("gcloud") and project:
         tick("APIs enabled", False, f"could not list services: {str(e)[:60]}")
 else:
     tick("APIs enabled", False, "gcloud and GOOGLE_CLOUD_PROJECT are needed to check; run ./setup_project.sh then ./setup_codelab.sh")
+
+# The two cloud resources: setup creates them in the background, so "not yet"
+# is a normal answer minutes after setup and never a failure.
+for label, cache, lock, step in (("Memory Bank", "memorybank.json", ".memorybank.lock", "6"),
+                                 ("RAG corpus", "ragcorpus.json", ".ragcorpus.lock", "7")):
+    if (ROOT / "runs" / cache).exists():
+        print(f"  ✓ {label} connected")
+    elif (ROOT / "runs" / lock).exists():
+        print(f"  - {label}: still being created in the background")
+    else:
+        print(f"  - {label}: not created yet (step {step} creates it)")
 
 port = os.environ.get("PORT", "4600")
 try:

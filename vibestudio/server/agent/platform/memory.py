@@ -24,6 +24,8 @@ preferences belong here.
 """
 from __future__ import annotations
 
+import contextlib
+import fcntl
 import json
 import os
 
@@ -89,12 +91,31 @@ def engine_name(create: bool = False) -> str | None:
         return json.loads(ENGINE_CACHE.read_text())["name"]
     if not create:
         return None
-    eng = _cli().agent_engines.create(config=_bank_config())
-    ENGINE_CACHE.write_text(json.dumps({"name": eng.api_resource.name}))
-    return eng.api_resource.name
+    with creation_lock("memorybank"):
+        if ENGINE_CACHE.exists():           # another process created it while we waited
+            return json.loads(ENGINE_CACHE.read_text())["name"]
+        eng = _cli().agent_engines.create(config=_bank_config())
+        ENGINE_CACHE.write_text(json.dumps({"name": eng.api_resource.name}))
+        return eng.api_resource.name
 
 
 ON_RETRY = None    # an app may set this to be told about retries (step, attempt, of, wait_s, detail); the lab prints
+
+
+@contextlib.contextmanager
+def creation_lock(name: str):
+    """One process at a time may create a shared cloud resource, and the one
+    that waits re-reads the cache instead of creating a second. Setup creates
+    the bank and the corpus in the background, so a click in the lab can land
+    while that is still running."""
+    lock = config.RUNS / f".{name}.lock"
+    lock.parent.mkdir(parents=True, exist_ok=True)
+    with lock.open("w") as fh:
+        fcntl.flock(fh, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(fh, fcntl.LOCK_UN)
 
 
 def _call(label: str, fn, tries: int = 6, wait_s: float = 8.0):

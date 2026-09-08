@@ -79,7 +79,7 @@ cd ~/vibe-studio-lab
 
 `setup_project.sh` creates a Google Cloud project with billing linked, or reuses the one it created on an earlier run, records the project ID in `~/project_id.txt`, and makes it the active gcloud project.
 
-`setup_codelab.sh` prepares everything else. It installs uv and the locked dependencies into `.venv`, enables the APIs this codelab calls, asks for the event code of the room you publish to and the name, or channel name, your videos are credited to, writes `.env`, makes one Gemini call to confirm the project answers, builds the learning center's page, starts the learning center in the background on port 4600, and finishes with the preflight check. Both scripts are safe to run again: the second one offers your previous answers as defaults and preserves any variable you added to `.env` by hand.
+`setup_codelab.sh` prepares everything else. It installs uv and the locked dependencies into `.venv`, enables the APIs this codelab calls, asks for the event code of the room you publish to and the name, or channel name, your videos are credited to, writes `.env`, makes one Gemini call to confirm the project answers, builds the learning center's page, starts the learning center in the background on port 4600, creates the Memory Bank and the RAG corpus in the background so steps 6 and 7 do not wait for them, and finishes with the preflight check. Both scripts are safe to run again: the second one offers your previous answers as defaults and preserves any variable you added to `.env` by hand.
 
 The script runs the preflight check for you and starts the learning center, so there is nothing else to type. Its last lines name the link to open.
 
@@ -92,6 +92,9 @@ The script runs the preflight check for you and starts the learning center, so t
   …
   ✓ stage6_video loads (13 edges)
   ✓ aiplatform.googleapis.com enabled (Gemini, Veo, Memory Bank, RAG Engine)
+  ✓ vectorsearch.googleapis.com enabled (the vector store a RAG corpus is built on)
+  ✓ Memory Bank connected
+  ✓ RAG corpus connected
   ✓ learning center running on port 4600
 
 PREFLIGHT GREEN

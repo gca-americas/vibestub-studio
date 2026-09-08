@@ -111,6 +111,7 @@ enable_api() {
     tick "$api  ($what)"
 }
 enable_api aiplatform.googleapis.com "Gemini · Veo · Memory Bank · RAG Engine"
+enable_api vectorsearch.googleapis.com "the vector store behind a RAG Engine corpus"
 enable_api run.googleapis.com "Cloud Run, step 9"
 enable_api cloudbuild.googleapis.com "Cloud Build, builds the container in step 9"
 enable_api artifactregistry.googleapis.com "Artifact Registry, holds the image in step 9"
@@ -295,8 +296,23 @@ else
         "Read runs/lab.log, then start it by hand:  scripts/start.sh"
 fi
 
-# ── 8 · preflight, run for you: nothing else to type ────────────────────────
-say "7 · Preflight"
+# ── 8 · the two cloud resources, created while you read ─────────────────────
+# A corpus takes a minute or two to come up and the bank about twenty seconds.
+# Both commands create once and connect ever after, so starting them here costs
+# nothing and steps 6 and 7 find them ready. A creation lock in agent/platform
+# keeps a click in the lab from creating a second one while these run.
+say "7 · Memory Bank and RAG Engine"
+if [ -f runs/memorybank.json ] && [ -f runs/ragcorpus.json ]; then
+    tick "both are already connected"
+else
+    [ -f runs/memorybank.json ] || nohup .venv/bin/python -m agent.platform.bank > runs/bank_setup.log 2>&1 &
+    [ -f runs/ragcorpus.json ] || nohup .venv/bin/python -m agent.platform.rag > runs/rag_setup.log 2>&1 &
+    info "creating them in the background; steps 6 and 7 will find them ready"
+    info "logs: runs/bank_setup.log · runs/rag_setup.log"
+fi
+
+# ── 9 · preflight, run for you: nothing else to type ────────────────────────
+say "8 · Preflight"
 info "checking the environment, the APIs, and the learning center"
 uv run python scripts/preflight.py || warn "preflight found something to fix; the ✗ lines above say what"
 

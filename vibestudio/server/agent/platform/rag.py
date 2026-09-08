@@ -31,7 +31,7 @@ import time
 import warnings
 
 from . import config
-from .memory import _call, project
+from .memory import _call, creation_lock, project
 
 CORPUS_CACHE = config.RUNS / "ragcorpus.json"
 LOCATION = os.environ.get("GOOGLE_CLOUD_LOCATION_RAG", "us-central1")   # RAG Engine is regional
@@ -74,6 +74,29 @@ def corpus_name(create: bool = False) -> str | None:
         return json.loads(CORPUS_CACHE.read_text())["name"]
     if not create:
         return None
+    with creation_lock("ragcorpus"):
+        if CORPUS_CACHE.exists():           # another process created it while we waited
+            return json.loads(CORPUS_CACHE.read_text())["name"]
+        return _create_corpus()
+
+
+def _api_hint(e: Exception) -> str | None:
+    """A disabled API answers 403 with the console URL in it. Say which API and
+    how to turn it on, rather than letting the SDK's paragraph through."""
+    text = str(e)
+    if "has not been used in project" not in text and "is disabled" not in text:
+        return None
+    for api in ("vectorsearch.googleapis.com", "aiplatform.googleapis.com"):
+        if api in text:
+            return (f"the {api} API is off in this project.\n"
+                    f"  Turn it on, wait a minute for it to propagate, and run this command again:\n"
+                    f"    gcloud services enable {api} --project {project()}")
+    return None
+
+
+def _create_corpus() -> str:
+    """Reuse a corpus of this display name in the project, else make one.
+    Called with the creation lock held."""
     rag = _rag()
     for c in rag.list_corpora():
         if c.display_name == DISPLAY:
@@ -82,7 +105,8 @@ def corpus_name(create: bool = False) -> str | None:
     _serverless()
     import contextlib, io
     quiet = io.StringIO()                         # the SDK prints DEBUG lines during create
-    with contextlib.redirect_stdout(quiet):
+    try:
+      with contextlib.redirect_stdout(quiet):
         corpus = _call("create_corpus", lambda: rag.create_corpus(
             display_name=DISPLAY,
             description="Vibe Studio: what the audience wrote under the channel's past videos.",
@@ -91,6 +115,11 @@ def corpus_name(create: bool = False) -> str | None:
                     vertex_prediction_endpoint=rag.VertexPredictionEndpoint(
                         publisher_model=f"publishers/google/models/{EMBEDDING_MODEL}")))),
             tries=4, wait_s=20.0)
+    except Exception as e:
+        hint = _api_hint(e)
+        if hint is None:
+            raise
+        raise SystemExit(f"the corpus was not created: {hint}") from None
     CORPUS_CACHE.write_text(json.dumps({"name": corpus.name}))
     return corpus.name
 

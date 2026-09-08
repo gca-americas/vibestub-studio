@@ -937,6 +937,23 @@ async def quarantine_skeleton():
     return {"ok": True, "state": "skeleton"}
 
 
+WORKER_VERBS = ("bank", "rag", "deliver", "deploy")
+
+
+@router.get("/worker/{verb}/log")
+async def worker_log(verb: str):
+    """The whole output of the last run of one console command, from
+    runs/<verb>_run.log. The page reads this when a command finishes, because
+    a proxy that buffers the event stream can hold the live lines back."""
+    if verb not in WORKER_VERBS:
+        raise HTTPException(404, f"unknown worker {verb!r}")
+    path = config.RUNS / f"{verb}_run.log"
+    if not path.exists():
+        return {"verb": verb, "lines": []}
+    text = path.read_text(errors="replace")
+    return {"verb": verb, "lines": [l for l in text.splitlines() if l.strip()]}
+
+
 @router.post("/holes/fill")
 async def holes_fill(body: dict):
     """Write the registry's answer into the file for each named hole: what

@@ -52,6 +52,7 @@ export const api = {
   labStage1: () => get<Stage1Status>("/api/lab/stage1"),
   labStage0: () => get<Stage0Status>("/api/lab/stage0"),
   holes: () => get<Record<string, string>>("/api/lab/holes"),
+  workerLog: (verb: "bank" | "rag" | "deliver" | "deploy") => get<{ verb: string; lines: string[] }>(`/api/lab/worker/${verb}/log`),
   fillHoles: (names: string[]) => post<{ filled: string[] }>("/api/lab/holes/fill", { names }),
   quarantineSkeleton: () => post<{ ok: boolean; state: string; detail?: string }>("/api/lab/quarantine/skeleton"),
   getCode: (path: string) => get<{ content: string; validation?: { valid: boolean; message: string }; symbol?: string; span?: number[] }>(`/api/code?path=${encodeURIComponent(path)}`),

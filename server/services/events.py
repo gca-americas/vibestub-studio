@@ -21,7 +21,7 @@ WATCHED = [config.STATE, config.RUNS / "sessions.db",
            config.RUNS / "ui_last.json", config.RUNS / "memorybank.json",
            config.RUNS / "ragcorpus.json", config.RUNS / "deploy.json"]
 POLL_S = 0.5
-HEARTBEAT_S = 15.0
+HEARTBEAT_S = 10.0
 
 
 def fingerprint() -> tuple:
@@ -114,9 +114,15 @@ async def snapshot():
 
 
 async def stream():
-    """The SSE generator: a snapshot on connect, then every published event."""
+    """The SSE generator: a snapshot on connect, then every published event.
+
+    Cloud Shell reaches this through a proxy that buffers a streaming response
+    until it has enough bytes, which holds a command's output back for tens of
+    seconds. The padding below fills that buffer at once so everything after it
+    is delivered as it is produced, and the heartbeat keeps it flushed."""
     q = bus.subscribe()
     try:
+        yield ":" + " " * 2048 + "\n\n"        # defeat a buffering proxy
         snap = await snapshot()
         yield sse({"type": "snapshot", "data": snap.model_dump(by_alias=True)})
         while True:

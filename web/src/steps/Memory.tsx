@@ -269,6 +269,14 @@ function BankRunner({ onDone }: { onDone: () => void }) {
       if (!fresh && !seenRunning.current && Date.now() / 1000 - startedAt.current < 20) return;
       setRunning(false);
       setExit(fresh ? st.last_exit?.code ?? null : null);
+      // The stream can be held back by a proxy, so take the whole output from
+      // the log the worker wrote rather than trusting what arrived live.
+      try {
+        const log = await api.workerLog("bank");
+        if (log.lines.length) setLines(log.lines);
+      } catch {
+        /* the live lines are all there is */
+      }
       onDone();
     }, 1500);
     return () => clearInterval(t);

@@ -1,0 +1,60 @@
+# secrets and machine-local config
+.env
+.env.*
+!.env.example
+
+# python
+.venv/
+__pycache__/
+*.pyc
+
+# everything the lab GENERATES at runtime (each student makes their own)
+runs/
+app/static/
+
+# local codelab preview build
+.preview/
+app/static/renders/
+
+# local claat build of CODELAB.md
+build/
+
+# AI coding assistants (local config, sessions, memory) - never committed
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+.mcp.json
+.codex/
+AGENTS.md
+.antigravity/
+.gemini/
+GEMINI.md
+.cursor/
+.cursorrules
+.aider*
+.copilot/
+.windsurf/
+.windsurfrules
+.continue/
+
+# frontend build + deps
+web/node_modules/
+web/dist/
+
+# the app (step 9)
+vibestudio/web/node_modules/
+vibestudio/web/dist/
+vibestudio/runs/
+
+# generated media: never commit a render, a thumbnail, or an avatar
+*.mp4
+*.mov
+*.webm
+*.mkv
+*.avi
+runs/media/
+
+# build artifacts and OS files
+node_modules/
+*.tsbuildinfo
+.DS_Store

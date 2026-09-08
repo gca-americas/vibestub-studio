@@ -1,0 +1,109 @@
+"""One command, all the ticks - run this before the lab starts.
+Run: python scripts/preflight.py [--ping]   (--ping spends one tiny model call)"""
+import os
+import pathlib
+import sys
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
+ok = True
+
+
+def tick(name, cond, hint=""):
+    global ok
+    print(("  ✓ " if cond else "  ✗ ") + name + ("" if cond else f"   → {hint}"))
+    ok = ok and bool(cond)
+
+
+v = sys.version_info
+tick(f"python {v.major}.{v.minor}", (3, 12) <= (v.major, v.minor) < (3, 13),
+     "use the repo venv: uv sync && source .venv/bin/activate")
+try:
+    import greenlet  # noqa: F401
+    tick("greenlet (async sqlite)", True)
+except ImportError:
+    tick("greenlet (async sqlite)", False, "uv sync")
+
+from agent.platform import config  # noqa: E402
+if os.environ.get("STUDIO_VERTEX", "").lower() in ("1", "true"):   # same rule as agent/platform/config.py
+    tick("auth path A: Vertex via ADC (STUDIO_VERTEX=1)", True)
+else:
+    tick("auth path B: GOOGLE_API_KEY set", bool(os.environ.get("GOOGLE_API_KEY")),
+         "cp .env.example .env — path A (Cloud Shell) or paste an AI Studio key")
+
+if "--ping" in sys.argv:
+    try:
+        from google import genai
+        r = genai.Client(api_key=os.environ["GOOGLE_API_KEY"]).models.generate_content(
+            model=config.MODEL, contents="reply exactly: OK")
+        tick(f"model ping ({config.MODEL})", "OK" in (r.text or ""), "check the key")
+    except Exception as e:
+        tick(f"model ping ({config.MODEL})", False, str(e)[:70])
+
+no_mb = os.environ.get("STUDIO_NO_MB")
+try:
+    import google.auth
+    _, adc_project = google.auth.default()
+    tick(f"Google Cloud ADC (project {adc_project})", bool(adc_project))
+except Exception as e:
+    tick("Google Cloud ADC", False, f"gcloud auth application-default login   ({str(e)[:50]})")
+if no_mb:
+    print("  - Memory Bank: skipped (STUDIO_NO_MB=1 — notes fall back to empty)")
+else:
+    try:
+        import vertexai  # noqa: F401
+        tick("Memory Bank SDK", True)
+    except ImportError:
+        tick("Memory Bank SDK", False, "uv sync")
+
+# the four stage apps the workflow act grows through - adk web lists them
+for app in ("stage0_prompt", "stage1_fanout", "stage2_direction", "stage3_router",
+            "stage4_memory", "stage5_rag", "stage6_video"):
+    try:
+        mod = __import__(f"{app}.agent", fromlist=["root_agent"])
+        n = getattr(getattr(mod.root_agent, "graph", None), "edges", None)
+        label = f"{app} loads" + (f" ({len(n)} edges)" if n is not None else "")
+        tick(label, True)
+    except Exception as e:
+        tick(f"{app} loads", False, str(e)[:70])
+
+# ── the tools and the services the lab calls ────────────────────────────────
+import shutil
+import subprocess
+import urllib.request
+
+tick("node and npm (build the learning center's page)", bool(shutil.which("node") and shutil.which("npm")),
+     "Cloud Shell has them; on a laptop install Node 20 or newer")
+tick("learning center page built (web/dist)", (ROOT / "web" / "dist" / "index.html").exists(),
+     "./setup_codelab.sh   (or: cd web && npm install && npm run build)")
+
+project = os.environ.get("GOOGLE_CLOUD_PROJECT", "")
+if shutil.which("gcloud") and project:
+    try:
+        out = subprocess.run(["gcloud", "services", "list", "--enabled", f"--project={project}", "--format=value(config.name)"],
+                             capture_output=True, text=True, timeout=60).stdout.split()
+        for api, what in (("aiplatform.googleapis.com", "Gemini, Veo, Memory Bank, RAG Engine"), ("run.googleapis.com", "Cloud Run"),
+                          ("cloudbuild.googleapis.com", "Cloud Build"), ("artifactregistry.googleapis.com", "Artifact Registry"),
+                          ("cloudtrace.googleapis.com", "Cloud Trace")):
+            tick(f"{api} enabled ({what})", api in out, f"gcloud services enable {api} --project={project}   (./setup_codelab.sh does this)")
+    except Exception as e:
+        tick("APIs enabled", False, f"could not list services: {str(e)[:60]}")
+else:
+    tick("APIs enabled", False, "gcloud and GOOGLE_CLOUD_PROJECT are needed to check; run ./setup_project.sh then ./setup_codelab.sh")
+
+port = os.environ.get("PORT", "4600")
+try:
+    with urllib.request.urlopen(f"http://localhost:{port}/api/lab/inspector", timeout=3) as r:
+        up = r.status == 200
+except Exception:
+    up = False
+tick(f"learning center running on port {port}", up, "./setup_codelab.sh starts it in the background; or scripts/start.sh")
+
+print("\nPREFLIGHT " + ("GREEN" if ok else "NOT READY - fix the ✗ lines above"))
+if up:
+    # Cloud Shell exposes WEB_HOST for its web preview; elsewhere localhost is the link
+    host = os.environ.get("WEB_HOST", "")
+    link = f"https://{port}-{host}/step/story" if host else f"http://localhost:{port}/step/story"
+    print(f"\nOpen step 1 here:  {link}")
+sys.exit(0 if ok else 1)

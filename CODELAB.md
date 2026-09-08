@@ -137,10 +137,10 @@ The render is real by default. Each video is one Veo 3.1 clip of about eight sec
 VIBETUBE_URL=https://vibetube.dev
 VIBETUBE_EVENT=<the event code>
 VIBETUBE_NAME=Your Name
-VIBETUBE_PROJECT=your-name-vibestudio
+VIBETUBE_PROJECT=<your Google Cloud project id>
 ```
 
-The platform keeps one video per project and room, so `VIBETUBE_PROJECT` is a stable identifier for you: publishing again replaces your earlier video rather than adding another. Everything up to publishing works without any of these values.
+The platform keeps one video per project and room, and the project it means is your Google Cloud project: publishing again replaces your earlier video rather than adding another. `setup_codelab.sh` fills `VIBETUBE_PROJECT` in with your project id, and the app falls back to `GOOGLE_CLOUD_PROJECT` when it is not set. Everything up to publishing works without any of these values.
 
 <aside class="positive">
 <b>Repository layout.</b> <code>agent/</code> holds the graph you read and edit: the node functions, the render desk, and the instruction constants. <code>agent/platform/</code> holds the plumbing and the GEAP clients: configuration, the session helpers, the run file, Memory Bank, RAG Engine, and Veo. <code>stage0_prompt/</code> through <code>stage6_video/</code> are the sandbox applications, one per step, each wiring a subset of the same graph. <code>starter/</code> holds the versions of the editable files that ship to students. <code>server/</code> and <code>web/</code> are the learning center. <code>vibestudio/</code> is the application of the deployment step, with its own complete copy of the finished agent. <code>checks/</code> holds the registry of editable lines and its verifiers.

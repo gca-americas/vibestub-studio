@@ -9,9 +9,10 @@
 # build in place. scripts/start.sh compares the two and rebuilds when needed,
 # which is why a restart is all this has to do.
 #
-# Nothing here kills a pid it has not identified. A pid file survives a machine
-# restart and pids are reused, so a recorded number is a hint, never a licence:
-# every candidate has to look like this repo's server, and must not be this
+# The server is found in the process table, never in a pid file: a recorded
+# number outlives the process it named, and a wrapper killed outright leaves the
+# real server running under a pid nobody wrote down. Nothing is killed that does
+# not look like this repo's server and run from this directory, and never this
 # shell or one of its ancestors.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -22,30 +23,7 @@ tick() { printf '  ✓ %s\n' "$1"; }
 info() { printf '  · %s\n' "$1"; }
 warn() { printf '  ! %s\n' "$1" >&2; }
 
-# ── who may be killed ───────────────────────────────────────────────────────
-is_ancestor() {          # $1 is this shell or one of its parents
-    local target="$1" p="$$"
-    while [ -n "$p" ] && [ "$p" -gt 1 ] 2>/dev/null; do
-        [ "$p" = "$target" ] && return 0
-        p="$(ps -o ppid= -p "$p" 2>/dev/null | tr -d '[:space:]' || true)"
-    done
-    return 1
-}
-
-is_our_server() {        # $1 is a live process that is this repo's learning center
-    local pid="$1" cmd
-    [ -n "$pid" ] || return 1
-    case "$pid" in (*[!0-9]*) return 1 ;; esac
-    [ "$pid" -gt 1 ] || return 1
-    [ "$pid" != "$$" ] || return 1
-    is_ancestor "$pid" && return 1
-    cmd="$(ps -o command= -p "$pid" 2>/dev/null || true)"
-    [ -n "$cmd" ] || return 1
-    case "$cmd" in
-        *uvicorn*server.main*|*scripts/start.sh*|*python*-m*vibestudio*) return 0 ;;
-    esac
-    return 1
-}
+. "$(dirname "$0")/lib/find_server.sh"
 
 say "Restarting the learning center"
 
@@ -55,44 +33,14 @@ if [ "${1:-}" = "--pull" ]; then
 fi
 
 stopped=0
-
-# The recorded pid, only if it still looks like our server.
-if [ -f runs/lab.pid ]; then
-    OLD="$(tr -d '[:space:]' < runs/lab.pid 2>/dev/null || true)"
-    if is_our_server "$OLD"; then
-        kill "$OLD" 2>/dev/null || true
-        info "stopped the learning center (pid $OLD)"
-        stopped=1
-    elif [ -n "$OLD" ]; then
-        info "runs/lab.pid holds $OLD, which is not this server any more; ignoring it"
-    fi
-fi
-
-# Who is listening on the port. lsof is absent from some images (Cloud Shell
-# among them); without a fallback nothing is found, nothing is stopped, the new
-# server cannot bind, and the old one answers the health check below, so a
-# restart that changed nothing looks like it worked.
-port_pids() {
-    if command -v lsof >/dev/null 2>&1; then
-        lsof -a -ti "tcp:$1" -sTCP:LISTEN 2>/dev/null && return 0
-    fi
-    if command -v ss >/dev/null 2>&1; then
-        ss -ltnpH "sport = :$1" 2>/dev/null | grep -o 'pid=[0-9]*' | cut -d= -f2 | sort -u && return 0
-    fi
-    if command -v fuser >/dev/null 2>&1; then
-        fuser -n tcp "$1" 2>/dev/null | tr ' ' '\n' | grep -E '^[0-9]+$' && return 0
-    fi
-    return 0
-}
-
-# A server started by hand has no pid file, and a stale file must not be the
-# only way to find it.
+for pid in $(lab_pids); do
+    kill "$pid" 2>/dev/null || true
+    info "stopped $(ps -o command= -p "$pid" 2>/dev/null | cut -c1-52) (pid $pid)"
+    stopped=1
+done
+# Anything still holding the port after that is not ours to touch.
 for pid in $(port_pids "$PORT"); do
-    if is_our_server "$pid"; then
-        kill "$pid" 2>/dev/null || true
-        info "stopped what was on port $PORT (pid $pid)"
-        stopped=1
-    else
+    if ! is_our_server "$pid" && ! is_ancestor "$pid"; then
         warn "port $PORT is held by pid $pid, which is not this repo's server; leaving it alone"
         warn "$(ps -o command= -p "$pid" 2>/dev/null | cut -c1-90)"
     fi
@@ -102,7 +50,6 @@ sleep 1
 
 mkdir -p runs
 PORT="$PORT" nohup scripts/start.sh > runs/lab.log 2>&1 &
-echo $! > runs/lab.pid
 
 for _ in $(seq 1 90); do
     if curl -s -o /dev/null "http://localhost:$PORT/api/lab/inspector"; then break; fi
@@ -135,11 +82,12 @@ else
     LAB_URL="http://localhost:$PORT"
 fi
 
+SRV="$(port_pids "$PORT" | head -1)"
 tick "running in the background on port $PORT"
 COMMIT="$(git rev-parse --short HEAD 2>/dev/null || true)"
 [ -n "$COMMIT" ] && info "code     $COMMIT $(git log -1 --format=%s 2>/dev/null | cut -c1-58)"
 printf '\n  %s\n\n' "$LAB_URL"
 info "reload the browser tab to pick up the new page"
 info "log      runs/lab.log"
-info "stop     kill \$(cat runs/lab.pid)"
+info "stop     scripts/stop.sh${SRV:+   (it is pid $SRV)}"
 printf '\n'

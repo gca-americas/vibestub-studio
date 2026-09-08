@@ -150,12 +150,15 @@ info "the room your videos are published to, and the name they are credited to"
 info "press Enter to take the [default] — both answers live in .env, editable later"
 VIBETUBE_EVENT="$(ask 'vibetube.dev event code' "$EVENT_DEFAULT")"
 VIBETUBE_NAME="$(ask 'Your name, or your channel name' "$NAME_DEFAULT")"
-# One video per project and room on the platform: a stable id per creator, so
-# publishing again replaces the earlier video. Kept from a previous run.
-slug() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9]\{1,\}/-/g' -e 's/^-//' -e 's/-$//'; }
-VIBETUBE_PROJECT="$(env_get VIBETUBE_PROJECT)"
-[ -n "$VIBETUBE_PROJECT" ] || VIBETUBE_PROJECT="$(slug "$VIBETUBE_NAME")-vibestudio"
-tick "room: $VIBETUBE_EVENT · credited as \"$VIBETUBE_NAME\" · project id $VIBETUBE_PROJECT"
+# The platform keeps one video per project and room, and the project it means
+# is this Google Cloud project. An id of our own invention would let one project
+# publish twice, so this is not a value to derive from a name.
+VIBETUBE_PROJECT="$PROJECT"
+PREVIOUS_VT_PROJECT="$(env_get VIBETUBE_PROJECT)"
+if [ -n "$PREVIOUS_VT_PROJECT" ] && [ "$PREVIOUS_VT_PROJECT" != "$VIBETUBE_PROJECT" ]; then
+    info "VIBETUBE_PROJECT was $PREVIOUS_VT_PROJECT; it is the Google Cloud project id, so it becomes $VIBETUBE_PROJECT"
+fi
+tick "room: $VIBETUBE_EVENT · credited as \"$VIBETUBE_NAME\" · publishing as project $VIBETUBE_PROJECT"
 
 # ── 4 · .env, written whole, previous values kept ───────────────────────────
 say "3 · .env"
@@ -282,7 +285,6 @@ tick "page built (web/dist)"
 # scripts/start.sh stops an earlier instance on the port before it starts, so a
 # re-run replaces the running server instead of adding a second one.
 PORT="$PORT" nohup scripts/start.sh > runs/lab.log 2>&1 &
-echo $! > runs/lab.pid
 for _ in $(seq 1 60); do
     if curl -s -o /dev/null "http://localhost:$PORT/api/lab/inspector"; then break; fi
     sleep 1
@@ -290,7 +292,7 @@ done
 if curl -s -o /dev/null "http://localhost:$PORT/api/lab/inspector"; then
     tick "learning center running in the background on http://localhost:$PORT  (log: runs/lab.log)"
     info "Cloud Shell: Web Preview → Change port → $PORT"
-    info "stop it with:  kill \$(cat runs/lab.pid)"
+    info "stop it with:  scripts/stop.sh"
 else
     die "The learning center did not answer on port $PORT within a minute." \
         "Read runs/lab.log, then start it by hand:  scripts/start.sh"
@@ -332,8 +334,9 @@ printf '  \033[1mOpen this and start at step 1\033[0m\n'
 printf '      %s/step/story\n\n' "$LAB_URL"
 printf '  It runs in the background. You do not need to start anything else.\n'
 printf '      log      runs/lab.log\n'
-printf '      stop     kill $(cat runs/lab.pid)\n'
-printf '      start    scripts/start.sh\n\n'
+printf '      stop     scripts/stop.sh\n'
+printf '      start    scripts/start.sh\n'
+printf '      restart  scripts/restart.sh   after a git pull\n\n'
 printf '  Already run for you, and repeatable at any time:\n'
 printf '      python scripts/preflight.py     re-check the environment\n'
 printf '      ./setup_codelab.sh              re-run this script; your files are kept\n\n'

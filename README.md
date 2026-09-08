@@ -31,7 +31,7 @@ cd vibe-studio-lab
 ./setup_codelab.sh              # uv + deps, the APIs, .env, one model call, then the learning center in the background on :4600
 ```
 
-Both scripts can be run again; the second keeps the answers you gave before. It ends with `python scripts/preflight.py`, whose last line is the link to step 1. `kill $(cat runs/lab.pid)` stops the learning center and `scripts/start.sh` starts it again.
+Both scripts can be run again; the second keeps the answers you gave before. It ends with `python scripts/preflight.py`, whose last line is the link to step 1. `scripts/stop.sh` stops the learning center, `scripts/start.sh` starts it again, and `scripts/restart.sh --pull` does both around a pull.
 
 Steps 6 to 9 need a Google Cloud project with GEAP enabled (Cloud Shell
 already has credentials): Memory Bank, RAG Engine, Veo, and Cloud Run.

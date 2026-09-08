@@ -68,10 +68,14 @@ def profile() -> dict:
             data.update({k: v for k, v in json.loads(PROFILE.read_text()).items() if k in data})
         except ValueError:
             pass
-    # The platform keeps one video per project and room. The id is stable for a
-    # creator in a room, so publishing again replaces the earlier video instead
-    # of adding one. VIBETUBE_PROJECT overrides it.
+    # The platform keeps one video per project and room, and the project it
+    # means is this Google Cloud project: publishing again replaces the earlier
+    # video instead of adding one. An id derived from a name would let one
+    # project publish twice under two names, so the cloud project is the answer
+    # and the slug is only a last resort when nothing names it.
     data["project_id"] = (os.environ.get("VIBETUBE_PROJECT", "")
+                          or os.environ.get("STUDIO_GCP_PROJECT", "")
+                          or os.environ.get("GOOGLE_CLOUD_PROJECT", "")
                           or f"{_slug(data['display_name']) or 'creator'}-{_slug(data['event_code']) or 'room'}")
     return data
 

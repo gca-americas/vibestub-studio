@@ -295,12 +295,31 @@ else
         "Read runs/lab.log, then start it by hand:  scripts/start.sh"
 fi
 
-# ── 8 · preflight ───────────────────────────────────────────────────────────
+# ── 8 · preflight, run for you: nothing else to type ────────────────────────
 say "7 · Preflight"
-uv run python scripts/preflight.py || warn "preflight found something to fix; the lines above say what"
+info "checking the environment, the APIs, and the learning center"
+uv run python scripts/preflight.py || warn "preflight found something to fix; the ✗ lines above say what"
 
 mkdir -p runs && : > "$MARKER"
 
-say "Setup finished."
-[ "$UV_WAS_INSTALLED" -eq 1 ] && info "uv was just installed — run 'source ~/.local/bin/env' to get it in this shell"
-printf '  Next:  open the learning center on port %s and start at step 1.\n\n' "$PORT"
+# ── where to go next, spelled out ───────────────────────────────────────────
+# Cloud Shell puts the preview host in WEB_HOST; elsewhere it is localhost.
+if [ -n "${WEB_HOST:-}" ]; then
+    LAB_URL="https://$PORT-$WEB_HOST"
+else
+    LAB_URL="http://localhost:$PORT"
+fi
+
+printf '\n\033[1m%s\033[0m\n' "Setup finished. The learning center is already running."
+printf '\n'
+printf '  \033[1mOpen this and start at step 1\033[0m\n'
+printf '      %s/step/story\n\n' "$LAB_URL"
+printf '  It runs in the background. You do not need to start anything else.\n'
+printf '      log      runs/lab.log\n'
+printf '      stop     kill $(cat runs/lab.pid)\n'
+printf '      start    scripts/start.sh\n\n'
+printf '  Already run for you, and repeatable at any time:\n'
+printf '      python scripts/preflight.py     re-check the environment\n'
+printf '      ./setup_codelab.sh              re-run this script; your files are kept\n\n'
+[ "$UV_WAS_INSTALLED" -eq 1 ] && printf '  uv was just installed. Run this to get it in this shell:  source ~/.local/bin/env\n\n'
+[ -n "${WEB_HOST:-}" ] || printf '  In Cloud Shell the link is also under Web Preview → Change port → %s.\n\n' "$PORT"

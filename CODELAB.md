@@ -81,30 +81,35 @@ cd ~/vibe-studio-lab
 
 `setup_codelab.sh` prepares everything else. It installs uv and the locked dependencies into `.venv`, enables the APIs this codelab calls, asks for the event code of the room you publish to and the name, or channel name, your videos are credited to, writes `.env`, makes one Gemini call to confirm the project answers, builds the learning center's page, starts the learning center in the background on port 4600, and finishes with the preflight check. Both scripts are safe to run again: the second one offers your previous answers as defaults and preserves any variable you added to `.env` by hand.
 
-The output ends like this.
+The script runs the preflight check for you and starts the learning center, so there is nothing else to type. Its last lines name the link to open.
 
 ```
-  ✓ learning center running in the background on http://localhost:4600  (log: runs/lab.log)
+7 · Preflight
   ✓ python 3.12
   ✓ auth path A: Vertex via ADC (STUDIO_VERTEX=1)
   ✓ Google Cloud ADC (project <your-project>)
   ✓ stage0_prompt loads
   …
-  ✓ stage6_video loads (15 edges)
-  ✓ node and npm (build the learning center's page)
-  ✓ learning center page built (web/dist)
+  ✓ stage6_video loads (13 edges)
   ✓ aiplatform.googleapis.com enabled (Gemini, Veo, Memory Bank, RAG Engine)
-  …
   ✓ learning center running on port 4600
 
 PREFLIGHT GREEN
 
-Open step 1 here:  https://4600-<your cloud shell host>/step/story
+Setup finished. The learning center is already running.
+
+  Open this and start at step 1
+      https://4600-<your cloud shell host>/step/story
+
+  It runs in the background. You do not need to start anything else.
+      log      runs/lab.log
+      stop     kill $(cat runs/lab.pid)
+      start    scripts/start.sh
 ```
 
-Click the link on the last line to open the learning center at its first page. The same address is available under **Web Preview → Change port → 4600**.
+Click that link. The same address is available under **Web Preview → Change port → 4600**.
 
-To stop the learning center, run `kill $(cat runs/lab.pid)`. To start it again, run `scripts/start.sh`. Its log is `runs/lab.log`.
+To re-check the environment at any point, run `python scripts/preflight.py`. To set up again, run `./setup_codelab.sh`; it keeps the answers you gave and the work you have done.
 
 With it open, read **step 1, The story**, for the scenario, and **step 2, What you build**, for the shape of the finished graph. Neither has an exercise. Then return here for step 3.
 

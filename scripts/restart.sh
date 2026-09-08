@@ -14,6 +14,9 @@
 # real server running under a pid nobody wrote down. Nothing is killed that does
 # not look like this repo's server and run from this directory, and never this
 # shell or one of its ancestors.
+# `sh scripts/restart.sh` runs a bash script under another shell. Re-enter under
+# bash rather than fail somewhere later on a construct sh does not have.
+[ -n "${BASH_VERSION:-}" ] || exec bash "$0" "$@"
 set -euo pipefail
 cd "$(dirname "$0")/.."
 PORT="${PORT:-4600}"

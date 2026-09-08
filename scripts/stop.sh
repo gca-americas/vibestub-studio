@@ -5,6 +5,9 @@
 # process it named, and the number in it is worth nothing once the pid has been
 # reused. Nothing outside this directory is touched, and neither is the shell
 # you are typing in.
+# `sh scripts/restart.sh` runs a bash script under another shell. Re-enter under
+# bash rather than fail somewhere later on a construct sh does not have.
+[ -n "${BASH_VERSION:-}" ] || exec bash "$0" "$@"
 set -euo pipefail
 cd "$(dirname "$0")/.."
 PORT="${PORT:-4600}"

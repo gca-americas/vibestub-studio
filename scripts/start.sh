@@ -7,6 +7,9 @@
 # watcher, any driver subprocess still running). A stale server already
 # holding the port from an earlier session is stopped first, so there is
 # never more than one instance answering.
+# `sh scripts/restart.sh` runs a bash script under another shell. Re-enter under
+# bash rather than fail somewhere later on a construct sh does not have.
+[ -n "${BASH_VERSION:-}" ] || exec bash "$0" "$@"
 set -euo pipefail
 cd "$(dirname "$0")/.."
 PORT="${PORT:-4600}"

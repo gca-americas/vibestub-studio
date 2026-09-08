@@ -32,6 +32,7 @@ import os
 from . import config
 
 ENGINE_CACHE = config.RUNS / "memorybank.json"
+BANK_DISPLAY = "vibestudio-membank"      # the bank is found by this name when the cache is gone
 LOCATION = os.environ.get("GOOGLE_CLOUD_LOCATION_MB", "us-central1")
 SCOPE = {"app_name": config.APP, "user_id": config.USER}
 TOPICS = {
@@ -73,7 +74,7 @@ def _bank_config():
     topic = vt.MemoryBankCustomizationConfigMemoryTopic
     custom = vt.MemoryBankCustomizationConfigMemoryTopicCustomMemoryTopic
     return vt.AgentEngineConfig(
-        display_name="vibestudio-membank",
+        display_name=BANK_DISPLAY,
         context_spec=vt.ReasoningEngineContextSpec(
             memory_bank_config=vt.ReasoningEngineContextSpecMemoryBankConfig(
                 customization_configs=[vt.MemoryBankCustomizationConfig(
@@ -94,9 +95,30 @@ def engine_name(create: bool = False) -> str | None:
     with creation_lock("memorybank"):
         if ENGINE_CACHE.exists():           # another process created it while we waited
             return json.loads(ENGINE_CACHE.read_text())["name"]
+        # An Agent Engine costs money to keep, and a lost cache file must not
+        # buy a second one: reuse the bank of this display name if it is there,
+        # the way the RAG corpus is reused.
+        for eng in _existing_banks():
+            print(f"  reusing the bank already in this project: {eng.split('/')[-1]}")
+            ENGINE_CACHE.write_text(json.dumps({"name": eng}))
+            return eng
         eng = _cli().agent_engines.create(config=_bank_config())
         ENGINE_CACHE.write_text(json.dumps({"name": eng.api_resource.name}))
         return eng.api_resource.name
+
+
+def _existing_banks() -> list[str]:
+    """Resource names of the Agent Engines in this project whose display name
+    is the one this lab creates. Empty when listing is not permitted."""
+    try:
+        out = []
+        for e in _cli().agent_engines.list():
+            res = getattr(e, "api_resource", e)
+            if getattr(res, "display_name", None) == BANK_DISPLAY and getattr(res, "name", None):
+                out.append(res.name)
+        return out
+    except Exception:
+        return []
 
 
 ON_RETRY = None    # an app may set this to be told about retries (step, attempt, of, wait_s, detail); the lab prints

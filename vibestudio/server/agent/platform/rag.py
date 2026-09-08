@@ -100,6 +100,7 @@ def _create_corpus() -> str:
     rag = _rag()
     for c in rag.list_corpora():
         if c.display_name == DISPLAY:
+            print(f"  reusing the corpus already in this project: {c.name.split('/')[-1]}")
             CORPUS_CACHE.write_text(json.dumps({"name": c.name}))
             return c.name
     _serverless()
@@ -235,8 +236,8 @@ def connect() -> None:
     if cached:
         print(f"connected (runs/ragcorpus.json):\n  {cached}")
     else:
-        print("no corpus yet - creating a RAG Engine corpus in your project (~20s, one-time)…")
-        print(f"── created ──\n  {corpus_name(create=True)}")
+        print("no corpus cached - looking for one in your project, and creating it if there is none (~20s)…")
+        print(f"── ready ──\n  {corpus_name(create=True)}")
     print(f"embedding model: {EMBEDDING_MODEL} · region: {LOCATION}")
     files = list_files()
     print(f"the corpus holds {len(files)} file(s)")

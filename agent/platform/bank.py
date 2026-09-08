@@ -55,8 +55,8 @@ def connect():
     if cached:
         print(f"connected (runs/memorybank.json):\n  {cached}")
     else:
-        print("no Memory Bank yet - creating an Agent Engine to host it (~30s, one-time)…")
-        print(f"── created ──\n  {memory.engine_name(create=True)}")
+        print("no bank cached - looking for one in your project, and creating it if there is none (~30s)…")
+        print(f"── ready ──\n  {memory.engine_name(create=True)}")
     print(f"scope: app_name={config.APP} · user_id={config.USER}")
     print(f"topics: {' · '.join(memory.TOPICS)}")
     rows = memory.list_all()

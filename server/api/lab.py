@@ -345,6 +345,26 @@ async def stage6_load():
     return await _load_app("stage6_video")
 
 
+@router.get("/loaded/{app}")
+async def loaded(app: str):
+    """Is adk web running the code on disk for this app? current, fresh or
+    stale, with when the files were saved and when the Runner was built."""
+    if app not in STAGE_APPS:
+        raise HTTPException(404, f"unknown app {app!r}")
+    from ..services import reload as agent_reload
+    return agent_reload.status(app)
+
+
+@router.post("/loaded/{app}/refresh")
+async def refresh_loaded(app: str):
+    """Make adk web current for this app: reload the agent modules in place
+    and drop the cached Runner, then report as /loaded does."""
+    if app not in STAGE_APPS:
+        raise HTTPException(404, f"unknown app {app!r}")
+    from ..services import reload as agent_reload
+    return agent_reload.refresh(app)
+
+
 @router.get("/load/{app}")
 async def any_load(app: str):
     """Load any stage app in a fresh interpreter: the check every run panel offers."""

@@ -27,8 +27,20 @@ async function post<T = unknown>(path: string, body?: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+/** Whether adk web is running the code on disk for an app. */
+export type LoadedStatus = {
+  app: string;
+  status: "current" | "fresh" | "stale" | "error";
+  cached: boolean;
+  saved_at: number;
+  loaded_at: number | null;
+  detail: string;
+};
+
 export const api = {
   labInspector: () => get<InspectorStatus>("/api/lab/inspector"),
+  loaded: (app: string) => get<LoadedStatus>(`/api/lab/loaded/${app}`),
+  refreshLoaded: (app: string) => post<LoadedStatus>(`/api/lab/loaded/${app}/refresh`),
   labLoad: (app: string) => get<{ ok: boolean; edges?: number | null; tools?: number; error: string }>(`/api/lab/load/${app}`),
   labStage2Load: () => get<{ ok: boolean; edges?: number; error: string }>("/api/lab/stage2/load"),
   labStage2: () => get<Stage2Status>("/api/lab/stage2"),

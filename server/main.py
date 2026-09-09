@@ -39,9 +39,17 @@ def build_inspector() -> FastAPI:
 
     from .services import reload as agent_reload
 
-    # ADK renamed this class from DevServer to ApiServer in 2.7; both carry the
-    # agent_loader and runners_to_clean that a save has to reach.
-    base = getattr(adk_fast_api, "ApiServer", None) or adk_fast_api.DevServer
+    # With web=True, get_fast_api_app does `from .dev_server import DevServer`
+    # at call time and builds that; replacing fast_api.ApiServer reaches nothing,
+    # and a save then never evicts the dev UI's caches. Subclass the class it
+    # really instantiates, in the module it imports it from. Older or trimmed
+    # builds without dev_server fall back to ApiServer in fast_api itself.
+    try:
+        from google.adk.cli import dev_server as _home
+        base = _home.DevServer
+    except (ImportError, AttributeError):
+        _home = adk_fast_api
+        base = getattr(adk_fast_api, "ApiServer", None) or adk_fast_api.DevServer
     name = base.__name__
 
     class _CapturingServer(base):  # type: ignore[misc, valid-type]
@@ -51,7 +59,15 @@ def build_inspector() -> FastAPI:
             super().__init__(*args, **kwargs)
             agent_reload.handle.server = self
 
-    setattr(adk_fast_api, name, _CapturingServer)
+        async def get_runner_async(self, app_name: str):
+            # Every run passes through here. A Runner seen for the first time was
+            # just built, and gets stamped with the sources it was built from, so
+            # the page can say whether adk web is running the student's save.
+            runner = await super().get_runner_async(app_name)
+            agent_reload.note_runner(app_name, runner)
+            return runner
+
+    setattr(_home, name, _CapturingServer)
     return adk_fast_api.get_fast_api_app(
         agents_dir=str(ROOT),
         session_service_uri=config.DB_URL,

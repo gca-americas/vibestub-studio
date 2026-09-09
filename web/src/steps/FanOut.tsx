@@ -5,6 +5,7 @@ import { ArrowRight, Check, Copy, ExternalLink, Lightbulb, RefreshCw, TerminalSq
 import { CodeEditor } from "../components/CodeEditor";
 import { In, StepHeader } from "../components/shared";
 import { LoadCheck } from "../components/LoadCheck";
+import { LoadedBadge } from "../components/LoadedBadge";
 import { api, useRunEvents } from "../lib/api";
 import type { InspectorStatus, Stage1Status, Stage2Status } from "../lib/types";
 import { COLORS, tint } from "./colors";
@@ -1441,6 +1442,9 @@ export function RunPanel({
     api.labInspector().then(setInspector).catch(() => setInspector({ up: false, url: "/inspector/dev-ui/", apps: [] }));
   }, []);
   const url = frame?.url ?? `/inspector/dev-ui/?app=${app}`;
+  // the badge reloads the frame when the student asks it to
+  const [reloadN, setReloadN] = useState(0);
+  const frameKey = `${frame?.n ?? 0}:${reloadN}`;
   return (
     <section id={`run-${app}`} className="rounded-3xl border p-6" style={{ borderColor: tint(BLUE, 0.33), background: tint(BLUE, 0.04) }}>
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -1480,14 +1484,18 @@ export function RunPanel({
 
       {open && (
         <div className="mt-5 overflow-hidden rounded-2xl border border-hairline bg-card">
-          <div className="flex items-center justify-between border-b border-hairline bg-overlay px-3 py-1.5 font-mono text-[11px] text-fg-muted">
-            <span>{url}</span>
-            <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-fg">
+          <div className="flex items-center justify-between gap-4 border-b border-hairline bg-overlay px-3 py-1.5 font-mono text-[11px] text-fg-muted">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="shrink-0">{url}</span>
+              <span className="shrink-0 opacity-50">·</span>
+              <LoadedBadge key={frameKey} app={app} onReload={() => setReloadN((n) => n + 1)} />
+            </div>
+            <a href={url} target="_blank" rel="noreferrer" className="flex shrink-0 items-center gap-1 hover:text-fg">
               open in a new tab <ExternalLink size={12} />
             </a>
           </div>
           <iframe
-            key={frame?.n ?? 0}
+            key={frameKey}
             title="adk web"
             src={url}
             className="h-[680px] w-full bg-[#1e1e1e]"

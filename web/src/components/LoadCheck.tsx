@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { RefreshCw } from "lucide-react";
-import { api } from "../lib/api";
+import { api, type LoadedStatus } from "../lib/api";
 import { COLORS, tint } from "../steps/colors";
 
 /** Seconds to hold after a successful load, so the dev UI's own reloader has
@@ -17,6 +17,7 @@ export function LoadCheck({ app, intro }: { app: string; intro?: string }) {
   const [load, setLoad] = useState<{ ok: boolean; edges?: number | null; tools?: number; error: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [left, setLeft] = useState(0);
+  const [loaded, setLoaded] = useState<LoadedStatus | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => () => {
@@ -26,12 +27,20 @@ export function LoadCheck({ app, intro }: { app: string; intro?: string }) {
   const run = async () => {
     setLoading(true);
     setLoad(null);
+    setLoaded(null);
     if (timer.current) clearInterval(timer.current);
     setLeft(0);
     try {
       const r = await api.labLoad(app);
       setLoad(r);
       if (r.ok) {
+        // The file loads. Now the question that matters: does adk web have it?
+        // The server compares what it built its Runner from with the files, and
+        // puts it right when memory is behind. Verified, not assumed.
+        api.loaded(app)
+          .then((st) => (st.status === "stale" ? api.refreshLoaded(app) : st))
+          .then(setLoaded)
+          .catch(() => setLoaded(null));
         setLeft(SETTLE_S);
         timer.current = setInterval(() => {
           setLeft((n) => {
@@ -89,7 +98,13 @@ export function LoadCheck({ app, intro }: { app: string; intro?: string }) {
           ) : (
             <>
               {what}
-              <span className="mt-1 block opacity-90">adk web has your save · ready to run</span>
+              <span className="mt-1 block opacity-90">
+                {loaded && (loaded.status === "current" || loaded.status === "fresh")
+                  ? `adk web has your save from ${new Date(loaded.saved_at * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })} · ready to run`
+                  : loaded
+                    ? `adk web could not take your save · ${loaded.detail}`
+                    : "adk web has your save · ready to run"}
+              </span>
             </>
           )}
         </div>

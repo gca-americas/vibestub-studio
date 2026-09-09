@@ -5,6 +5,7 @@ import { ArrowRight, Check, Copy, ExternalLink, Lightbulb, RefreshCw, TerminalSq
 import { CodeEditor } from "../components/CodeEditor";
 import { In, StepHeader } from "../components/shared";
 import { LoadCheck } from "../components/LoadCheck";
+import { LoadedBadge } from "../components/LoadedBadge";
 import { api, useRunEvents } from "../lib/api";
 import type { InspectorStatus, Stage0Status } from "../lib/types";
 import { AdkGlance } from "./AdkGlance";
@@ -263,6 +264,7 @@ const INSPECTOR_URL = "/inspector/dev-ui/?app=stage0_prompt";
 function ToolsEditRun() {
   const [idea, setIdea] = useState(DEFAULT_IDEA);
   const [open, setOpen] = useState(false);
+  const [reloadN, setReloadN] = useState(0);   // the badge reloads the frame on request
   const [hint, setHint] = useState(0);
   const [inspector, setInspector] = useState<InspectorStatus | null>(null);
   const [status, setStatus] = useState<Stage0Status | null>(null);
@@ -480,13 +482,17 @@ function ToolsEditRun() {
 
           {open && (
             <div className="mt-5 overflow-hidden rounded-2xl border border-hairline bg-card">
-              <div className="flex items-center justify-between border-b border-hairline bg-overlay px-3 py-1.5 font-mono text-[11px] text-fg-muted">
-                <span>{INSPECTOR_URL}</span>
-                <a href={INSPECTOR_URL} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-fg">
+              <div className="flex items-center justify-between gap-4 border-b border-hairline bg-overlay px-3 py-1.5 font-mono text-[11px] text-fg-muted">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="shrink-0">{INSPECTOR_URL}</span>
+                  <span className="shrink-0 opacity-50">·</span>
+                  <LoadedBadge key={reloadN} app="stage0_prompt" onReload={() => setReloadN((n) => n + 1)} />
+                </div>
+                <a href={INSPECTOR_URL} target="_blank" rel="noreferrer" className="flex shrink-0 items-center gap-1 hover:text-fg">
                   open in a new tab <ExternalLink size={12} />
                 </a>
               </div>
-              <iframe title="adk web" src={INSPECTOR_URL} className="h-[680px] w-full bg-[#1e1e1e]" />
+              <iframe key={reloadN} title="adk web" src={INSPECTOR_URL} className="h-[680px] w-full bg-[#1e1e1e]" />
             </div>
           )}
         </section>

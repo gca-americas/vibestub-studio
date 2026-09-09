@@ -14,6 +14,15 @@ from checks.holes import HOLES  # noqa: E402
 from scripts.carve import SHIP_HOLES  # noqa: E402
 
 
+def _read(rel: str) -> str:
+    """The live file, or the starter copy when the live one is not in place
+    (the nine student files are not in git; a fresh clone has only starter/)."""
+    p = ROOT / rel
+    if not p.exists():
+        p = ROOT / "starter" / rel
+    return p.read_text()
+
+
 def carved(rel: str, src: str) -> str:
     """The file as students receive it: the shipped holes carved, the rest filled."""
     for name, (r, anchor, snippet) in HOLES.items():
@@ -39,7 +48,7 @@ def main() -> int:
     for name, (rel, anchor, snippet) in HOLES.items():
         by_file[rel].append((name, anchor, snippet))
     for rel, items in sorted(by_file.items()):
-        live = (ROOT / rel).read_text()
+        live = _read(rel)
         for name, anchor, snippet in items:
             if anchor not in live and snippet not in live:
                 print(f"  \u2717 {name}: neither snippet nor anchor found in {rel}")

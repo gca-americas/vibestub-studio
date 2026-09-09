@@ -17,7 +17,10 @@ APP = ROOT / "vibestudio" / "server" / "agent"
 def finished(name: str) -> bytes:
     """agent/<name> with every registry hole filled."""
     rel = f"agent/{name}"
-    src = (ROOT / rel).read_text()
+    p = ROOT / rel
+    if not p.exists():                 # not in git; a fresh clone has only starter/
+        p = ROOT / "starter" / rel
+    src = p.read_text()
     for _, (r, anchor, snippet) in HOLES.items():
         if r == rel:
             src = src.replace(anchor, snippet, 1)

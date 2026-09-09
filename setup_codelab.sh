@@ -261,20 +261,21 @@ PY
 # any run state, so the lab starts where a student starts. A later run leaves
 # your files alone: re-running this script must never discard your work.
 say "5 · Starting state"
-MARKER="runs/.setup_done"
-if [ -f "$MARKER" ]; then
-    info "your files are left as they are (this is not the first setup)"
-    info "to reset the lab to the state students receive: scripts/starter.sh"
-else
-    # scripts/starter.sh cannot clear the session store while a server holds the port
-    RUNNING="$(lsof -a -ti "tcp:$PORT" -sTCP:LISTEN 2>/dev/null || true)"
-    if [ -n "$RUNNING" ]; then
-        info "stopping the learning center on port $PORT so the session store can be cleared"
-        for pid in $RUNNING; do kill "$pid" 2>/dev/null || true; done
-        sleep 1
+# The nine files students edit are not in git. Each one is copied from
+# starter/ when it is missing, and an existing one is never touched: a re-run
+# of this script keeps your work. scripts/starter.sh is the reset.
+placed=0
+for f in stage0_prompt/agent.py stage1_fanout/agent.py stage2_direction/agent.py stage3_router/agent.py stage4_memory/agent.py stage5_rag/agent.py stage6_video/agent.py agent/graph.py agent/deliver.py; do
+    if [ ! -f "$f" ]; then
+        cp "starter/$f" "$f"
+        placed=$((placed + 1))
     fi
-    scripts/starter.sh
-    tick "the editable files hold their TODO lines, and no run state is left over"
+done
+if [ "$placed" -gt 0 ]; then
+    tick "$placed editable file(s) put in place from starter/, holding their TODO lines"
+else
+    info "your files are left as they are"
+    info "to reset the lab to the state students receive: scripts/starter.sh"
 fi
 
 # ── 7 · the learning center: build the page, start the server in the background ──
@@ -321,7 +322,7 @@ say "8 · Preflight"
 info "checking the environment, the APIs, and the learning center"
 uv run python scripts/preflight.py || warn "preflight found something to fix; the ✗ lines above say what"
 
-mkdir -p runs && : > "$MARKER"
+mkdir -p runs
 
 # ── where to go next, spelled out ───────────────────────────────────────────
 # Cloud Shell puts the preview host in WEB_HOST; elsewhere it is localhost.

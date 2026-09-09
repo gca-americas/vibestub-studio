@@ -125,6 +125,16 @@ if [ "$needs_build" = 1 ]; then
   (cd web && ([ -d node_modules ] || npm install) && npm run build)
 fi
 
+# The nine student files are not in git; a fresh clone has none of them and
+# the server would fail to import. Missing ones come from starter/; present
+# ones are the student's and are left alone.
+for f in stage0_prompt/agent.py stage1_fanout/agent.py stage2_direction/agent.py stage3_router/agent.py stage4_memory/agent.py stage5_rag/agent.py stage6_video/agent.py agent/graph.py agent/deliver.py; do
+  if [ ! -f "$f" ]; then
+    cp "starter/$f" "$f"
+    echo "put $f in place from starter/"
+  fi
+done
+
 stop_port "$PORT"
 .venv/bin/uvicorn server.main:app --host 0.0.0.0 --port "$PORT" \
   --timeout-graceful-shutdown 3 &

@@ -90,7 +90,7 @@ vibe-studio-lab/
 │   ├── stage4_memory/agent.py      # Step 6: GEAP Memory Bank integration via callbacks
 │   ├── stage5_rag/agent.py         # Step 7: GEAP RAG Engine corpus reader node
 │   └── stage6_video/agent.py       # Step 8: LongRunningFunctionTool video render desk
-├── starter/                        # Pristine student starter files with TODO holes
+├── starter/                        # The nine student files with their TODO holes; the live copies are not in git
 ├── server/ & web/                  # VibeStudio Workbench (developer UI on port 4600)
 │   ├── server/                     # FastAPI server: code edit API, verifiers, and adk web mount
 │   └── web/                        # React + TypeScript frontend: step guides, editor, graph view
@@ -152,5 +152,7 @@ python checks/verify_app.py      # vibestudio/server/agent/ equals the finished 
 ```
 
 When a hole changes: update `checks/holes.py`, update the codelab block, run `scripts/carve.py`, copy the carved file into `starter/`, run `checks/verify_app.py --sync`, then run all three checks.
+
+The nine files students edit (`agent/graph.py`, `agent/deliver.py`, `stage*/agent.py`) are listed in `.gitignore` and never committed: setup and `scripts/start.sh` copy them from `starter/` when they are missing and leave existing ones alone, so a tree filled in while testing cannot reach a commit. `starter/` is the file that ships.
 
 `scripts/dev.sh` runs the VibeStudio Workbench with hot reload (the API on 4600, Vite on 5173). Diagram sources for the codelab figures live in `img/src/`; the codelab is built with `claat`.

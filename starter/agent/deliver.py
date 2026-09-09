@@ -25,7 +25,6 @@ from google.genai.types import Content, FunctionResponse, Part
 from .platform import config, drive, state, videogen
 
 APP = os.environ.get("STUDIO_VIDEO_APP", "stage6_video")
-USERS = ["user", config.USER]                 # adk web files its sessions under "user"
 POLL_S = 10.0
 
 
@@ -53,7 +52,7 @@ async def find_pending() -> list[dict]:
     """Every pending render in the app's sessions, newest session first."""
     svc = drive.svc()
     rows = []
-    for user in USERS:
+    for user in drive.users(APP):
         try:
             resp = await svc.list_sessions(app_name=APP, user_id=user)
         except Exception:

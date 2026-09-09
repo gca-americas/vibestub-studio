@@ -41,3 +41,25 @@ def run(coro):
             if service is not None:
                 await service.close()   # DatabaseSessionService.close() -> db_engine.dispose()
     return asyncio.run(_disposing())
+
+
+def users(app_name: str) -> list[str]:
+    """Every user id that has a session for this app, adk web's "user" first.
+
+    DatabaseSessionService can only list sessions one user at a time, so the
+    store itself is asked which users exist. A run driven through the API
+    under another id is then as visible to the delivery and the verify
+    panels as one made in the dev UI."""
+    found: list[str] = []
+    try:
+        import sqlite3
+        db = config.RUNS / "sessions.db"
+        if db.exists():
+            with sqlite3.connect(db) as con:
+                found = [r[0] for r in con.execute(
+                    "select distinct user_id from sessions where app_name = ? order by update_time desc",
+                    (app_name,))]
+    except Exception:
+        found = []
+    order = ["user", config.USER, *found]
+    return list(dict.fromkeys(u for u in order if u))

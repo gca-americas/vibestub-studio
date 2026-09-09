@@ -24,7 +24,6 @@ ROOT = config.ROOT
 router = APIRouter(prefix="/api/lab", tags=["lab"])
 
 STAGE_APPS = ["stage0_prompt", "stage1_fanout", "stage2_direction", "stage3_router", "stage4_memory", "stage5_rag", "stage6_video"]
-DEV_UI_USERS = ["user", config.USER]      # adk web files chats under "user"
 
 
 @router.get("/events")
@@ -58,7 +57,7 @@ def _texts(ev) -> list[str]:
 async def _sessions(app_name: str):
     svc = drive.svc()
     out = []
-    for user in DEV_UI_USERS:
+    for user in drive.users(app_name):
         try:
             resp = await svc.list_sessions(app_name=app_name, user_id=user)
         except Exception:

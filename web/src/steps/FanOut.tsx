@@ -863,23 +863,15 @@ function HumanInTheLoop() {
       <In delay={0.1}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Where the graph stands</p>
-          <h2 className="font-display mt-2 text-2xl">The chain ends at propose_directions.</h2>
+          <h2 className="font-display mt-2 text-2xl">Send an idea, read four candidates.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            The workflow executes the research fan-out, joins incoming data, and passes the research context to{" "}
-            <code className="font-mono text-fg">propose_directions</code> to produce four candidates. The run ends there:
-            the candidates are the workflow's output and nobody is asked anything. Two edits add the pause. First the
-            node joins the chain; then the node learns to wait.
+            You are the only person in this run. Your idea goes in at adk web; the readers run, the join gathers their outputs, and{" "}
+            <code className="font-mono text-fg">propose_directions</code> makes its one call and produces four candidates. The run ends
+            there: the candidates are the workflow's output, the last event in the chat, and nobody is asked anything. Two edits add the
+            pause. First the gate joins the chain; then the node learns to wait.
           </p>
-          <div className="mt-4 flex flex-wrap items-center gap-2 font-mono text-[11px]">
-            {["join_research", "propose_directions", "direction_gate"].map((n, i) => (
-              <span key={n} className="flex items-center gap-2">
-                {i > 0 && <span className="text-fg-muted">→</span>}
-                <span className="rounded-lg border px-2.5 py-1" style={i < 2 ? { borderColor: "var(--hairline)", background: "var(--overlay)" } : { borderColor: tint(AMBER, 0.53), background: tint(AMBER, 0.1), color: AMBER }}>
-                  {n}
-                </span>
-              </span>
-            ))}
-            <span className="ml-2 text-fg-muted">← edit 1 adds this node</span>
+          <div className="mt-5 overflow-x-auto">
+            <HumanRunFigure />
           </div>
         </section>
       </In>
@@ -1194,9 +1186,10 @@ function AgentNodeFigure() {
   );
 }
 
-/** Stage 2 as the person in adk web sees it: an idea goes in, the graph runs
- *  to propose_directions and ends, and four candidates come back as the
- *  workflow's output. Nothing asks the person to choose yet. */
+/** Where 4d starts, as the person in adk web sees it: an idea goes in, the
+ *  graph runs to propose_directions and ends, and four candidates come back
+ *  as the workflow's output. Nothing asks the person to choose yet; the two
+ *  edits on the page add the gate that will. */
 function HumanRunFigure() {
   const mono = { fontFamily: "var(--font-mono)" } as const;
   const node = (x: number, y: number, w: number, label: string, color?: string) => (
@@ -1214,7 +1207,7 @@ function HumanRunFigure() {
   const tick = (x: number, y: number) => <path d={`M${x} ${y} l3 3 l6 -6.5`} fill="none" stroke={GREEN} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />;
   return (
     <figure className="m-0 min-w-[820px]">
-      <svg viewBox="0 0 940 250" role="img" aria-label="You type an idea in adk web. The two readers run, the join gathers their outputs, and propose_directions makes one model call; the run ends there. Its four candidates come back to you as the workflow's output, the last event in the chat: three viable and one that breaks policy on purpose. Nothing asks you to choose yet; 4d adds a gate after the agent." className="h-auto w-full text-fg">
+      <svg viewBox="0 0 940 250" role="img" aria-label="You type an idea in adk web. The two readers run, the join gathers their outputs, and propose_directions makes one model call; the run ends there. Its four candidates come back to you as the workflow's output, the last event in the chat: three viable and one that breaks policy on purpose. Nothing asks you to choose yet; the two edits on this page add a gate after the agent." className="h-auto w-full text-fg">
         <defs>
           <marker id="hr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />
@@ -1257,11 +1250,11 @@ function HumanRunFigure() {
         <text x="608" y="130" fontSize="10.5" fontWeight="700" style={mono} textAnchor="middle" fill={PURPLE}>propose_directions</text>
         <text x="608" y="164" fontSize="8.5" style={mono} textAnchor="middle" fill={PURPLE}>one model call</text>
         <text x="608" y="177" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.7">the run ends here</text>
-        <text x="608" y="204" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.55">no gate yet · 4d adds one after it</text>
+        <text x="608" y="204" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.55">no gate yet · the two edits below add one</text>
 
         {/* back to you */}
         <path d="M686 120 C 740 120, 740 60, 760 60" fill="none" stroke={PURPLE} strokeWidth="1.3" markerEnd="url(#hr-arrow-p)" />
-        <rect x="754" y="20" width="176" height="150" rx="12" fill="var(--overlay)" stroke={PURPLE} strokeWidth="1.2" />
+        <rect x="750" y="20" width="186" height="150" rx="12" fill="var(--overlay)" stroke={PURPLE} strokeWidth="1.2" />
         <text x="776" y="40" fontSize="10" style={mono} fill={PURPLE}>the workflow's output</text>
         <text x="776" y="53" fontSize="8" style={mono} fill="currentColor" opacity="0.7">the last event in the chat</text>
         {[0, 1, 2].map((i) => (
@@ -1452,9 +1445,8 @@ function AgentNode() {
           app="stage2_direction"
           open={open}
           setOpen={setOpen}
-          title="Send an idea, read four candidates."
-          intro="You are the only person in this run. Type an idea in adk web; the readers run, the join gathers their outputs, propose_directions makes its one call, and the run ends. Its four candidates come back to you as the workflow's output, the last event in the chat. Nothing asks you to choose yet; 4d adds that."
-          figure={<HumanRunFigure />}
+          title="Run stage 2 in adk web."
+          intro="The chain ends at propose_directions, so each run is one model call and ends with its four candidates as the workflow's output."
           idea={idea}
           setIdea={setIdea}
           steps={[

@@ -106,8 +106,8 @@ function TheAgent() {
       <StepHeader
         kicker="Step 3b · The single-prompt agent"
         color={BLUE}
-        title="The whole pipeline as one agent."
-        blurb="Before building the graph, meet the simplest version: one Agent whose instruction describes the entire pipeline in prose. It uses three of the fields from 3a."
+        title="The monolithic prompt baseline."
+        blurb="Build a baseline agent using a monolithic system prompt. This stage configures three core ADK primitives (model, instruction, tools) to demonstrate the capabilities and boundaries of prompt-driven execution."
       />
 
       <In delay={0.1}>
@@ -122,13 +122,14 @@ function TheAgent() {
               <Chip color={PURPLE}>tools = [ ]</Chip>
             </div>
             <p className="mt-5 text-sm text-fg-muted">
-              <b className="text-fg">model</b> is set once for the lab in <code className="font-mono">agent/platform/config.py</code>.
-              adk web discovers this agent because the folder contains an <code className="font-mono">agent.py</code>{" "}
-              that exports <code className="font-mono">root_agent</code>; the folder name becomes the app name.
+              <b className="text-fg">model</b> references the Gemini model defined in{" "}
+              <code className="font-mono">agent/platform/config.py</code>. ADK discovers runnable applications by locating
+              an <code className="font-mono">agent.py</code> file that exports <code className="font-mono">root_agent</code>,
+              using the folder name as the app ID.
             </p>
             <p className="mt-4 text-sm text-fg-muted">
-              <b className="text-fg">instruction</b> is the system prompt. Here it lists the pipeline as five sentences,
-              each one a job the model is asked to perform inside a single conversation:
+              <b className="text-fg">instruction</b> serves as the system prompt. In this baseline, the prompt packs five
+              separate production tasks into continuous prose within a single conversation:
             </p>
             <ol className="mt-3 space-y-2">
               {JOBS.map((j, i) => (
@@ -145,12 +146,12 @@ function TheAgent() {
               ))}
             </ol>
             <p className="mt-4 text-sm text-fg-muted">
-              The last line asks the model to confirm the direction with you before describing the video. That request
-              is text. Nothing in the code enforces it.
+              The final instruction asks the model to confirm the direction with the creator. Because this is prompt
+              text rather than a deterministic boundary, the model can easily be steered to bypass human approval.
             </p>
             <p className="mt-4 text-sm text-fg-muted">
-              <b className="text-fg">tools</b> is empty. The first two jobs need data the model does not have, so the agent can only guess at trends and invent a backlog. In 3c you give it the two functions
-              that fetch the real data. Both sources are below.
+              <b className="text-fg">tools</b> is initially empty. Without tool integration, the model cannot access
+              external systems. In 3c, you wire two Python functions that retrieve platform trends and channel notes.
             </p>
           </div>
 
@@ -195,10 +196,11 @@ function Sources() {
       <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">The sources</p>
       <h2 className="font-display mt-2 text-2xl">The backlog, and what is trending.</h2>
       <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-        The creator keeps a backlog: ideas noted down to make someday, one per line in{" "}
-        <code className="font-mono text-fg">agent/backlog.txt</code>. The platform reports what is trending: ten formats at a time, a style or a twist an idea can ride,
-        drawn from a pool of 250, each with a heat score, a different ten on every call. The job of the pipeline is to combine
-        the two: find the backlog ideas closest to what the creator wants tonight, and ride the trend that fits them.
+        The pipeline grounds content generation using two external data sources.{" "}
+        <code className="font-mono text-fg">agent/backlog.txt</code> contains the creator's archived concept notes,
+        stored one per line. Platform trends are simulated from a catalog of 250 active formats and visual styles,
+        sampling ten scored entries per invocation. The agent synthesizes these sources, aligning the creator's backlog
+        notes with current platform momentum.
       </p>
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <div className="overflow-hidden rounded-2xl border border-hairline bg-input">
@@ -301,8 +303,8 @@ function ToolsEditRun() {
       <StepHeader
         kicker="Step 3c · Tools, edit, run"
         color={BLUE}
-        title="Python functions behind an HTTP contract."
-        blurb="Give the agent its two research tools, run it in adk web, and check from the session store what it actually did."
+        title="Tools, edit, run."
+        blurb="Configure the agent's tool list with external Python functions, trigger inference in ADK Web, and evaluate the execution trace in the session store."
       />
 
       {/* where the research comes from */}
@@ -310,12 +312,12 @@ function ToolsEditRun() {
         <section className="rounded-3xl border border-hairline bg-card p-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Where the research comes from</p>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            The two functions are in <code className="font-mono text-fg">stage0_prompt/agent.py</code>. ADK turns
-            each function passed in <code className="font-mono text-fg">tools=[...]</code> into a tool declaration from its
-            name, signature, and docstring. When the model decides it needs the data, it emits a{" "}
-            <code className="font-mono text-fg">function_call</code>; ADK runs the function and appends a{" "}
-            <code className="font-mono text-fg">function_response</code> event with the return value; the model continues
-            with that data in context.
+            The research functions are defined in <code className="font-mono text-fg">stage0_prompt/agent.py</code>. ADK inspects
+            functions passed to <code className="font-mono text-fg">tools=[...]</code> and automatically generates schema
+            declarations from their signatures and docstrings. During inference, the model emits a{" "}
+            <code className="font-mono text-fg">function_call</code> event. The runtime executes the local Python function
+            and injects a corresponding <code className="font-mono text-fg">function_response</code> event back into the
+            context window.
           </p>
 
           <div className="mt-6 grid items-stretch gap-3 md:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr]">
@@ -353,18 +355,13 @@ function ToolsEditRun() {
             </div>
             <ul className="space-y-3 text-sm text-fg-muted">
               <li>
-                <b className="text-fg">Trends</b> are what is moving on the platform right now: a format paired with a look, never a
-                subject. The pool beside the graph holds 250; every call draws ten with a heat score, so no two runs see the same
-                ten. A quarter of the looks are the channel's own cozy low-poly; the rest range from claymation to film noir.
+                <b className="text-fg">Platform trends</b>: A dynamic pool of 250 production formats paired with visual
+                aesthetics. Each tool call samples ten active topics with heat scores.
               </li>
               <li>
-                <b className="text-fg">The backlog</b> is the creator's own notes, fifteen ideas in{" "}
-                <code className="font-mono text-fg">agent/backlog.txt</code>, one per line. Add a line and the next call
-                returns it.
-              </li>
-              <li>
-                <b className="text-fg">The same two sources</b> feed the graph in step 4. Only the shape changes: there
-                they are nodes that always run; here they are tools the model may or may not call.
+                <b className="text-fg">Creator backlog</b>: Raw concept ideas stored in{" "}
+                <code className="font-mono text-fg">agent/backlog.txt</code>, one per line. Modifying this file immediately
+                changes the items available to subsequent tool calls.
               </li>
             </ul>
           </div>
@@ -501,10 +498,10 @@ function ToolsEditRun() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Verify</p>
-              <h2 className="font-display mt-2 text-2xl">What the session store says happened.</h2>
+              <h2 className="font-display mt-2 text-2xl">Verify agent execution.</h2>
               <p className="mt-2 max-w-2xl text-sm text-fg-muted">
-                These checks read the file on disk and the <code className="font-mono">stage0_prompt</code> sessions in
-                runs/sessions.db, the same events adk web displays. They refresh when you send a message.
+                Check the session event log to confirm that the agent runs as expected and triggers both research tools.
+                Results update automatically when you submit messages.
               </p>
             </div>
             <button onClick={check} className="flex items-center gap-2 rounded-xl border border-hairline bg-overlay px-4 py-2 font-mono text-xs text-fg-muted hover:text-fg">
@@ -535,11 +532,21 @@ function ToolsEditRun() {
           )}
 
           <div className="mt-5 rounded-2xl border border-hairline p-4 text-sm text-fg-muted">
-            <p className="font-mono text-[10px] uppercase tracking-wider text-fg-muted">Read the reply yourself</p>
+            <p className="font-mono text-[10px] uppercase tracking-wider text-fg-muted">Evaluate response limitations</p>
             <ul className="mt-2 space-y-1.5">
-              <li>The research is prose. Which source produced which claim is not recoverable from the text.</li>
-              <li>If the reply declares the topic safe, the model that proposed it also certified it. No code checked.</li>
-              <li>After the second message, see whether the agent described the video without your confirmation. The instruction asked for it; nothing enforced it.</li>
+              <li>
+                <b className="text-fg">Unstructured research</b>: The output combines trends and notes into free-form
+                prose, making it impossible to isolate which source produced specific claims.
+              </li>
+              <li>
+                <b className="text-fg">Self-certified safety</b>: The model evaluates its own policy compliance without
+                external, deterministic validation.
+              </li>
+              <li>
+                <b className="text-fg">Unenforced confirmation</b>: In the follow-up message, the model generates the
+                video description without waiting for human approval, demonstrating that prompt directives cannot
+                enforce workflow gates.
+              </li>
             </ul>
           </div>
         </section>
@@ -547,9 +554,9 @@ function ToolsEditRun() {
 
       <In delay={0.55}>
         <div className="mx-auto max-w-3xl rounded-2xl border border-hairline bg-card/60 px-6 py-5 text-center text-sm text-fg-muted">
-          This design works for a one-off demo. It does not give you inspectable research, an enforced pause, or a
-          verifiable check. Step 4 replaces the first two sentences with nodes that always run, in parallel, and whose
-          output is a payload you can open.
+          While suitable for prototyping, a monolithic prompt lacks inspectable research, deterministic policy
+          enforcement, and reliable human approval gates. The workflow graph decomposes this baseline into an ADK
+          Workflow with parallel reader nodes, a join synchronization barrier, and structured candidate schemas.
         </div>
       </In>
     </div>

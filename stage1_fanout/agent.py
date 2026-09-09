@@ -14,9 +14,10 @@ from google.adk.workflow import START, JoinNode
 
 from agent.graph import read_backlog, scan_trends
 
-join_research = None  # TODO: FANOUT_JOIN - define the JoinNode that waits for both readers
+join_research = JoinNode(name="join_research")
 
 root_agent = Workflow(
     name="stage1_fanout",
-    description="trends + backlog -> join -> one research dict",
-    edges=[])  # TODO: FANOUT_EDGES - declare the edges: two readers into the join
+    description="2 real readers -> join -> one research dict",
+    edges=[(START, scan_trends, join_research),
+           (START, read_backlog, join_research)])

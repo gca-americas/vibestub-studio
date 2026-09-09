@@ -28,7 +28,7 @@ def read_backlog() -> dict:
 
 root_agent = Agent(
     name="solo_channel", model=config.MODEL,
-    tools=[],  # TODO: TOOLS - add the two research tools
+    tools=[check_trends, read_backlog],  # TODO: TOOLS - add the two research tools
     instruction=(
         "You run the creator's short-video channel, alone.\n"
         "When the creator gives you an idea (or nothing), do ALL of this:\n"

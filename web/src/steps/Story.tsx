@@ -27,8 +27,8 @@ export function Story() {
       <StepHeader
         kicker="Step 1 · The story"
         color={COLORS.cyan}
-        title="You run a channel on VibeTube."
-        blurb="You have a backlog of video ideas, an audience that leaves comments, and no time for the production work each video requires."
+        title="You run a digital channel on VibeTube."
+        blurb="You have an active audience and an expanding backlog of creative ideas, but producing each video requires continuous multi-stage execution."
       />
 
       {/* The work, as a wall of chores */}
@@ -51,15 +51,15 @@ export function Story() {
               ))}
             </ul>
             <p className="mt-4 text-sm text-fg-muted">
-              A model can do each of these: Gemini researches and writes, Veo renders. That is not the hard part.
+              Generative models can execute each of these tasks individually: Gemini researches and writes scripts, while Veo renders video clips.
             </p>
           </div>
 
           <div className="flex flex-col justify-between rounded-3xl border border-vibe-cyan/30 bg-vibe-cyan/5 p-6 shadow-2xl">
             <div>
-              <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-vibe-cyan">The remaining problem</p>
-              <h2 className="font-display mt-3 text-2xl leading-tight md:text-3xl">Process, not capability.</h2>
-              <p className="mt-3 text-sm text-fg-muted">You want a pipeline that:</p>
+              <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-vibe-cyan">Agentic orchestration</p>
+              <h2 className="font-display mt-3 text-2xl leading-tight md:text-3xl">End-to-end workflow automation.</h2>
+              <p className="mt-3 text-sm text-fg-muted">The production pipeline delivers:</p>
             </div>
             <ul className="mt-4 space-y-3">
               {WANTS.map(({ icon: Icon, text }, i) => (
@@ -84,10 +84,10 @@ export function Story() {
       <In delay={0.9}>
         <div className="mx-auto max-w-3xl rounded-2xl border border-hairline bg-card/60 px-6 py-5 text-center">
           <p className="text-balance text-base text-fg-muted md:text-lg">
-            A pipeline with those properties is <span className="font-semibold text-fg">repeatable</span> and{" "}
-            <span className="font-semibold text-fg">auditable</span>, and you could hand it to another creator. That is what you build
-            in this lab, one node at a time, as an ADK <span className="font-mono text-fg">Workflow</span>. In the last step it becomes an
-            app, <span className="font-display text-fg">Vibe Studio</span>, and ships to Cloud Run.
+            This workflow provides a <span className="font-semibold text-fg">repeatable</span>,{" "}
+            <span className="font-semibold text-fg">auditable</span> production system. In this lab, you build this pipeline
+            using an ADK <span className="font-mono text-fg">Workflow</span>. In the final step, you package the graph into
+            a complete application, <span className="font-display text-fg">VibeStudio</span>, and deploy it to Cloud Run.
           </p>
         </div>
       </In>

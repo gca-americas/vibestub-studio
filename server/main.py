@@ -104,7 +104,7 @@ def create_app() -> FastAPI:
             candidate = DIST / path
             if path and candidate.is_file():
                 return FileResponse(candidate)
-            return FileResponse(DIST / "index.html")
+            return FileResponse(DIST / "index.html", headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
     else:
         @app.get("/", include_in_schema=False)
         async def no_build():

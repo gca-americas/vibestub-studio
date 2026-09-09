@@ -195,13 +195,13 @@ export function SnakeGraph({ only, highlight, cols = COLS, label, hover, onHover
 }
 
 const YOU = ["Type the video idea.", "Pick one of four directions.", "Publish the clip when it lands."];
-const AUTO = [
-  "Three research readers run in parallel and join: trends, the backlog, the audience's comments.",
-  "An agent proposes four typed candidates, with Memory Bank in its context.",
-  "A policy function routes OK or BLOCK before any spend; a task agent repairs a blocked one.",
-  "An agent writes the script and remembers your pick.",
-  "render_desk, an agent node, submits one Veo clip and the run suspends on the receipt.",
-  "The delivery answers the receipt by call id and the run ends with a clip.",
+const WHAT_YOU_LEARN = [
+  "Graph engineering foundations: Workflow, edge tuples, START, JoinNode for parallel fan-out, and deterministic router nodes.",
+  "Agent modes and lifecycle callbacks: chat, single_turn, and task modes as graph nodes, with interceptors.",
+  "Human-in-the-loop orchestration: RequestInput to suspend workflows for human decisions and resume with structured schemas.",
+  "Hierarchical agent memory: Session state via parameter binding and persistent GEAP Memory Bank context.",
+  "Knowledge grounding: GEAP RAG Engine corpus integrated as a parallel retrieval node for audience feedback.",
+  "Long-running workflows and deployment: LongRunningFunctionTool receipts, resuming by ID, and Cloud Run deployment.",
 ];
 
 const LEGEND: { kind: Kind; label: string }[] = [
@@ -222,7 +222,7 @@ export function Overview() {
         kicker="Step 2 · What you build today"
         color={COLORS.purple}
         title="A production pipeline as an explicit graph."
-        blurb="One ADK Workflow does the research, the decisions, and the render. It pauses for your pick and for the clip, and resumes from the session. In step 9 an app drives it and ships to Cloud Run."
+        blurb="An ADK Workflow executes end-to-end video production, managing parallel research, human-in-the-loop pauses, asynchronous video generation, and Cloud Run deployment."
       />
 
       {/* The graph, drawn the way the app draws it */}
@@ -258,9 +258,9 @@ export function Overview() {
             </ol>
           </div>
           <div className="rounded-3xl border border-hairline bg-card p-6">
-            <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Runs without input</p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">What you learn</p>
             <ul className="mt-4 space-y-2">
-              {AUTO.map((t) => (
+              {WHAT_YOU_LEARN.map((t) => (
                 <li key={t} className="flex items-start gap-3 text-sm text-fg-muted">
                   <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-vibe-cyan" />
                   <span>{t}</span>
@@ -281,9 +281,6 @@ export function Overview() {
                   {i + 3}
                 </span>
                 <span className="text-sm font-semibold group-hover:text-fg">{s.label}</span>
-              </div>
-              <div className="mt-2 font-mono text-[10px] text-fg-muted">
-                {i < 3 ? "Part 1 · Workflow graph design" : i < 8 ? "Part 2 · Memory, knowledge, and the video" : "Wrap-up"}
               </div>
             </Link>
           ))}

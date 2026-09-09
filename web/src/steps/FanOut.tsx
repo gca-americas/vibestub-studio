@@ -1171,7 +1171,7 @@ function AgentNodeFigure() {
         {/* the chain */}
         {node(28, 176, 120, "join_research", CYAN)}
         <line x1="148" y1="189" x2="236" y2="189" stroke="currentColor" strokeWidth="1.2" markerEnd="url(#an-arrow)" />
-        <text x="192" y="181" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.7">the research dict</text>
+        <text x="192" y="168" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.7">the research dict</text>
         {node(238, 176, 152, "propose_directions", PURPLE)}
         <text x="314" y="218" fontSize="8.5" style={mono} textAnchor="middle" fill={PURPLE}>an Agent used as a node</text>
         <text x="314" y="231" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.7">mode single_turn, by default</text>
@@ -1200,7 +1200,7 @@ function AgentNodeFigure() {
           </g>
         ))}
         <text x="672" y="196" fontSize="10.5" style={mono} fill="currentColor">4</text>
-        <text x="688" y="198" fontSize="14" fill={RED}>☠</text>
+        <text x="686" y="200" fontSize="18" fontWeight="700" fill={RED}>☠</text>
         <text x="712" y="196" fontSize="9.5" style={mono} fill={RED}>breaks policy on purpose</text>
         <text x="712" y="210" fontSize="8.5" style={mono} fill="currentColor" opacity="0.7">bait for policy_check, step 5</text>
         <line x1="668" y1="222" x2="900" y2="222" stroke="var(--hairline)" />

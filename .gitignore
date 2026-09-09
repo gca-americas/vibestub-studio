@@ -10,11 +10,9 @@ __pycache__/
 
 # everything the lab GENERATES at runtime (each student makes their own)
 runs/
-app/static/
 
 # local codelab preview build
 .preview/
-app/static/renders/
 
 # local claat build of CODELAB.md
 build/
@@ -71,6 +69,3 @@ stage5_rag/agent.py
 stage6_video/agent.py
 agent/graph.py
 agent/deliver.py
-
-# the workbench serves clips and thumbnails from here (server/main.py MEDIA); created at start
-app/

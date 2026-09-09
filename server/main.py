@@ -29,7 +29,7 @@ from server.services.events import snapshot, watcher  # noqa: E402
 from server.services.workers import workers  # noqa: E402
 
 DIST = ROOT / "web" / "dist"
-MEDIA = ROOT / "app" / "static"
+MEDIA = config.RUNS / "media"          # renders and art the lab generates, served at /static
 
 
 def build_inspector() -> FastAPI:

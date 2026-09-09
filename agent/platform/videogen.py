@@ -15,7 +15,7 @@ Configuration, all optional, from the environment:
     STUDIO_VIDEO_RETRIES  attempts per network step (default 8)
     STUDIO_VIDEO_INTERVAL seconds between attempts (default 70)
     STUDIO_VIDEO_TIMEOUT  seconds a delivery waits for one render (default 600)
-    STUDIO_VIDEO_DIR      where mp4 files land (default app/static/renders, served at /static/renders)
+    STUDIO_VIDEO_DIR      where mp4 files land (default runs/media/renders, served at /static/renders)
     STUDIO_REAL_VIDEO=0   no Veo, no cost: the render "finishes" after a few seconds with no file
 """
 from __future__ import annotations
@@ -35,7 +35,7 @@ ON_RETRY = None    # an app may set this to be told about retries (step, attempt
 RETRIES = int(os.environ.get("STUDIO_VIDEO_RETRIES", "8"))
 INTERVAL_S = float(os.environ.get("STUDIO_VIDEO_INTERVAL", "70"))
 TIMEOUT_S = float(os.environ.get("STUDIO_VIDEO_TIMEOUT", "600"))
-VIDEO_DIR = pathlib.Path(os.environ.get("STUDIO_VIDEO_DIR") or (config.ROOT / "app" / "static" / "renders"))
+VIDEO_DIR = pathlib.Path(os.environ.get("STUDIO_VIDEO_DIR") or (config.RUNS / "media" / "renders"))
 WEB_PREFIX = "/static/renders"
 CLIP_MS = 8000                      # a Veo 3.1 clip is eight seconds
 PREBAKED_S = 5.0                    # how long a stand-in "render" takes

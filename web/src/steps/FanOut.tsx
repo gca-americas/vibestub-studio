@@ -518,7 +518,7 @@ function DeclareFanOut() {
         kicker="Step 4b · Parallel research fan-out"
         color={AMBER}
         title="Build the research fan-out."
-        blurb="Two readers run in parallel and a join waits for both. You define the join and write the two edges in stage1_fanout/agent.py, then run it in adk web."
+        blurb="Coordinate concurrent research retrieval across platform trends and backlog ideas. Instantiate an ADK JoinNode to synchronize parallel reader branches and consolidate incoming payloads into a unified research dictionary."
       />
 
       <In delay={0.1}>
@@ -540,12 +540,6 @@ function DeclareFanOut() {
         <section className="rounded-3xl border border-hairline bg-card p-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">The nodes</p>
           <h2 className="font-display mt-2 text-2xl">Function nodes and a join.</h2>
-          <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            A function node is a plain Python function. It takes <code className="font-mono text-fg">node_input</code>, the output of the node
-            before it, and returns an <code className="font-mono text-fg">Event</code> whose <code className="font-mono text-fg">output</code> goes to
-            the node after it. No decorator, no base class. The two readers below are the production functions in{" "}
-            <code className="font-mono text-fg">agent/graph.py</code>, imported by the app.
-          </p>
           <div className="mt-4 grid gap-3 md:grid-cols-3">
             {STAGE1_NODES.map((n) => (
               <div key={n.name} className="rounded-2xl border border-hairline bg-overlay p-4">
@@ -1267,7 +1261,7 @@ function AgentNode() {
         kicker="Step 4c · Agent nodes"
         color={AMBER}
         title="The first agent node."
-        blurb="Stage 2 puts an agent after the join. You define it in stage2_direction/agent.py, add it to the chain, and run it: the join's research dict goes in, trends, backlog and your idea, and four typed candidates come out."
+        blurb="Connect an ADK Agent node downstream of the research join. The agent accepts the synchronized research dictionary, synthesizes platform trends and backlog ideas, and emits four structured, schema-validated creative directions."
       />
 
       <In delay={0.1}>
@@ -1620,13 +1614,13 @@ export function RunPanel({
   );
 }
 
-export function VerifyPanel({ checking, onCheck, intro, children }: { checking: boolean; onCheck: () => void; intro: string; children: React.ReactNode }) {
+export function VerifyPanel({ checking, onCheck, intro, title = "Execution verification.", children }: { checking: boolean; onCheck: () => void; intro: string; title?: string; children: React.ReactNode }) {
   return (
     <section className="rounded-3xl border border-hairline bg-card p-6">
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Verify</p>
-          <h2 className="font-display mt-2 text-2xl">What the session store says happened.</h2>
+          <h2 className="font-display mt-2 text-2xl">{title}</h2>
           <p className="mt-2 max-w-2xl text-sm text-fg-muted">{intro}</p>
         </div>
         <button onClick={onCheck} className="flex items-center gap-2 rounded-xl border border-hairline bg-overlay px-4 py-2 font-mono text-xs text-fg-muted hover:text-fg">

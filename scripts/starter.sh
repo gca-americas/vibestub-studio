@@ -8,8 +8,11 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 PORT="${PORT:-4600}"
-if lsof -a -ti "tcp:$PORT" -sTCP:LISTEN >/dev/null 2>&1; then
-  echo "Vibe Studio is still listening on port $PORT. Stop it (Ctrl+C in its terminal), then rerun."
+# found in the process table, the way restart.sh and stop.sh find it; lsof is
+# absent from Cloud Shell and would report nothing there
+. "$(dirname "$0")/lib/find_server.sh"
+if [ -n "$(port_pids "$PORT")" ]; then
+  echo "Vibe Studio is still listening on port $PORT. Stop it with scripts/stop.sh, then rerun."
   exit 1
 fi
 for f in stage0_prompt/agent.py stage1_fanout/agent.py stage2_direction/agent.py stage3_router/agent.py stage4_memory/agent.py stage5_rag/agent.py stage6_video/agent.py agent/graph.py agent/deliver.py; do

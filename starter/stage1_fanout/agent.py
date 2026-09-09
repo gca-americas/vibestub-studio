@@ -18,5 +18,5 @@ join_research = None  # TODO: FANOUT_JOIN - define the JoinNode that waits for b
 
 root_agent = Workflow(
     name="stage1_fanout",
-    description="trends + backlog -> join -> one research dict",
+    description="2 real readers -> join -> one research dict",
     edges=[])  # TODO: FANOUT_EDGES - declare the edges: two readers into the join

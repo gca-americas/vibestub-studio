@@ -1164,7 +1164,7 @@ function AgentNodeFigure() {
         </defs>
 
         {/* the model, above the chain */}
-        <rect x="226" y="22" width="176" height="52" rx="12" fill={tint(PURPLE, 0.06)} stroke={PURPLE} strokeWidth="1.2" />
+        <rect x="184" y="22" width="260" height="52" rx="12" fill={tint(PURPLE, 0.06)} stroke={PURPLE} strokeWidth="1.2" />
         <text x="314" y="43" fontSize="11" style={mono} textAnchor="middle" fill={PURPLE}>Gemini · config.MODEL</text>
         <text x="314" y="60" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.7">one call · no tool loop · no conversation</text>
 
@@ -1172,7 +1172,9 @@ function AgentNodeFigure() {
         {node(28, 176, 120, "join_research", CYAN)}
         <line x1="148" y1="189" x2="236" y2="189" stroke="currentColor" strokeWidth="1.2" markerEnd="url(#an-arrow)" />
         <text x="192" y="168" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.7">the research dict</text>
-        {node(238, 176, 152, "propose_directions", PURPLE)}
+        <rect x="230" y="168" width="168" height="42" rx="13" fill={tint(PURPLE, 0.12)} stroke={PURPLE} strokeOpacity="0.35" strokeWidth="1" />
+        <rect x="238" y="176" width="152" height="26" rx="8" fill={tint(PURPLE, 0.22)} stroke={PURPLE} strokeWidth="2.2" />
+        <text x="314" y="194" fontSize="11" fontWeight="700" style={mono} textAnchor="middle" fill={PURPLE}>propose_directions</text>
         <text x="314" y="218" fontSize="8.5" style={mono} textAnchor="middle" fill={PURPLE}>an Agent used as a node</text>
         <text x="314" y="231" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.7">mode single_turn, by default</text>
         <line x1="390" y1="189" x2="470" y2="189" stroke="currentColor" strokeWidth="1.2" markerEnd="url(#an-arrow)" />
@@ -1267,29 +1269,6 @@ function AgentNode() {
       <In delay={0.1}>
         <section className="overflow-x-auto rounded-3xl border border-hairline bg-card p-6">
           <AgentNodeFigure />
-        </section>
-      </In>
-
-      <In delay={0.2}>
-        <section className="rounded-3xl border border-hairline bg-card p-6">
-          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Where the graph stands</p>
-          <h2 className="font-display mt-2 text-2xl">The join has a dict and nobody reads it.</h2>
-          <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            After 4b the run ends at <code className="font-mono text-fg">join_research</code>. Stage 2 ships with the same two chains and an
-            undefined <code className="font-mono text-fg">propose_directions</code>. Two edits: define the agent, then start a third chain from
-            the join with it.
-          </p>
-          <div className="mt-4 flex flex-wrap items-center gap-2 font-mono text-[11px]">
-            {["join_research", "propose_directions"].map((n, i) => (
-              <span key={n} className="flex items-center gap-2">
-                {i > 0 && <span className="text-fg-muted">→</span>}
-                <span className="rounded-lg border px-2.5 py-1" style={i < 1 ? { borderColor: "var(--hairline)", background: "var(--overlay)" } : { borderColor: tint(AMBER, 0.53), background: tint(AMBER, 0.1), color: AMBER }}>
-                  {n}
-                </span>
-              </span>
-            ))}
-            <span className="ml-2 text-fg-muted">← edit 2 adds this chain</span>
-          </div>
         </section>
       </In>
 

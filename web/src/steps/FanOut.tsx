@@ -1115,13 +1115,6 @@ function HumanInTheLoop() {
 
 /* ───────────────────────── 4c ───────────────────────── */
 
-const AGENT_NODE_POINTS = [
-  { t: "Agent as a workflow node", d: "Configures Agent with a name, model, instruction, and output_schema in single_turn mode without tool loops or open-ended conversation." },
-  { t: "One call, one typed answer", d: "Used as a node, an agent runs in single_turn mode by default. Its input is the previous node's output, the join's dict, delivered as JSON. It answers once and the answer goes to the next node." },
-  { t: "Typed by output_schema", d: "Directions is a Pydantic model with exactly four candidates. The model must return that shape, and later nodes read it by field name, as code." },
-  { t: "One of the four is bait", d: "Candidates 1 to 3 offer viable channel concepts. Candidate 4 intentionally introduces a policy-violating concept to test downstream safety validation." },
-];
-
 const CODE_INSTRUCTION = `# agent/graph.py
 PROPOSE_INSTRUCTION = (
     "You run the creator's short-video channel. The message "
@@ -1146,6 +1139,82 @@ class Direction(BaseModel):
 
 class Directions(BaseModel):
     candidates: list[Direction]   # exactly 4`;
+
+/** The first agent node, as a picture: a node in the chain that makes one
+ *  model call and answers with one typed object, four candidates, the last
+ *  of them bait for the policy check two steps on. */
+function AgentNodeFigure() {
+  const mono = { fontFamily: "var(--font-mono)" } as const;
+  const node = (x: number, y: number, w: number, label: string, color?: string, dashed = false) => (
+    <g>
+      <rect x={x} y={y} width={w} height={26} rx={8} fill={color ? tint(color, 0.1) : "var(--overlay)"} stroke={color ?? "var(--hairline)"} strokeWidth={color ? 1.4 : 1} strokeDasharray={dashed ? "4 3" : undefined} />
+      <text x={x + w / 2} y={y + 17} fontSize="10" style={mono} textAnchor="middle" fill={color ?? "currentColor"} opacity={dashed ? 0.6 : 1}>{label}</text>
+    </g>
+  );
+  const tick = (x: number, y: number) => <path d={`M${x} ${y} l3.5 3.5 l7 -7.5`} fill="none" stroke={GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />;
+  const rows: [string, string][] = [
+    ["1", "a channel concept"],
+    ["2", "a channel concept"],
+    ["3", "a channel concept"],
+  ];
+  return (
+    <figure className="m-0 min-w-[820px]">
+      <svg viewBox="0 0 940 300" role="img" aria-label="propose_directions sits in the chain between join_research and direction_gate. Used as a node it runs in single_turn mode: the join's dict goes to Gemini as JSON in one call, with no tool loop and no conversation, and one typed answer comes back, a Directions object with exactly four candidates. Candidates 1 to 3 are viable channel concepts; candidate 4 breaks policy on purpose, bait for the policy check later in the graph. Later nodes read the answer by field name." className="h-auto w-full text-fg">
+        <defs>
+          <marker id="an-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />
+          </marker>
+          <marker id="an-arrow-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill={PURPLE} />
+          </marker>
+        </defs>
+
+        {/* the model, above the chain */}
+        <rect x="226" y="22" width="176" height="52" rx="12" fill={tint(PURPLE, 0.06)} stroke={PURPLE} strokeWidth="1.2" />
+        <text x="314" y="43" fontSize="11" style={mono} textAnchor="middle" fill={PURPLE}>Gemini · config.MODEL</text>
+        <text x="314" y="60" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.7">one call · no tool loop · no conversation</text>
+
+        {/* the chain */}
+        {node(28, 176, 120, "join_research", CYAN)}
+        <line x1="148" y1="189" x2="236" y2="189" stroke="currentColor" strokeWidth="1.2" markerEnd="url(#an-arrow)" />
+        <text x="192" y="181" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.7">the research dict</text>
+        {node(238, 176, 152, "propose_directions", PURPLE)}
+        <text x="314" y="218" fontSize="8.5" style={mono} textAnchor="middle" fill={PURPLE}>an Agent used as a node</text>
+        <text x="314" y="231" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.7">mode single_turn, by default</text>
+        <line x1="390" y1="189" x2="470" y2="189" stroke="currentColor" strokeWidth="1.2" markerEnd="url(#an-arrow)" />
+        {node(472, 176, 120, "direction_gate", undefined, true)}
+        <text x="532" y="218" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.6">next stage</text>
+
+        {/* up to the model and back */}
+        <path d="M290 176 C 290 130, 290 110, 290 76" fill="none" stroke={PURPLE} strokeWidth="1.2" markerEnd="url(#an-arrow-p)" />
+        <text x="282" y="128" fontSize="8.5" style={mono} textAnchor="end" fill="currentColor" opacity="0.75">the dict, as JSON</text>
+        <path d="M338 74 C 338 110, 338 130, 338 174" fill="none" stroke={PURPLE} strokeWidth="1.2" markerEnd="url(#an-arrow-p)" />
+        <text x="346" y="128" fontSize="8.5" style={mono} fill={PURPLE}>one answer, typed</text>
+        <text x="346" y="141" fontSize="8.5" style={mono} fill="currentColor" opacity="0.75">output_schema=Directions</text>
+
+        {/* the answer */}
+        <path d="M390 182 C 560 182, 560 60, 650 60" fill="none" stroke={PURPLE} strokeOpacity="0.5" strokeWidth="1.2" strokeDasharray="4 3" markerEnd="url(#an-arrow-p)" />
+        <rect x="652" y="22" width="264" height="228" rx="14" fill="var(--overlay)" stroke={PURPLE} strokeWidth="1.2" />
+        <text x="668" y="44" fontSize="11" style={mono} fill={PURPLE}>Directions</text>
+        <text x="668" y="58" fontSize="8.5" style={mono} fill="currentColor" opacity="0.7">exactly four candidates</text>
+        <line x1="668" y1="68" x2="900" y2="68" stroke="var(--hairline)" />
+        {rows.map(([n, what], i) => (
+          <g key={n}>
+            <text x="672" y={94 + i * 34} fontSize="10.5" style={mono} fill="currentColor">{n}</text>
+            {tick(690, 90 + i * 34)}
+            <text x="712" y={94 + i * 34} fontSize="9.5" style={mono} fill="currentColor">{what}</text>
+          </g>
+        ))}
+        <text x="672" y="196" fontSize="10.5" style={mono} fill="currentColor">4</text>
+        <text x="688" y="198" fontSize="14" fill={RED}>☠</text>
+        <text x="712" y="196" fontSize="9.5" style={mono} fill={RED}>breaks policy on purpose</text>
+        <text x="712" y="210" fontSize="8.5" style={mono} fill="currentColor" opacity="0.7">bait for policy_check, step 5</text>
+        <line x1="668" y1="222" x2="900" y2="222" stroke="var(--hairline)" />
+        <text x="668" y="239" fontSize="8.5" style={mono} fill="currentColor" opacity="0.7">later nodes read it by field name, as code</text>
+      </svg>
+    </figure>
+  );
+}
 
 function AgentNode() {
   const [idea, setIdea] = useState(DEFAULT_IDEA);
@@ -1202,15 +1271,8 @@ function AgentNode() {
       />
 
       <In delay={0.1}>
-        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {AGENT_NODE_POINTS.map((p, i) => (
-            <motion.div key={p.t} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 + i * 0.08 }} className="rounded-3xl border border-hairline bg-card p-5">
-              <p className="text-sm font-semibold" style={{ color: AMBER }}>
-                {p.t}
-              </p>
-              <p className="mt-2 text-sm text-fg-muted">{p.d}</p>
-            </motion.div>
-          ))}
+        <section className="overflow-x-auto rounded-3xl border border-hairline bg-card p-6">
+          <AgentNodeFigure />
         </section>
       </In>
 

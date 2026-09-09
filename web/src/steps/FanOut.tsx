@@ -676,12 +676,6 @@ function DeclareFanOut() {
 
 /* ───────────────────────── 4c ───────────────────────── */
 
-const HITL_POINTS = [
-  { t: "Where a person belongs", d: "At the decisions that need judgment: which direction to film, whether the thumbnail is right. Everything else in the pipeline can run without input." },
-  { t: "Why a prompt is not enough", d: "In a single prompt, confirmation requests are advisory guidelines that user prompts can easily override. A graph workflow introduces a code-level barrier that the model cannot bypass." },
-  { t: "What ADK provides", d: "A node yields RequestInput. The graph suspends, the session records an open call, and no process waits. A function_response carrying that call's id is the only thing that resumes it." },
-];
-
 const CODE_REQUEST_INPUT_SAMPLE = `yield RequestInput(
     # what the person reads
     message="Approve this thumbnail?",
@@ -863,30 +857,18 @@ function HumanInTheLoop() {
         kicker="Step 4d · Human-in-the-loop"
         color={AMBER}
         title="Human in the loop."
-        blurb="A workflow that spends money and publishes on a creator's behalf needs a person at the decisions that require judgment. In ADK that decision is a node that suspends the graph until someone answers."
+        blurb="Introduce an architectural approval gate before triggering downstream actions that incur cost or publish media. In ADK, yielding RequestInput suspends workflow execution and persists session state until an external response satisfies the validation schema."
       />
 
       <In delay={0.1}>
-        <section className="grid gap-3 md:grid-cols-3">
-          {HITL_POINTS.map((p, i) => (
-            <motion.div key={p.t} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 + i * 0.08 }} className="rounded-3xl border border-hairline bg-card p-5">
-              <p className="text-sm font-semibold" style={{ color: AMBER }}>
-                {p.t}
-              </p>
-              <p className="mt-2 text-sm text-fg-muted">{p.d}</p>
-            </motion.div>
-          ))}
-        </section>
-      </In>
-
-      <In delay={0.2}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Where the graph stands</p>
           <h2 className="font-display mt-2 text-2xl">The chain ends at propose_directions.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            After 4c, stage 2 runs the research, joins it, and <code className="font-mono text-fg">propose_directions</code>{" "}
-            turns the join's dict into four candidates. The run ends there: the candidates are the workflow's output and nobody is asked
-            anything. Two edits add the pause. First the node joins the chain; then the node learns to wait.
+            The workflow executes the research fan-out, joins incoming data, and passes the research context to{" "}
+            <code className="font-mono text-fg">propose_directions</code> to produce four candidates. The run ends there:
+            the candidates are the workflow's output and nobody is asked anything. Two edits add the pause. First the
+            node joins the chain; then the node learns to wait.
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-2 font-mono text-[11px]">
             {["join_research", "propose_directions", "direction_gate"].map((n, i) => (

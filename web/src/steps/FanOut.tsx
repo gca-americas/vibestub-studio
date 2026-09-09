@@ -1194,6 +1194,93 @@ function AgentNodeFigure() {
   );
 }
 
+/** Stage 2 as the person in adk web sees it: an idea goes in, the graph runs
+ *  to propose_directions and ends, and four candidates come back as the
+ *  workflow's output. Nothing asks the person to choose yet. */
+function HumanRunFigure() {
+  const mono = { fontFamily: "var(--font-mono)" } as const;
+  const node = (x: number, y: number, w: number, label: string, color?: string) => (
+    <g>
+      <rect x={x} y={y} width={w} height={24} rx={8} fill={color ? tint(color, 0.1) : "var(--overlay)"} stroke={color ?? "var(--hairline)"} strokeWidth={color ? 1.3 : 1} />
+      <text x={x + w / 2} y={y + 16} fontSize="9.5" style={mono} textAnchor="middle" fill={color ?? "currentColor"}>{label}</text>
+    </g>
+  );
+  const person = (cx: number, cy: number) => (
+    <g>
+      <circle cx={cx} cy={cy} r="8" fill={tint(BLUE, 0.15)} stroke={BLUE} strokeWidth="1.4" />
+      <path d={`M${cx - 15} ${cy + 30} a15 15 0 0 1 30 0`} fill={tint(BLUE, 0.15)} stroke={BLUE} strokeWidth="1.4" />
+    </g>
+  );
+  const tick = (x: number, y: number) => <path d={`M${x} ${y} l3 3 l6 -6.5`} fill="none" stroke={GREEN} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />;
+  return (
+    <figure className="m-0 min-w-[820px]">
+      <svg viewBox="0 0 940 250" role="img" aria-label="You type an idea in adk web. The two readers run, the join gathers their outputs, and propose_directions makes one model call; the run ends there. Its four candidates come back to you as the workflow's output, the last event in the chat: three viable and one that breaks policy on purpose. Nothing asks you to choose yet; 4d adds a gate after the agent." className="h-auto w-full text-fg">
+        <defs>
+          <marker id="hr-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />
+          </marker>
+          <marker id="hr-arrow-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill={BLUE} />
+          </marker>
+          <marker id="hr-arrow-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill={PURPLE} />
+          </marker>
+        </defs>
+
+        {/* you, in adk web */}
+        <rect x="14" y="20" width="150" height="212" rx="14" fill="var(--overlay)" stroke={BLUE} strokeOpacity="0.5" strokeWidth="1.2" />
+        <text x="89" y="40" fontSize="10.5" style={mono} textAnchor="middle" fill={BLUE}>you · adk web</text>
+        {person(89, 68)}
+        <rect x="26" y="112" width="126" height="40" rx="9" fill={tint(BLUE, 0.1)} stroke={BLUE} strokeWidth="1" />
+        <text x="89" y="128" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor">a tiny dragon guards</text>
+        <text x="89" y="141" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor">the last cookie</text>
+        <text x="89" y="172" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.7">1 · your idea</text>
+        <text x="89" y="214" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.7">3 · read what came back</text>
+
+        {/* into the graph */}
+        <path d="M152 132 C 190 132, 190 126, 218 126" fill="none" stroke={BLUE} strokeWidth="1.3" markerEnd="url(#hr-arrow-b)" />
+
+        {/* the run */}
+        <text x="236" y="40" fontSize="8.5" style={mono} fill="currentColor" opacity="0.7">2 · the run</text>
+        <circle cx="232" cy="126" r="12" fill="var(--overlay)" stroke="currentColor" strokeOpacity="0.6" />
+        <text x="232" y="129" fontSize="7.5" style={mono} textAnchor="middle" fill="currentColor">START</text>
+        <path d="M244 121 C 262 121, 262 80, 280 80" fill="none" stroke="currentColor" strokeWidth="1.1" markerEnd="url(#hr-arrow)" />
+        <path d="M244 131 C 262 131, 262 172, 280 172" fill="none" stroke="currentColor" strokeWidth="1.1" markerEnd="url(#hr-arrow)" />
+        {node(282, 68, 92, "scan_trends")}
+        {node(282, 160, 92, "read_backlog")}
+        <path d="M374 80 C 392 80, 392 126, 408 126" fill="none" stroke="currentColor" strokeWidth="1.1" markerEnd="url(#hr-arrow)" />
+        <path d="M374 172 C 392 172, 392 126, 408 126" fill="none" stroke="currentColor" strokeWidth="1.1" markerEnd="url(#hr-arrow)" />
+        {node(410, 114, 100, "join_research", CYAN)}
+        <line x1="510" y1="126" x2="536" y2="126" stroke="currentColor" strokeWidth="1.1" markerEnd="url(#hr-arrow)" />
+        <rect x="530" y="106" width="156" height="40" rx="13" fill={tint(PURPLE, 0.12)} stroke={PURPLE} strokeOpacity="0.35" strokeWidth="1" />
+        <rect x="538" y="114" width="140" height="24" rx="8" fill={tint(PURPLE, 0.22)} stroke={PURPLE} strokeWidth="2" />
+        <text x="608" y="130" fontSize="10.5" fontWeight="700" style={mono} textAnchor="middle" fill={PURPLE}>propose_directions</text>
+        <text x="608" y="164" fontSize="8.5" style={mono} textAnchor="middle" fill={PURPLE}>one model call</text>
+        <text x="608" y="177" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.7">the run ends here</text>
+        <text x="608" y="204" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.55">no gate yet · 4d adds one after it</text>
+
+        {/* back to you */}
+        <path d="M686 120 C 740 120, 740 60, 760 60" fill="none" stroke={PURPLE} strokeWidth="1.3" markerEnd="url(#hr-arrow-p)" />
+        <rect x="754" y="20" width="176" height="150" rx="12" fill="var(--overlay)" stroke={PURPLE} strokeWidth="1.2" />
+        <text x="776" y="40" fontSize="10" style={mono} fill={PURPLE}>the workflow's output</text>
+        <text x="776" y="53" fontSize="8" style={mono} fill="currentColor" opacity="0.7">the last event in the chat</text>
+        {[0, 1, 2].map((i) => (
+          <g key={i}>
+            <text x="778" y={78 + i * 20} fontSize="9.5" style={mono} fill="currentColor">{i + 1}</text>
+            {tick(792, 75 + i * 20)}
+            <text x="810" y={78 + i * 20} fontSize="8.5" style={mono} fill="currentColor">a channel concept</text>
+          </g>
+        ))}
+        <text x="778" y="140" fontSize="9.5" style={mono} fill="currentColor">4</text>
+        <text x="788" y="143" fontSize="15" fontWeight="700" fill={RED}>☠</text>
+        <text x="810" y="140" fontSize="8.5" style={mono} fill={RED}>breaks policy on purpose</text>
+        <text x="776" y="160" fontSize="8" style={mono} fill="currentColor" opacity="0.7">nothing asks you to choose yet</text>
+        <path d="M844 172 C 844 200, 600 236, 170 232" fill="none" stroke={PURPLE} strokeOpacity="0.5" strokeWidth="1.2" strokeDasharray="4 3" markerEnd="url(#hr-arrow-p)" />
+      </svg>
+    </figure>
+  );
+}
+
 function AgentNode() {
   const [idea, setIdea] = useState(DEFAULT_IDEA);
   const [open, setOpen] = useState(false);
@@ -1365,8 +1452,9 @@ function AgentNode() {
           app="stage2_direction"
           open={open}
           setOpen={setOpen}
-          title="Run stage 2 in adk web."
-          intro="The chain ends at propose_directions, so each run is one model call and ends with its four candidates as the workflow's output."
+          title="Send an idea, read four candidates."
+          intro="You are the only person in this run. Type an idea in adk web; the readers run, the join gathers their outputs, propose_directions makes its one call, and the run ends. Its four candidates come back to you as the workflow's output, the last event in the chat. Nothing asks you to choose yet; 4d adds that."
+          figure={<HumanRunFigure />}
           idea={idea}
           setIdea={setIdea}
           steps={[
@@ -1476,6 +1564,7 @@ export function RunPanel({
   steps,
   stepTitles,
   frame,
+  figure,
 }: {
   app: string;
   open: boolean;
@@ -1491,6 +1580,8 @@ export function RunPanel({
    *  reloads the frame each time it changes (the dev UI never re-reads a
    *  session on its own). */
   frame?: { url: string; n: number } | null;
+  /** A picture of this run, drawn between the intro and the instructions. */
+  figure?: React.ReactNode;
 }) {
   const [inspector, setInspector] = useState<InspectorStatus | null>(null);
   useEffect(() => {
@@ -1523,6 +1614,8 @@ export function RunPanel({
           </button>
         </div>
       </div>
+
+      {figure && <div className="mt-5 overflow-x-auto rounded-2xl border border-hairline bg-card p-4">{figure}</div>}
 
       <ol className="mt-5 grid gap-3 md:grid-cols-3">
         <Instruction n={1} title="Send your idea in the chat box">

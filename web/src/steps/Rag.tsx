@@ -814,7 +814,7 @@ function TheCorpus() {
                 A model has a context window, and a pile of documents does not fit in it. Retrieval-augmented generation (RAG) puts a search in
                 front of the model: the documents are split into passages and indexed once; at run time a question fetches the few passages
                 that fit it, and the model reads those. The comments file is small enough to paste whole today; a year of comments is not, and
-                the retrieval step is what keeps the run the same size either way.
+                the retrieval phase is what keeps the run the same size either way.
               </p>
             </div>
             <RetrievalFigure />
@@ -910,7 +910,7 @@ function TheCorpus() {
 
 const CODE_READ_FEEDBACK = `# agent/graph.py
 def read_feedback(node_input):
-    """The third reader (step 7): what the audience wrote under past videos,
+    """The third reader: what the audience wrote under past videos,
     the passages nearest to tonight's idea. Retrieval, not a model call."""
     from . import rag
     idea = idea_text(node_input)
@@ -950,7 +950,7 @@ function WorkflowFigure() {
   const edge = (x1: number, y1: number, x2: number, y2: number, color = "currentColor") => <line key={`${x1}${y1}${x2}${y2}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeOpacity={color === "currentColor" ? 0.55 : 0.9} strokeWidth={color === CYAN ? 1.8 : 1.2} markerEnd="url(#wf7-arrow)" />;
   return (
     <figure className="m-0 mt-4">
-      <svg viewBox="0 0 1016 260" className="h-auto w-full text-fg" role="img" aria-label="The workflow through step 7: START fans out to scan_trends, read_backlog and the new read_feedback, all into join_research, then propose_directions, direction_gate, persist_direction, policy_check routing OK to scripter and BLOCK to quarantine, which continues to scripter.">
+      <svg viewBox="0 0 1016 260" className="h-auto w-full text-fg" role="img" aria-label="The workflow with audience feedback retrieval: START fans out to scan_trends, read_backlog and the new read_feedback, all into join_research, then propose_directions, direction_gate, persist_direction, policy_check routing OK to scripter and BLOCK to quarantine, which continues to scripter.">
         <defs>
           <marker id="wf7-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />
@@ -1133,8 +1133,8 @@ function TheReader() {
           title="Add the third reader to the fan-out."
           intro={
             <>
-              Only the <code className="font-mono text-fg">Workflow</code> is shown. This step's app is <code className="font-mono text-fg">stage5_rag</code>, the
-              step 6 graph with its callbacks. Replace the TODO line with two: the backlog edge as it is, then{" "}
+              Only the <code className="font-mono text-fg">Workflow</code> is shown. The stage app is <code className="font-mono text-fg">stage5_rag</code>, containing the
+              workflow graph and memory callbacks. Replace the TODO line with two: the backlog edge as it is, then{" "}
               <code className="font-mono text-fg">(START, read_feedback, join_research)</code>.
             </>
           }

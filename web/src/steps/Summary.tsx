@@ -23,13 +23,13 @@ interface NodeInfo {
 }
 
 const NODES: NodeInfo[] = [
-  { name: "START", kind: "start", step: "Step 4 · The research fan-out", to: "/step/fan-out/a", concepts: ["Workflow and its edge list", "START: the entry every chain begins at", "A tuple is a chain, a list of tuples is the graph"] },
-  { name: "scan_trends", kind: "func", step: "Step 4b · Fan-out", to: "/step/fan-out/b", concepts: ["A function node: node_input in, Event(output=...) out", "Two chains from START run in parallel", "Trends drawn from a pool beside the graph"] },
-  { name: "read_backlog", kind: "func", step: "Step 4b · Fan-out", to: "/step/fan-out/b", concepts: ["The creator's notes from a text file", "idea_text: the message that started the run", "The same function in the stage app and in production"] },
+  { name: "START", kind: "start", step: "Step 4 · Agentic workflow fundamentals", to: "/step/fan-out/a", concepts: ["Workflow and its edge list", "START: the entry every chain begins at", "A tuple is a chain, a list of tuples is the graph"] },
+  { name: "scan_trends", kind: "func", step: "Step 4b · Parallel research fan-out", to: "/step/fan-out/b", concepts: ["A function node: node_input in, Event(output=...) out", "Two chains from START run in parallel", "Trends drawn from a pool beside the graph"] },
+  { name: "read_backlog", kind: "func", step: "Step 4b · Parallel research fan-out", to: "/step/fan-out/b", concepts: ["The creator's notes from a text file", "idea_text: the message that started the run", "The same function in the stage app and in production"] },
   { name: "read_feedback", kind: "func", step: "Step 7 · RAG Engine", to: "/step/rag/a", concepts: ["A RAG Engine corpus: files, passages, embeddings", "retrieval_query: meaning in, meaning out", "Retrieval as a third reader, one more edge into the join"] },
-  { name: "join_research", kind: "join", step: "Step 4b · Fan-out", to: "/step/fan-out/b", concepts: ["JoinNode waits for every incoming edge", "Its output is one dict, keyed by node name", "Adding a reader changes one line"] },
-  { name: "propose_directions", kind: "agent", step: "Step 4c · The agent node", to: "/step/fan-out/c", concepts: ["An Agent as a node, single_turn", "output_schema: four typed candidates in one call", "Step 6: before_model_callback recall_taste appends Memory Bank"] },
-  { name: "direction_gate", kind: "human", step: "Step 4d · Human in the loop", to: "/step/fan-out/d", concepts: ["RequestInput suspends the graph", "response_schema, payload, interrupt_id", "Resume by function_response with the call's id"] },
+  { name: "join_research", kind: "join", step: "Step 4b · Parallel research fan-out", to: "/step/fan-out/b", concepts: ["JoinNode waits for every incoming edge", "Its output is one dict, keyed by node name", "Adding a reader changes one line"] },
+  { name: "propose_directions", kind: "agent", step: "Step 4c · Agent nodes", to: "/step/fan-out/c", concepts: ["An Agent as a node, single_turn", "output_schema: four typed candidates in one call", "Step 6: before_model_callback recall_taste appends Memory Bank"] },
+  { name: "direction_gate", kind: "human", step: "Step 4d · Human-in-the-loop", to: "/step/fan-out/d", concepts: ["RequestInput suspends the graph", "response_schema, payload, interrupt_id", "Resume by function_response with the call's id"] },
   { name: "persist_direction", kind: "func", step: "Step 5a · State", to: "/step/policy-gate/a", concepts: ["Event(state=...) writes shared state", "parameter_binding: candidates arrives by name", "user: keys outlive the session; runs/state.json is the app's copy"] },
   { name: "policy_check", kind: "router", step: "Step 5b · The router node", to: "/step/policy-gate/b", concepts: ["A router: Event(route=...) picks the edge", "Policy as data: policy_words.txt read at decision time", "A dict target maps route names to nodes"] },
   { name: "scripter", kind: "agent", step: "Step 5b · The router node", to: "/step/policy-gate/b", concepts: ["An agent node after the gate", "Step 6: after_agent_callback remember_pick writes the pick to Memory Bank"] },
@@ -43,8 +43,8 @@ const NODES: NodeInfo[] = [
 const KIND_LABEL: Record<Kind, string> = { start: "", func: "function", join: "join", agent: "agent", human: "your pick", router: "router", task: "agent (mode: task)", desk: "long-running tool" };
 
 const STEP_ROWS = [
-  { step: "3 · A single prompt", covered: "An Agent with function tools; function_call and function_response events; why prose is a poor interface between steps" },
-  { step: "4 · Fan-out and the human pause", covered: "Workflow, START, edges as tuples; JoinNode; an Agent as a node with output_schema; RequestInput with response_schema, payload and interrupt_id" },
+  { step: "3 · Monolithic agent", covered: "An Agent with function tools; function_call and function_response events; why prose is a poor interface between steps" },
+  { step: "4 · Agentic workflow fundamentals", covered: "Workflow, START, edges as tuples; JoinNode; an Agent as a node with output_schema; RequestInput with response_schema, payload and interrupt_id" },
   { step: "5 · State and the policy gate", covered: "Event(state=...), parameter binding, the user: prefix; a router node; policy as data; agent modes and a task agent with tools" },
   { step: "6 · Memory Bank", covered: "Scope, extraction, consolidation, custom topics; memories.generate and retrieve; before_model_callback and after_agent_callback" },
   { step: "7 · RAG Engine", covered: "A corpus, chunking, an embedding model, retrieval by meaning; a retrieval node as one more edge into the join; a model that varies" },

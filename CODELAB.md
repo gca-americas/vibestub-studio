@@ -169,7 +169,7 @@ Evaluating this baseline demonstrates the operational boundaries of prompt-drive
 
 ### ADK agent architecture (3A)
 
-In the **VibeStudio Workbench**, navigate to **Step 3 · A single prompt** and open **ADK at a glance (3A)**. This view presents the core architectural layers of an ADK agent (`LlmAgent`):
+In the **VibeStudio Workbench**, navigate to **Step 3 · Monolithic agent** and open **ADK agent architecture (3A)**. This view presents the core architectural layers of an ADK agent (`LlmAgent`):
 
 ```python
 from google.adk.agents import LlmAgent
@@ -199,7 +199,7 @@ The monolithic agent in this step implements only three of these primitives: `mo
 
 ### Monolithic agent specification (3B)
 
-In the workbench, advance to **The single-prompt agent (3B)**. Open `stage0_prompt/agent.py` to examine the baseline agent definition:
+In the workbench, advance to **Monolithic agent specification (3B)**. Open `stage0_prompt/agent.py` to examine the baseline agent definition:
 
 - **Single prompt instruction**: The system prompt condenses five distinct production tasks into continuous prose: discovering platform trends, reviewing backlog ideas, proposing creative concepts, enforcing prohibited subject policies, and drafting shot lists.
 - **Underlying data sources**: The agent references two sources defined beside the graph:
@@ -208,7 +208,7 @@ In the workbench, advance to **The single-prompt agent (3B)**. Open `stage0_prom
 
 ### Tools in Agent (3C)
 
-In the workbench, advance to **Tools, edit, run (3C)**. 
+In the workbench, advance to **Tools in Agent (3C)**. 
 
 #### What is a tool to an agent?
 
@@ -279,13 +279,13 @@ These architectural gaps motivate decomposing the monolithic agent into the expl
 
 ## Agentic workflow fundamentals
 
-In the **VibeStudio Workbench**, navigate to **Step 4 · Research fan-out**, parts **4A** through **4D**.
+In the **VibeStudio Workbench**, navigate to **Step 4 · Agentic workflow fundamentals**, parts **4A** through **4D**.
 
 This step transitions from a single-agent baseline to deterministic graph orchestration using ADK `Workflow`. You will build a parallel research fan-out, synchronize branches with a join node, generate schema-validated creative candidates, and introduce a deterministic human-in-the-loop approval gate.
 
 ### Graph architecture and execution chains (4A)
 
-In the workbench, open **The ADK graph (4A)**.
+In the workbench, open **Graph architecture and execution chains (4A)**.
 
 An ADK `Workflow` structures agent execution as a directed graph defined by an edge list:
 
@@ -295,6 +295,8 @@ An ADK `Workflow` structures agent execution as a directed graph defined by an e
 - **Deterministic control**: Execution flow is governed by declared code structures rather than inferred from prompt text.
 
 #### Node archetypes in ADK
+
+ADK workflows compose several specialized node types. Each archetype performs a specific operational role in the graph, separating deterministic code execution from generative model reasoning:
 
 | Node Archetype | Implementation | Role in Pipeline |
 |---|---|---|
@@ -311,9 +313,11 @@ root_agent = Workflow(
     edges=[...])
 ```
 
+In this configuration, `root_agent` is an instance of `Workflow` rather than a standalone `Agent`. ADK treats workflows as first-class agents, allowing an entire graph to be loaded, served, and inspected as a unified application. The `name` registers the application in ADK Web, while the `edges` list defines its execution topology.
+
 ### Parallel research fan-out (4B)
 
-In the workbench, advance to **Declare the fan-out (4B)**. Open `stage1_fanout/agent.py`.
+In the workbench, advance to **Parallel research fan-out (4B)**. Open `stage1_fanout/agent.py`.
 
 ![The research fan-out: two readers from START into a join](img/stage-1-fanout.svg)
 
@@ -349,9 +353,9 @@ Save your changes. The workbench verifier confirms that the join and edges are w
 - **Aggregated dictionary output**: The workflow completes at `join_research`, outputting a dictionary with entries for both readers.
   - **Why**: `JoinNode` ensures complete data capture before allowing subsequent nodes to execute.
 
-### Structured agent nodes (4C)
+### Agent nodes (4C)
 
-In the workbench, advance to **The agent node (4C)**. Open `stage2_direction/agent.py`.
+In the workbench, advance to **Agent nodes (4C)**. Open `stage2_direction/agent.py`.
 
 ![The proposer and the human input node after the join](img/stage-2-direction.svg)
 
@@ -401,12 +405,12 @@ propose_directions = Agent(
 - **Direct dictionary consumption**: `propose_directions` consumes the JSON payload emitted by `join_research` without manual formatting.
 - **Typed candidate output**: The agent emits a validated `Directions` object containing four discrete candidates. Downstream nodes read fields by attribute name (`candidate.title`) without string parsing.
 
-### Human-in-the-loop approval gates (4D)
+### Human-in-the-loop (4D)
 
-In the workbench, advance to **Human in the loop (4D)**. Open `agent/graph.py`.
+In the workbench, advance to **Human-in-the-loop (4D)**. Open `agent/graph.py`.
 
 #### Prompt instructions versus deterministic suspension
-Production workflows that incur financial cost or publish content require human oversight at critical milestones. In a single prompt, confirmation requests are advisory guidelines that models can be persuaded to skip. In a graph workflow, human approval is an architectural boundary:
+Production workflows that incur financial cost or publish content require human oversight at critical decision points. In a single prompt, confirmation requests are advisory instructions that a user can easily prompt the model to bypass. In an ADK workflow, human approval is enforced by the execution engine: the graph halts at a designated node and cannot advance until it receives external, schema-validated input:
 
 - Yielding `RequestInput` suspends workflow execution immediately.
 - ADK records an open interrupt call in the session store and issues a unique `interrupt_id`.
@@ -441,15 +445,24 @@ In `agent/graph.py`, implement the suspension call inside `direction_gate`:
 ## State and the policy gate
 Duration: 0:11:00
 
-Learning center: **step 5, Policy gate**, parts **a** through **c**.
+In the **VibeStudio Workbench**, navigate to **Step 5 · State and the policy gate**, parts **(5A)** through **(5C)**.
 
-This step completes the graph. A function node turns your choice into the direction the rest of the run works from, a router decides whether that direction is publishable, and a task-mode agent repairs a refused direction instead of ending the run.
+This step completes the core production pipeline. You will persist user selections into session state, enforce channel safety policies using deterministic router nodes, and assemble an iterative task agent to automatically remediate policy violations before generating video scripts.
 
-### Session state
+### State and parameter binding (5A)
 
-You chose a direction by giving the number of your choice. The nodes after the gate need the direction that number points to, including nodes that do not receive the gate's output directly. Session state carries values for the rest of the run.
+In the workbench, navigate to **State (5A)**. Open `agent/graph.py` and `stage3_router/agent.py`.
 
-State is a dict every node in a run can read and write. Each write is a delta on an `Event`, and ADK merges the deltas in order.
+#### Session state vs node output
+
+In an ADK workflow, data moves across the graph through two distinct mechanisms:
+
+- **Node output (`Event(output=...)`)**: Data directed strictly to immediate downstream consumers defined in the edge list.
+- **Session state (`Event(state=...)`)**: A shared key-value dictionary accessible by any subsequent node in the execution lifecycle.
+
+When a user selects a candidate at `direction_gate`, the selection arrives as a numeric index (`{"pick": "2"}`). Downstream nodes need the complete direction object: title, narrative angle, and hook line. Rather than passing verbose metadata through every intermediate node payload, `persist_direction` writes the resolved candidate to shared session state.
+
+Each state mutation is emitted as a delta on an `Event`. ADK merges these deltas sequentially into the session store:
 
 <!-- code: PERSIST_STATE -->
 ```python
@@ -457,9 +470,11 @@ State is a dict every node in a run can read and write. Each write is a delta on
                        "hook": hook, "user:prefs": {"last_direction": chosen["title"]}})
 ```
 
-The yield does not save anything by itself. It hands the `Event` to the `Workflow`, which attaches the keys to that event as a state delta and appends the event to the session through the session service. That service writes the event row to wherever it is pointed, in this codelab a local database at `runs/sessions.db`, and merges the delta into the session's state.
+Yielding this `Event` hands control to the `Workflow` runtime, which appends the delta to the session journal in `runs/sessions.db`.
 
-The development UI shows the merged result in its State tab, and a later function node receives a key by naming it as a parameter. `persist_direction` demonstrates both sides at once: it writes `direction`, and it reads `candidates`, which the gate wrote in the previous step, through a parameter of that name.
+#### Parameter binding
+
+ADK function nodes read session state automatically through parameter inspection. If a function signature declares a parameter name matching an existing state key, ADK extracts that key from state and passes it directly:
 
 ```python
 def persist_direction(node_input, candidates: list = []):
@@ -474,13 +489,40 @@ def persist_direction(node_input, candidates: list = []):
     hook = chosen.get("hook") or " ".join(chosen["title"].split()[:4])
 ```
 
-Output and state serve different purposes. Output travels to the next node only. State is available to any later node, and the memory callback two steps from now reads `direction` and `angle` from it. A key that begins with `user:` is stored against the user rather than the session, so it outlives the run and is present in the next one.
+Here, `candidates` was written to session state by `direction_gate`. ADK binds it directly into `persist_direction(node_input, candidates: list = [])` without requiring explicit dictionary lookups.
 
-### Routers
+Keys prefixed with `user:` persist across sessions in user-level storage, allowing subsequent workflow runs to access creator preferences.
+
+#### Hands-on edit: persisting state and wiring the node
+
+1. In `agent/graph.py`, inside `persist_direction`, replace the `TODO: PERSIST_STATE` line with the state event yield:
+
+<!-- code: PERSIST_STATE -->
+```python
+    yield Event(state={"direction": chosen["title"], "angle": chosen.get("angle", ""),
+                       "hook": hook, "user:prefs": {"last_direction": chosen["title"]}})
+```
+
+2. In `stage3_router/agent.py`, append `persist_direction` to the third chain in the `edges` list:
+
+```python
+           (join_research, propose_directions, direction_gate,
+            persist_direction)
+```
+
+Save your files. In the workbench, verify that `state write in place` and `persist_direction in the chain` both show green checkmarks.
+
+### The router node (5B)
+
+In the workbench, navigate to **The router node (5B)**.
 
 ![The policy gate: a router with two labeled exits](img/stage-3-router.svg)
 
-A router is a function node whose `Event` carries a route name beside its output.
+#### Deterministic policy routing
+
+A router is a specialized function node that evaluates upstream output and directs execution along conditional graph branches. Unlike generative agents, a router executes deterministic logic without making LLM calls.
+
+A router returns an `Event` specifying a `route` tag:
 
 ```python
 def length_check(node_input):
@@ -488,24 +530,26 @@ def length_check(node_input):
     return Event(output=node_input, route="TRIM" if too_long else "PASS")
 ```
 
-An edge whose target is a dict maps each route name to a node. The router and the edge list have to agree on the names.
+In the workflow definition, an edge target defined as a dictionary maps route names to destination nodes:
 
 ```python
     (length_check, {"TRIM": shorten, "PASS": scripter}),
 ```
 
-The router in this workflow is `policy_check`. It reads `agent/policy_words.txt` when the node runs, matches whole words in the title and the angle, and returns the route.
+The workflow router `policy_check` reads prohibited phrases from `agent/policy_words.txt` and performs whole-word matching against the chosen direction's title and angle:
 
 <!-- code: POLICY_ROUTE -->
 ```python
     return Event(output=node_input, route="BLOCK" if bad else "OK")
 ```
 
-The decision is a word list and a regular expression, so the same direction produces the same route on every run, at no cost and with no network call, before any script is written or any money is spent. Policy stored as data rather than as prose in an instruction is also editable without touching the graph: change the file and the next run uses the new list.
+Storing policy as data instead of hardcoded instructions enables updates without modifying the workflow graph: updating the text file immediately applies to subsequent runs. Because evaluation is deterministic regex matching, it executes in milliseconds at zero token cost before generative scripting begins.
 
-### The destinations
+#### Destinations: Scripter and Quarantine
 
-`scripter` is an agent node like `propose_directions`. Its message is the approved direction as JSON, the same title, angle, and hook that were written to state. Its instruction, `SCRIPT_INSTRUCTION`, describes how to build the script, and its output is another schema, `Script`, with a title, a description, tags, an opening line, and exactly three shots for the render model.
+The router directs traffic to one of two downstream nodes:
+
+- **`scripter`**: A `single_turn` agent node that converts the approved direction into a structured production script adhering to the `Script` Pydantic schema:
 
 ```python
 scripter = Agent(
@@ -515,7 +559,18 @@ scripter = Agent(
     output_schema=Script)
 ```
 
-`quarantine` is the other destination. Through part b it is a placeholder function that reports the block and ends the run, which is enough to prove the route works. Part c replaces it.
+- **`quarantine`**: Initially a placeholder function that halts flagged directions, replaced in the next part by an autonomous remediation agent.
+
+#### Hands-on edit: routing the policy check
+
+1. In `agent/graph.py`, inside `policy_check`, complete the return statement:
+
+<!-- code: POLICY_ROUTE -->
+```python
+    return Event(output=node_input, route="BLOCK" if bad else "OK")
+```
+
+2. In `stage3_router/agent.py`, update `edges` to route `policy_check` and rejoin the quarantine branch into `scripter`:
 
 <!-- code: ROUTER_EDGES -->
 ```python
@@ -525,19 +580,27 @@ scripter = Agent(
            (quarantine, scripter)])
 ```
 
-### Task mode
+Save your files. In the workbench, verify that the router edge mappings are verified.
 
-`mode` on `Agent` has three values, and this is where the third one earns its place.
+### Agent modes and the task node (5C)
 
-| Mode | Behavior | In this codelab |
+In the workbench, navigate to **Agent modes and the task node (5C)**.
+
+#### Agent execution modes
+
+ADK `Agent` instances support three execution modes tailored to specific pipeline requirements:
+
+| Mode | Execution Lifecycle | Role in Pipeline |
 |---|---|---|
-| `chat` | A conversation. Each user message is a turn; the model decides when to call tools, when to ask, and when to stop. Required for a root agent, and not allowed after another node. | The single-prompt agent. |
-| `single_turn` | One model call, no conversation. Input from the previous node, one structured object out. The default for an agent used as a node. | `propose_directions`, `scripter`. |
-| `task` | The model works with its tools for as many calls as it needs and ends by calling the built-in `finish_task` tool. What it hands to `finish_task`, typed by `output_schema`, becomes the node's output. | `quarantine`, from part c on. |
+| `chat` | Multi-turn conversational loop. The model determines when to invoke tools, solicit input, or end the turn. | Root agents facing an interactive human user. |
+| `single_turn` | Single model inference call. Accepts previous node input and emits a structured schema object. | Sequential graph transformations (`propose_directions`, `scripter`). |
+| `task` | Autonomous loop with tool execution. The agent iterates until calling the built-in `finish_task` tool. | Multi-step remediation and inspection (`quarantine`). |
 
-Rewriting a refused direction is a good fit for `task` mode because the number of rounds is not known in advance. The agent receives the refused direction as its message, calls `find_policy_hits` to learn which words tripped the gate, calls `suggest_replacement` for each one, rewrites the text, and checks again, repeating until the title and the angle come back clean.
+#### Autonomous policy remediation
 
-Both tools are plain functions in `agent/cleanup_tools.py`, and ADK reads their signature and docstring as before.
+Rewriting a flagged direction requires `task` mode because the number of remediation iterations is variable. The agent receives the flagged direction, invokes `find_policy_hits` to detect violations, requests approved alternatives via `suggest_replacement`, rewrites the direction, and verifies cleanliness before proceeding.
+
+Both tools are defined in `agent/cleanup_tools.py` with typed signatures and docstrings:
 
 ```python
 def find_policy_hits(text: str) -> dict:
@@ -557,7 +620,9 @@ def suggest_replacement(word: str) -> dict:
     """
 ```
 
-`agent/policy_replacements.txt` pairs each refused word with an approved stand-in, one per line, and is data in the same sense the policy list is. The completed node names the mode, the tools, and the schema.
+#### Hands-on edit: assembling the quarantine task agent
+
+In `stage3_router/agent.py`, replace the placeholder `quarantine` function with the task agent definition:
 
 <!-- code: QUARANTINE -->
 ```python
@@ -571,23 +636,32 @@ quarantine = Agent(
 )
 ```
 
-Two things make this a task rather than a single turn: the agent has tools, and it ends by calling `finish_task`. ADK adds that tool itself when `mode="task"` is set and shapes its parameters from `output_schema`, so the node's output is a `CleanedDirection` rather than free text, in the same shape the scripter already reads.
+Task mode equips the agent with tools and terminates execution by calling `finish_task`. When `mode="task"` is configured, ADK automatically provides `finish_task` and derives its parameters from `output_schema`, ensuring the node yields a typed `CleanedDirection` object matching the scripter node's input schema.
 
-### The replacement table
+### Architectural comparison: monolithic prompt vs graph workflow
 
-Each sentence of the original prompt now has a construct behind it.
+Each instruction from the original monolithic prompt now maps to a dedicated architectural construct:
 
-| Prompt sentence | Replaced by | Result |
+| Original Monolithic Directive | Graph Implementation | Operational Benefit |
 |---|---|---|
-| "check trends, look at the backlog" | Two reader nodes and `join_research` | Both run, in parallel, on every run |
-| "propose a direction and agree on it with the creator" | `propose_directions` and `direction_gate` | Four typed candidates in state, and a pause the model cannot skip |
-| "refuse blacklisted subjects" | `policy_check`, a labeled edge, and `policy_words.txt`, with `quarantine` as a task agent | A recorded route decided before any spend, and a refused direction repaired rather than discarded |
-| "describe the video" | `scripter` | The model writes the script after the gate |
-| The implied sequence | The edge list | Order is declared, not inferred |
+| "check trends, look at the backlog" | Parallel reader nodes and `join_research` | Both sources execute concurrently on every run. |
+| "propose a direction and agree on it with the creator" | `propose_directions` and `direction_gate` | Four typed candidates persisted in state; approval is an explicit graph suspension. |
+| "refuse blacklisted subjects" | `policy_check` router and `quarantine` task agent | Deterministic routing executed before generating script tokens; flagged directions are repaired automatically. |
+| "describe the video" | `scripter` agent node | Generates structured script shots strictly after policy approval. |
+| Implied execution sequence | Explicit `Workflow` edge list | Graph topology and execution order are strictly defined in code. |
 
-### In the learning center
+#### What to expect and why
 
-Step **5a** covers session state and has the two edits that write the direction and append the node to the chain. Step **5b** covers the router; run it twice in two sessions, once answering with a publishable candidate and once with candidate 4, to see both routes. Step **5c** covers agent modes and assembles the task node: a button puts the `Agent` skeleton in place of the placeholder, and you add the mode, the tools, and the output schema. Running the blocked route again shows the tool calls, the `finish_task` call, and the script written from the repaired direction.
+Test both execution paths in ADK Web or VibeStudio Workbench:
+
+- **Approved route (Candidate 1, 2, or 3)**:
+  - Selecting an approved candidate routes from `policy_check` directly to `scripter` (`route="OK"`).
+  - The scripter generates a 3-shot production script adhering to the `Script` schema.
+- **Quarantine remediation route (Candidate 4)**:
+  - Candidate 4 contains flagged vocabulary ("clickbait", "viral hack").
+  - `policy_check` routes to `quarantine` (`route="BLOCK"`).
+  - In the session trace, observe `quarantine` calling `find_policy_hits`, calling `suggest_replacement` for each violation, rewriting the title, and calling `finish_task`.
+  - Execution rejoins `scripter`, producing a script from the sanitized direction.
 
 <aside class="positive">
 <b>Routers and fallbacks.</b> The development UI flags a router with no fallback edge. If <code>policy_check</code> returned a route other than <code>OK</code> or <code>BLOCK</code>, the run would have no destination. Adding <code>DEFAULT_ROUTE: quarantine</code> to the edge dict covers that case; import <code>DEFAULT_ROUTE</code> from <code>google.adk.workflow</code>.

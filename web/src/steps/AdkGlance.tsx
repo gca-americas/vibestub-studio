@@ -72,7 +72,7 @@ export function AdkGlance() {
   return (
     <div className="space-y-10">
       <StepHeader
-        kicker="Step 3a · Agent Development Kit"
+        kicker="Step 3a · ADK agent architecture"
         color={BLUE}
         title="An ADK agent at a glance."
         blurb="ADK is Google's code-first framework for building agents in Python. An agent is a model plus the context it reasons with, the tools and collaborators it acts through, and the callbacks that wrap each call. Click any piece."

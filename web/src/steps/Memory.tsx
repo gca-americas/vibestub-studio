@@ -75,7 +75,7 @@ function WorkflowFigure() {
   const edge = (x1: number, y1: number, x2: number, y2: number, color = "currentColor", dashed = false) => <line key={`${x1}${y1}${x2}${y2}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeOpacity={color === "currentColor" ? 0.55 : 0.9} strokeWidth="1.2" strokeDasharray={dashed ? "4 3" : undefined} markerEnd="url(#wf-arrow)" />;
   return (
     <figure className="m-0 mt-4">
-      <svg viewBox="0 0 1016 250" className="h-auto w-full text-fg" role="img" aria-label="The workflow through step 6: START fans out to scan_trends and read_backlog, join_research, propose_directions with before_model_callback recall_taste, direction_gate, persist_direction, policy_check routing OK to scripter with after_agent_callback remember_pick and BLOCK to quarantine, which continues to scripter.">
+      <svg viewBox="0 0 1016 250" className="h-auto w-full text-fg" role="img" aria-label="The workflow with memory callbacks: START fans out to scan_trends and read_backlog, join_research, propose_directions with before_model_callback recall_taste, direction_gate, persist_direction, policy_check routing OK to scripter with after_agent_callback remember_pick and BLOCK to quarantine, which continues to scripter.">
         <defs>
           <marker id="wf-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />
@@ -109,7 +109,7 @@ function WorkflowFigure() {
         <text x="375" y="230" fontSize="9" fontFamily="var(--font-mono)" textAnchor="middle" fill="currentColor" opacity="0.6">reads the bank before its model call</text>
         <text x="880" y="230" fontSize="9" fontFamily="var(--font-mono)" textAnchor="middle" fill="currentColor" opacity="0.6">writes the pick after its turn</text>
       </svg>
-      <figcaption className="mt-2 text-xs text-fg-muted">The highlighted agents are the only change from step 5: a callback on each. The edge list is untouched.</figcaption>
+      <figcaption className="mt-2 text-xs text-fg-muted">The highlighted agents attach lifecycle callbacks while preserving existing edge topology.</figcaption>
     </figure>
   );
 }
@@ -654,8 +654,8 @@ function BankFigure() {
         {/* the contrast */}
         <line x1="14" y1="270" x2="926" y2="270" stroke="var(--hairline)" />
         <text x="14" y="290" fontSize="8.5" style={mono} fill="currentColor" opacity="0.65">what goes where</text>
-        <text x="140" y="290" fontSize="8.5" style={mono} fill="currentColor">documents, transcripts → RAG Engine (step 7)</text>
-        <text x="420" y="290" fontSize="8.5" style={mono} fill={PURPLE}>a person's preferences → Memory Bank (this step)</text>
+        <text x="140" y="290" fontSize="8.5" style={mono} fill="currentColor">documents, transcripts → RAG Engine</text>
+        <text x="420" y="290" fontSize="8.5" style={mono} fill={PURPLE}>a person's preferences → Memory Bank</text>
         <text x="14" y="306" fontSize="8" style={mono} fill="currentColor" opacity="0.55">not a document store, not analytics: facts about one user</text>
       </svg>
     </figure>
@@ -905,7 +905,7 @@ function CallbacksFigure() {
   );
   return (
     <figure className="m-0 min-w-[860px]">
-      <svg viewBox="0 0 940 246" role="img" aria-label="One agent run, left to right: before_agent, then before_model, the model call, after_model, then, when the model asks for a tool, before_tool, the tool call, after_tool, and finally after_agent. This step uses before_model on propose_directions, where recall_taste adds the memories to the request, and after_agent on scripter, where remember_pick hands the pick to Memory Bank. A callback that returns None lets the run continue; a value replaces what would come next." className="h-auto w-full text-fg">
+      <svg viewBox="0 0 940 246" role="img" aria-label="One agent run, left to right: before_agent, then before_model, the model call, after_model, then, when the model asks for a tool, before_tool, the tool call, after_tool, and finally after_agent. The workflow uses before_model on propose_directions, where recall_taste adds the memories to the request, and after_agent on scripter, where remember_pick hands the pick to Memory Bank. A callback that returns None lets the run continue; a value replaces what would come next." className="h-auto w-full text-fg">
         <defs>
           <marker id="cb-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
             <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />
@@ -981,7 +981,7 @@ function TheCallbacks() {
         kicker="Step 6b · Callbacks"
         color={PURPLE}
         title="Callbacks: code at fixed points in an agent's turn."
-        blurb="An Agent lets you attach functions that ADK runs at set moments: around the turn, around each model call, around each tool call. Memory uses two of them, and the step 5 graph keeps its shape."
+        blurb="An Agent lets you attach functions that ADK runs at set moments: around the turn, around each model call, around each tool call. Memory uses two of them, attaching callbacks without modifying graph topology."
       />
 
       <CatchUp needs={["GATE_INPUT", "PERSIST_STATE", "POLICY_ROUTE"]} color={PURPLE} />

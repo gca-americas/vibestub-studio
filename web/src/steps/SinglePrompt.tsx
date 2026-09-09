@@ -28,9 +28,9 @@ const GREEN = COLORS.green;
 
 type Part = "a" | "b" | "c";
 const PARTS: { id: Part; label: string }[] = [
-  { id: "a", label: "ADK at a glance" },
-  { id: "b", label: "The single-prompt agent" },
-  { id: "c", label: "Tools, edit, run" },
+  { id: "a", label: "ADK agent architecture" },
+  { id: "b", label: "Monolithic agent specification" },
+  { id: "c", label: "Tools in Agent" },
 ];
 
 export function SinglePrompt() {
@@ -105,7 +105,7 @@ function TheAgent() {
   return (
     <div className="space-y-10">
       <StepHeader
-        kicker="Step 3b · The single-prompt agent"
+        kicker="Step 3b · Monolithic agent specification"
         color={BLUE}
         title="The monolithic prompt baseline."
         blurb="Build a baseline agent using a monolithic system prompt. This stage configures three core ADK primitives (model, instruction, tools) to demonstrate the capabilities and boundaries of prompt-driven execution."
@@ -303,9 +303,9 @@ function ToolsEditRun() {
   return (
     <div className="space-y-12">
       <StepHeader
-        kicker="Step 3c · Tools, edit, run"
+        kicker="Step 3c · Tools in Agent"
         color={BLUE}
-        title="Tools, edit, run."
+        title="Tools in Agent."
         blurb="Configure the agent's tool list with external Python functions, trigger inference in ADK Web, and evaluate the execution trace in the session store."
       />
 

@@ -151,7 +151,7 @@ function SaveFigure() {
   );
   return (
     <figure className="m-0 min-w-[860px]">
-      <svg viewBox="0 0 940 246" role="img" aria-label="direction_gate passes the pick to persist_direction as node_input. persist_direction writes direction, angle, hook and user:prefs to session state with Event(state=...), and candidates is bound into its parameter from state by name. adk web shows the keys in its State tab, and the memory node of step 6 reads direction and angle. The output, the chosen candidate, goes to policy_check only." className="h-auto w-full text-fg">
+      <svg viewBox="0 0 940 246" role="img" aria-label="direction_gate passes the pick to persist_direction as node_input. persist_direction writes direction, angle, hook and user:prefs to session state with Event(state=...), and candidates is bound into its parameter from state by name. adk web shows the keys in its State tab, and downstream nodes read direction and angle. The output, the chosen candidate, goes to policy_check only." className="h-auto w-full text-fg">
         <defs>
           <marker id="sv-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />
@@ -164,7 +164,7 @@ function SaveFigure() {
         {/* the gate and its answer */}
         <rect x="12" y="126" width="118" height="28" rx="8" {...box} />
         <text x="71" y="144" fontSize="10" style={mono} textAnchor="middle" fill="currentColor">direction_gate</text>
-        <text x="71" y="170" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.6">the form, 4d</text>
+        <text x="71" y="170" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.6">the form input</text>
         <line x1="130" y1="140" x2="196" y2="140" stroke="currentColor" strokeWidth="1.2" markerEnd="url(#sv-arrow)" />
         <text x="163" y="128" fontSize="9" style={mono} textAnchor="middle" fill="currentColor">{'{"pick": "2"}'}</text>
         <text x="163" y="156" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.6">node_input</text>
@@ -179,7 +179,7 @@ function SaveFigure() {
         <text x="452" y="34" fontSize="10.5" style={mono} fill="currentColor">session state</text>
         <text x="678" y="34" fontSize="8.5" style={mono} textAnchor="end" fill="currentColor" opacity="0.6">one dict per run</text>
         <line x1="440" y1="42" x2="690" y2="42" stroke="var(--hairline)" />
-        {keyRow(60, "candidates", "written by the gate, 4d", "currentColor")}
+        {keyRow(60, "candidates", "written by the gate", "currentColor")}
         {keyRow(80, "direction", '"Tiny dragon guards…"')}
         {keyRow(100, "angle", "the twist")}
         {keyRow(120, "hook", "the sticker line")}
@@ -201,7 +201,7 @@ function SaveFigure() {
         <text x="838" y="62" fontSize="7.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.6">shows the merged keys</text>
         <line x1="690" y1="110" x2="748" y2="114" stroke="currentColor" strokeOpacity="0.6" strokeWidth="1.1" markerEnd="url(#sv-arrow)" />
         <rect x="750" y="100" width="176" height="28" rx="8" {...box} />
-        <text x="838" y="114" fontSize="9.5" style={mono} textAnchor="middle" fill="currentColor">remember_pick · step 6</text>
+        <text x="838" y="114" fontSize="9.5" style={mono} textAnchor="middle" fill="currentColor">remember_pick · memory</text>
         <text x="838" y="124" fontSize="7.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.6">reads direction, angle</text>
 
         {/* output */}
@@ -244,7 +244,7 @@ function StateNode() {
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">The graph so far</p>
           <h2 className="font-display mt-2 text-2xl">The fan-out, propose_directions, your pick, and now a writer.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            Step 4 built the research fan-out, the join, propose_directions and the gate. This part appends <code className="font-mono text-fg">persist_direction</code> after the gate: a function node that turns your number into the direction and writes it where the rest of the run can read it.
+            The workflow extends the research fan-out, join synchronization, direction proposer, and approval gate. This stage appends <code className="font-mono text-fg">persist_direction</code> after the gate: a function node that maps the selected choice into state for downstream nodes to read.
           </p>
           <div className="mt-4">
             <SnakeGraph only={["__START__", "scan_trends", "read_backlog", "join_research", "propose_directions", "direction_gate", "persist_direction"]} highlight="persist_direction" cols={6} label="The graph after this part: START fans out to scan_trends and read_backlog, then join_research, propose_directions, direction_gate, and the new persist_direction." />
@@ -270,7 +270,7 @@ function StateNode() {
             <>
               <code className="font-mono text-fg">persist_direction</code> in <code className="font-mono text-fg">agent/graph.py</code> is shown. The gate's answer,{" "}
               <code className="font-mono text-fg">{"{"}"pick": "2"{"}"}</code>, arrives as <code className="font-mono text-fg">node_input</code>. The{" "}
-              <code className="font-mono text-fg">candidates</code> parameter is bound from state, where the gate wrote the four candidates in 4d. The function resolves the number to a
+              <code className="font-mono text-fg">candidates</code> parameter is bound from state, where the gate wrote the four candidates. The function resolves the number to a
               candidate and outputs it for the next node. Replace the TODO line with a <code className="font-mono text-fg">yield Event(state={"{...}"})</code> carrying four keys:{" "}
               <code className="font-mono text-fg">direction</code>, <code className="font-mono text-fg">angle</code>, <code className="font-mono text-fg">hook</code>, and{" "}
               <code className="font-mono text-fg">user:prefs</code>.
@@ -300,7 +300,7 @@ function StateNode() {
         <EditPanel
           label="Edit 2 of 2"
           title="Append persist_direction to the chain."
-          intro={<>This step's app is <code className="font-mono text-fg">stage3_router</code>; only its <code className="font-mono text-fg">Workflow</code> is shown. The chain ends at the gate; add <code className="font-mono text-fg">persist_direction</code> after it so the answer has a reader.</>}
+          intro={<>The stage app is <code className="font-mono text-fg">stage3_router</code>; only its <code className="font-mono text-fg">Workflow</code> is shown. The chain ends at the gate; add <code className="font-mono text-fg">persist_direction</code> after it so the answer has a reader.</>}
           pill={status ? (persistOk ? "persist_direction in the chain ✓" : `chain ends at ${status.chain[status.chain.length - 1] ?? "…"}`) : "…"}
           ok={persistOk}
           hint={hintA}
@@ -427,8 +427,8 @@ function RouterNode() {
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">The router node</p>
           <h2 className="font-display mt-2 text-2xl">A function that returns a route.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            A router is a function node like the readers in step 4. It takes the previous node's output, decides, and returns an{" "}
-            <code className="font-mono text-fg">Event</code> whose <code className="font-mono text-fg">route</code> field names the edge to take next.
+            A router is a specialized function node. It evaluates the previous node's output against deterministic conditions and returns an{" "}
+            <code className="font-mono text-fg">Event</code> whose <code className="font-mono text-fg">route</code> field specifies which outgoing branch to take next.
             In the edge list, a tuple whose target is a dict maps each route name to a node, so the router and the edge list have to agree on the names.
             Here the decision is a word list and a regex: the same direction gives the same route every time, and the check costs nothing, since it runs before the scripter and the render.
           </p>
@@ -440,7 +440,7 @@ function RouterNode() {
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Where the graph stands</p>
           <h2 className="font-display mt-2 text-2xl">The chain ends at persist_direction.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            After 5a the chain resolves your pick into the chosen candidate, a dict with a title, an angle, and a hook, and its output is that
+            The chain resolves your pick into the chosen candidate, a dict with a title, an angle, and a hook, and its output is that
             dict. The router reads it next. The router is missing its last line. The two nodes it routes to are defined below.
           </p>
           <div className="mt-4 grid gap-4 lg:grid-cols-[1.1fr_1fr]">
@@ -592,12 +592,12 @@ function RouterNode() {
 /* ───────────────────────── 5c ───────────────────────── */
 
 const MODES = [
-  { mode: "chat", color: CYAN, who: "The step 3 agent, a root agent.", what: "A conversation. Each user message is a turn; the model decides when to call tools, when to ask, and when to stop. Required for a root agent; not allowed after another node." },
+  { mode: "chat", color: CYAN, who: "Root or standalone conversational agents.", what: "A conversation. Each user message is a turn; the model decides when to call tools, when to ask, and when to stop. Required for a root agent; not allowed after another node." },
   { mode: "single_turn", color: AMBER, who: "propose_directions, scripter.", what: "One model call, no conversation. Input from the previous node, one structured object out. The default for an agent used as a node." },
   { mode: "task", color: PURPLE, who: "quarantine, from now on.", what: "The model works with its tools for as many calls as it needs and ends by calling the built-in finish_task tool. What it hands to finish_task, typed by output_schema, is the node's output." },
 ];
 
-const CODE_TOOLS = `"""Tools for the quarantine node (step 5b).
+const CODE_TOOLS = `"""Tools for the quarantine node.
 
 The node is a task-mode agent: it calls these until find_policy_hits comes
 back clean, then calls finish_task with the cleaned direction. Both tools are
@@ -709,7 +709,7 @@ function ModesFigure() {
 
         {/* chat */}
         <text x="14" y="20" fontSize="11" style={mono} fill={CYAN}>chat</text>
-        <text x="60" y="20" fontSize="8.5" style={mono} fill="currentColor" opacity="0.6">a conversation · the root agent of step 3</text>
+        <text x="60" y="20" fontSize="8.5" style={mono} fill="currentColor" opacity="0.6">a conversation · root conversational agent</text>
         {node(14, 100, 56, "you")}
         {node(220, 100, 80, "model", CYAN)}
         <line x1="70" y1="106" x2="218" y2="106" stroke="currentColor" strokeWidth="1.1" markerEnd="url(#md-arrow)" />
@@ -905,7 +905,7 @@ function TaskNode() {
           title="Assemble the task node."
           intro={
             <>
-              <code className="font-mono text-fg">quarantine</code> ships as the 5b placeholder. The button below puts the Agent skeleton in its place: a name, the model, and
+              <code className="font-mono text-fg">quarantine</code> begins as a placeholder function. The button below puts the Agent skeleton in its place: a name, the model, and
               the instruction, with a TODO line where three arguments are missing. Add them and save: <code className="font-mono text-fg">mode="task"</code>,{" "}
               <code className="font-mono text-fg">tools=[find_policy_hits, suggest_replacement]</code>, and <code className="font-mono text-fg">output_schema=CleanedDirection</code>.
             </>
@@ -938,9 +938,9 @@ function TaskNode() {
                 </div>
               </div>
               <p className="max-w-3xl text-sm text-fg-muted">
-                Two things make this a task and not a single turn: the agent has tools, and it ends by calling <code className="font-mono text-fg">finish_task</code>. ADK adds
-                that tool itself when <code className="font-mono text-fg">mode="task"</code> is set, and shapes its parameters from{" "}
-                <code className="font-mono text-fg">output_schema</code>, so the node's output is a <code className="font-mono text-fg">CleanedDirection</code>, not free text.
+                Task mode equips the agent with tools and concludes execution by calling <code className="font-mono text-fg">finish_task</code>. ADK adds
+                that tool automatically when <code className="font-mono text-fg">mode="task"</code> is set, shaping its parameters from{" "}
+                <code className="font-mono text-fg">output_schema</code> to produce a typed <code className="font-mono text-fg">CleanedDirection</code>.
               </p>
               <div className="flex flex-col gap-3 rounded-2xl border border-hairline bg-card p-4 md:flex-row md:items-center md:justify-between">
                 <p className="text-sm text-fg-muted">

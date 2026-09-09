@@ -231,7 +231,7 @@ export function Deploy() {
         kicker="Step 9 · Deploy"
         color={GREEN}
         title="The Runner, an app on top, Cloud Run."
-        blurb="Every step so far ran the graph through adk web. The app in vibestudio/ runs it through the same class the dev UI uses, a Runner, with its own page in front and one event stream between them. Read how it is put together, run it here, then ship it."
+        blurb="Deploy the production application to Cloud Run. The service wraps the workflow in an ADK Runner, exposing Server-Sent Events (SSE) to stream live execution progress directly to the web client."
       />
 
       <In delay={0.2}>
@@ -273,9 +273,9 @@ export function Deploy() {
   web/                      the React page
   Dockerfile · deploy.py · run.sh
 
-The stage apps of steps 3 to 8 (stage0_prompt … stage6_video) each wired a subset of this graph.
-The app skips them and runs wf from agent/graph.py, the complete workflow. The delivery console
-of step 8 is not needed here: runner.py polls Veo and answers the pending call itself.`}</pre>
+The stage exercise apps (stage0_prompt … stage6_video) each wired an incremental subset of this graph.
+The production application runs wf from agent/graph.py, the complete workflow. The standalone delivery
+process is not needed here: runner.py polls Veo and answers the pending call itself.`}</pre>
           </div>
         </section>
       </In>

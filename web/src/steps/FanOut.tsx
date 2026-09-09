@@ -30,10 +30,10 @@ const RED = COLORS.red;
 
 type Part = "a" | "b" | "c" | "d";
 const PARTS: { id: Part; label: string }[] = [
-  { id: "a", label: "The ADK graph" },
-  { id: "b", label: "Declare the fan-out" },
-  { id: "c", label: "The agent node" },
-  { id: "d", label: "Human in the loop" },
+  { id: "a", label: "Graph architecture and execution chains" },
+  { id: "b", label: "Parallel research fan-out" },
+  { id: "c", label: "Agent nodes" },
+  { id: "d", label: "Human-in-the-loop" },
 ];
 
 export function FanOut() {
@@ -89,24 +89,17 @@ const EDGE_GRAMMAR = `edges=[
     (policy_check, {"OK": scripter,             # a dict target: the router's route name picks the edge
                     "BLOCK": quarantine}),
     (quarantine, scripter),                     # the cleaned direction rejoins the main line
-    (scripter, render_desk, store_video),       # step 8: the render, then its result
+    (scripter, render_desk, store_video),       # video generation: the render, then its result
 ]`;
-
-const REUSE = [
-  { app: "stage1_fanout", nodes: "scan_trends · read_backlog · join_research", edges: 2, what: "the research fan-out and join" },
-  { app: "stage2_direction", nodes: "+ propose_directions · direction_gate · persist_direction", edges: 3, what: "adds the agent node and the human pause" },
-  { app: "stage3_router", nodes: "+ policy_check · scripter · quarantine", edges: 5, what: "adds the router and the script" },
-  { app: "agent/graph.py · wf", nodes: "the same nodes, plus read_feedback (step 7) and render_desk, store_video (step 8)", edges: 16, what: "the production graph the app runs" },
-];
 
 function GraphIntro() {
   return (
     <div className="space-y-12">
       <StepHeader
-        kicker="Step 4a · The ADK graph"
+        kicker="Step 4a · Graph architecture and execution chains"
         color={AMBER}
         title="Nodes and edges."
-        blurb="A Workflow is a graph. A node is a unit of work; an edge says which node runs after which. In step 3 the model decided what ran and when. Here the edge list decides, and the model only works inside its node."
+        blurb="An ADK Workflow structures execution as a directed graph. Nodes represent discrete units of work, and edges define deterministic sequencing. The edge list governs orchestration, constraining model execution to dedicated nodes."
       />
 
       <In delay={0.1}>
@@ -135,47 +128,12 @@ function GraphIntro() {
             </pre>
             <div className="border-t border-hairline px-4 py-3 text-xs text-fg-muted">
               <p>
-                Each entry is a <b className="text-fg">chain</b>: the nodes run left to right. Two chains that leave the
-                same node run <b className="text-fg">in parallel</b>. Two chains that arrive at a <b className="text-fg">JoinNode</b>{" "}
-                are joined there; it waits for both. A <b className="text-fg">dict</b> in place of a node is a router's
-                exits, keyed by the route name the node returns.
+                Each entry defines a sequential <b className="text-fg">chain</b> where nodes execute in left-to-right order. Chains sharing a source node execute{" "}
+                <b className="text-fg">in parallel</b>. Chains converging on a <b className="text-fg">JoinNode</b> synchronize there, waiting until all inbound branches complete. A{" "}
+                <b className="text-fg">dictionary target</b> maps conditional router outcomes to downstream destination nodes.
               </p>
-              <p className="mt-2">You declare the edges. ADK walks the graph, runs parallel branches together, and stores every node's output as an event in the session.</p>
+              <p className="mt-2">Workflows declare the edge topology in code. The ADK runtime traverses the graph, coordinates concurrent branch execution, and persists each node's output event into the session journal.</p>
             </div>
-          </div>
-        </section>
-      </In>
-
-      <In delay={0.25}>
-        <section className="rounded-3xl border border-hairline bg-card p-6">
-          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">The node set and the stage graphs</p>
-          <h2 className="font-display mt-2 text-2xl">The sandbox apps reuse the production nodes.</h2>
-          <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            Every node function lives once, in <code className="font-mono text-fg">agent/graph.py</code>. The three stage apps
-            import those functions and declare their own, shorter edge lists. Nothing is copied. When you add an edge to the
-            production list in steps 7 and 9, the same functions gain a new neighbor and the live map grows a node.
-          </p>
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="font-mono text-[10px] uppercase tracking-wider text-fg-muted">
-                <tr>
-                  <th className="py-2 pr-4">App</th>
-                  <th className="py-2 pr-4">Nodes it declares</th>
-                  <th className="py-2 pr-4">Edges</th>
-                  <th className="py-2">Covers</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-hairline">
-                {REUSE.map((r) => (
-                  <tr key={r.app}>
-                    <td className="py-2 pr-4 font-mono text-xs">{r.app}</td>
-                    <td className="py-2 pr-4 font-mono text-xs text-fg-muted">{r.nodes}</td>
-                    <td className="py-2 pr-4 font-mono text-xs">{r.edges}</td>
-                    <td className="py-2 text-fg-muted">{r.what}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </section>
       </In>
@@ -477,7 +435,7 @@ function DeclareFanOut() {
   return (
     <div className="space-y-12">
       <StepHeader
-        kicker="Step 4b · Declare the fan-out"
+        kicker="Step 4b · Parallel research fan-out"
         color={AMBER}
         title="Build the research fan-out."
         blurb="Two readers run in parallel and a join waits for both. You define the join and write the two edges in stage1_fanout/agent.py, then run it in adk web."
@@ -488,9 +446,9 @@ function DeclareFanOut() {
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">The graph to build</p>
           <h2 className="font-display mt-2 text-2xl">Both readers run, then the join releases.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            In step 3 the model decided whether to call each research tool. Here the graph decides: both readers leave START, so both
-            run, and the join does not release until both have reported. The output of this stage is the join's dict. In 4c an agent
-            node takes it from there.
+            The graph enforces deterministic research retrieval. Both reader chains originate at START, ensuring both
+            execute concurrently on every run. The join barrier synchronizes the branches and passes an aggregated
+            dictionary to downstream nodes.
           </p>
           <div className="mt-4 overflow-x-auto rounded-2xl border border-hairline bg-overlay py-2">
             <Stage1Graph />
@@ -646,7 +604,7 @@ function DeclareFanOut() {
 
 const HITL_POINTS = [
   { t: "Where a person belongs", d: "At the decisions that need judgment: which direction to film, whether the thumbnail is right. Everything else in the pipeline can run without input." },
-  { t: "Why a prompt is not enough", d: "In step 3 the instruction asked the model to confirm the direction, and one message overrode it. A request in text is advice to the model, not a control on the graph." },
+  { t: "Why a prompt is not enough", d: "In a single prompt, confirmation requests are advisory guidelines that user prompts can easily override. A graph workflow introduces a code-level barrier that the model cannot bypass." },
   { t: "What ADK provides", d: "A node yields RequestInput. The graph suspends, the session records an open call, and no process waits. A function_response carrying that call's id is the only thing that resumes it." },
 ];
 
@@ -665,7 +623,7 @@ const CODE_REQUEST_INPUT_SAMPLE = `yield RequestInput(
 const REQUEST_INPUT_FIELDS = [
   { f: "message", what: "The prompt shown to the person." },
   { f: "response_schema", what: "A JSON schema. adk web renders it as the form, and ADK validates the answer against it before the graph resumes. Here one field, pick." },
-  { f: "payload", what: "Data that travels with the request for a frontend to display. Here the candidates. adk web ignores it; Vibe Studio reads it from step 5 on." },
+  { f: "payload", what: "Data that travels with the request for a frontend to display. Here the candidates. adk web ignores it; VibeStudio reads it during execution." },
   { f: "interrupt_id", what: "ADK assigns it when the yield runs." },
 ];
 
@@ -714,7 +672,7 @@ function SchemaFigure() {
         <rect x="256" y="180" width="356" height="50" rx="12" {...box} />
         <text x="268" y="200" fontSize="11" fontFamily="var(--font-mono)" fill="currentColor" opacity="0.8">persist_direction(node_input, ...)</text>
         <text x="268" y="219" fontSize="10.5" fontFamily="var(--font-mono)" fill="currentColor">reads "pick" by name</text>
-        <text x="8" y="205" fontSize="10.5" fontFamily="var(--font-mono)" fill="currentColor" opacity="0.7">step 5, next node</text>
+        <text x="8" y="205" fontSize="10.5" fontFamily="var(--font-mono)" fill="currentColor" opacity="0.7">downstream node</text>
         <line x1="132" y1="201" x2="254" y2="201" stroke="currentColor" strokeOpacity="0.4" strokeWidth="1" strokeDasharray="3 3" />
       </svg>
       <figcaption className="mt-2 text-xs text-fg-muted">The schema is rendered as the form, the answer is validated against it, and the next node reads the same key.</figcaption>
@@ -736,7 +694,7 @@ function PausedGraphFigure() {
   const edge = (x1: number, y1: number, x2: number, y2: number) => <line key={`${x1}-${y1}-${x2}-${y2}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="currentColor" strokeWidth="1.2" markerEnd="url(#pg-arrow)" />;
   return (
     <figure className="m-0">
-      <svg viewBox="0 0 580 200" role="img" aria-label="The stage 2 chain runs from START through the two readers, the join and propose_directions to direction_gate, where the run is paused waiting for a function_response. persist_direction, which step 5 adds, is shown dashed below the gate." className="h-auto w-full text-fg" style={{ maxWidth: "100%" }}>
+      <svg viewBox="0 0 580 200" role="img" aria-label="The stage 2 chain runs from START through the two readers, the join and propose_directions to direction_gate, where the run is paused waiting for a function_response. persist_direction is shown dashed below the gate." className="h-auto w-full text-fg" style={{ maxWidth: "100%" }}>
         <defs>
           <marker id="pg-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />
@@ -757,12 +715,12 @@ function PausedGraphFigure() {
         {edge(296, 85, 308, 85)}
         {edge(418, 85, 430, 85)}
         <line x1="486" y1="98" x2="486" y2="150" stroke="currentColor" strokeOpacity="0.5" strokeWidth="1.2" strokeDasharray="4 3" markerEnd="url(#pg-arrow)" />
-        <text x="494" y="128" fontSize="9" fontFamily="var(--font-mono)" fill="currentColor" opacity="0.6">step 5</text>
+        <text x="494" y="128" fontSize="9" fontFamily="var(--font-mono)" fill="currentColor" opacity="0.6">next stage</text>
         <text x="418" y="118" fontSize="9.5" fontFamily="var(--font-mono)" fill={AMBER} textAnchor="end">paused here</text>
         <text x="418" y="131" fontSize="9.5" fontFamily="var(--font-mono)" fill="currentColor" opacity="0.7" textAnchor="end">an open adk_request_input call</text>
         <text x="418" y="144" fontSize="9.5" fontFamily="var(--font-mono)" fill="currentColor" opacity="0.7" textAnchor="end">resumes on function_response(interrupt_id)</text>
       </svg>
-      <figcaption className="mt-2 text-xs text-fg-muted">Where the graph stands after edit 2. The run ends after your answer because the gate is the last node; step 5 starts with the node that reads it.</figcaption>
+      <figcaption className="mt-2 text-xs text-fg-muted">Where the graph stands after edit 2. The run ends after your answer because the gate is the last node in this stage; downstream stages continue from the node that reads it.</figcaption>
     </figure>
   );
 }
@@ -828,7 +786,7 @@ function HumanInTheLoop() {
   return (
     <div className="space-y-12">
       <StepHeader
-        kicker="Step 4d · Human in the loop"
+        kicker="Step 4d · Human-in-the-loop"
         color={AMBER}
         title="Human in the loop."
         blurb="A workflow that spends money and publishes on a creator's behalf needs a person at the decisions that require judgment. In ADK that decision is a node that suspends the graph until someone answers."
@@ -914,13 +872,13 @@ function HumanInTheLoop() {
               <p>
                 The person's answer becomes the next node's <code className="font-mono text-fg">node_input</code>. That node is code,
                 not a model: <code className="font-mono text-fg">persist_direction</code> reads <code className="font-mono text-fg">pick</code>{" "}
-                by name, and the policy check in step 5 is deterministic code too.
-                Free text would hand every later step a parsing problem, and each would solve it differently. A{" "}
+                by name, passing directly into downstream deterministic validation logic.
+                Free text would hand downstream nodes a parsing problem, and each would solve it differently. A{" "}
                 <code className="font-mono text-fg">response_schema</code> settles the shape once, at the pause, and ADK validates the
                 answer against it before the graph resumes.
               </p>
               <p>
-                The same schema is the frontend contract. adk web renders it as a small form. Vibe Studio, which you start in step 5,
+                The same schema acts as a frontend contract. ADK Web renders it as a form, while the production VibeStudio application
                 renders the same schema as a radio list, and a chat bot or a phone app could render it without any change to the
                 graph. <code className="font-mono text-fg">payload</code> travels with the request for that frontend to display.
               </p>
@@ -1078,10 +1036,10 @@ function HumanInTheLoop() {
 /* ───────────────────────── 4c ───────────────────────── */
 
 const AGENT_NODE_POINTS = [
-  { t: "Same class as step 3", d: "Agent, with a name, a model, an instruction, and an output_schema. Step 3 gave it tools and let it talk to you. Here it gets neither." },
+  { t: "Agent as a workflow node", d: "Configures Agent with a name, model, instruction, and output_schema in single_turn mode without tool loops or open-ended conversation." },
   { t: "One call, one typed answer", d: "Used as a node, an agent runs in single_turn mode by default. Its input is the previous node's output, the join's dict, delivered as JSON. It answers once and the answer goes to the next node." },
   { t: "Typed by output_schema", d: "Directions is a Pydantic model with exactly four candidates. The model must return that shape, and later nodes read it by field name, as code." },
-  { t: "One of the four is bait", d: "Candidates 1 to 3 are publishable. Candidate 4 is the outrage pitch a rival channel would run, and its title must contain a word from agent/policy_words.txt. Step 5 adds the gate that refuses it." },
+  { t: "One of the four is bait", d: "Candidates 1 to 3 offer viable channel concepts. Candidate 4 intentionally introduces a policy-violating concept to test downstream safety validation." },
 ];
 
 const CODE_INSTRUCTION = `# agent/graph.py
@@ -1157,7 +1115,7 @@ function AgentNode() {
   return (
     <div className="space-y-12">
       <StepHeader
-        kicker="Step 4c · The agent node"
+        kicker="Step 4c · Agent nodes"
         color={AMBER}
         title="The first agent node."
         blurb="Stage 2 puts an agent after the join. You define it in stage2_direction/agent.py, add it to the chain, and run it: the join's research dict goes in, trends, backlog and your idea, and four typed candidates come out."
@@ -1205,7 +1163,7 @@ function AgentNode() {
           <h2 className="font-display mt-2 text-2xl">The arguments of an agent node.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
             <code className="font-mono text-fg">name</code> is the node's name on the map. <code className="font-mono text-fg">model</code> is{" "}
-            <code className="font-mono text-fg">config.MODEL</code>, the same Gemini model step 3 used. <code className="font-mono text-fg">instruction</code>{" "}
+            <code className="font-mono text-fg">config.MODEL</code>, the configured Gemini model. <code className="font-mono text-fg">instruction</code>{" "}
             is a string constant in <code className="font-mono text-fg">agent/graph.py</code>, imported into the app file. And{" "}
             <code className="font-mono text-fg">output_schema</code> is the <code className="font-mono text-fg">Directions</code> model.
           </p>

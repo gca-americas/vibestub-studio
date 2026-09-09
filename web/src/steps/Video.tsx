@@ -409,8 +409,8 @@ function TheTool() {
             Then it restarts the workflow. It writes the result to <code className="font-mono text-fg">runs/state.json</code> and sends the paused session one
             message: a <code className="font-mono text-fg">function_response</code> whose id is the id of the pending call, carrying the clip's URL. ADK matches the
             id to the call, marks it answered, and continues the run from where it stopped: the render_desk node completes, and the next node,{" "}
-            <code className="font-mono text-fg">store_video</code>, runs. Nodes that already ran are not run again. In step 9 the Vibe Studio app runs this same
-            loop inside its own server, so no one has to type the command.
+            <code className="font-mono text-fg">store_video</code>, runs. Nodes that already ran are not run again. In production deployment, the VibeStudio server runs this same
+            loop automatically, so manual commands are unnecessary.
           </p>
           <PollerFigure />
           <div className="mt-4 overflow-hidden rounded-2xl border border-hairline bg-input">
@@ -469,7 +469,7 @@ function TheTool() {
 
 const CODE_STORE = `# agent/graph.py
 def store_video(node_input):
-    """After render_desk (step 8): the delivered render, from runs/state.json
+    """After render_desk: the delivered render, from runs/state.json
     where deliver wrote it, into shared state and the run's output."""
     render = state.load().get("render") or {}
     url = render.get("url") or ""
@@ -497,7 +497,7 @@ function WorkflowFigure() {
   return (
     <figure className="m-0 mt-4">
       <div className="overflow-x-auto">
-        <svg viewBox="0 0 1180 260" className="h-auto w-full min-w-[900px] text-fg" role="img" aria-label="The workflow through step 8: the step 7 graph, then scripter to the new render_desk to the new store_video.">
+        <svg viewBox="0 0 1180 260" className="h-auto w-full min-w-[900px] text-fg" role="img" aria-label="The workflow with video generation: the research readers, scripter, and the new render_desk and store_video nodes.">
           <defs>
             <marker id="wf8-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
               <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />

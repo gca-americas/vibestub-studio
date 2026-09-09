@@ -126,13 +126,11 @@ function GraphIntro() {
             <pre className="overflow-x-auto px-4 py-3 font-mono text-[11.5px] leading-relaxed text-fg">
               <code>{EDGE_GRAMMAR}</code>
             </pre>
+            <div className="overflow-x-auto border-t border-hairline px-4 py-3">
+              <EdgeShapesFigure />
+            </div>
             <div className="border-t border-hairline px-4 py-3 text-xs text-fg-muted">
-              <p>
-                Each entry defines a sequential <b className="text-fg">chain</b> where nodes execute in left-to-right order. Chains sharing a source node execute{" "}
-                <b className="text-fg">in parallel</b>. Chains converging on a <b className="text-fg">JoinNode</b> synchronize there, waiting until all inbound branches complete. A{" "}
-                <b className="text-fg">dictionary target</b> maps conditional router outcomes to downstream destination nodes.
-              </p>
-              <p className="mt-2">Workflows declare the edge topology in code. The ADK runtime traverses the graph, coordinates concurrent branch execution, and persists each node's output event into the session journal.</p>
+              <p>Workflows declare the edge topology in code. The ADK runtime traverses the graph, coordinates concurrent branch execution, and persists each node's output event into the session journal.</p>
             </div>
           </div>
         </section>
@@ -142,6 +140,88 @@ function GraphIntro() {
         <EdgesExercise />
       </In>
     </div>
+  );
+}
+
+/* the four shapes an edge entry can take, drawn from the production list */
+function EdgeShapesFigure() {
+  const box = { fill: "var(--overlay)", stroke: "var(--hairline)" };
+  const mono = { fontFamily: "var(--font-mono)" } as const;
+  const node = (x: number, y: number, w: number, label: string, color?: string) => (
+    <g>
+      <rect x={x} y={y} width={w} height={22} rx={7} fill={color ? tint(color, 0.1) : box.fill} stroke={color ?? box.stroke} strokeWidth={color ? 1.3 : 1} />
+      <text x={x + w / 2} y={y + 15} fontSize="9" style={mono} textAnchor="middle" fill={color ?? "currentColor"}>{label}</text>
+    </g>
+  );
+  const arrow = (x1: number, y1: number, x2: number, y2: number, color = "currentColor") => (
+    <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth="1.1" markerEnd="url(#eg-arrow)" />
+  );
+  const entry = (x: number, y: number, text: string) => (
+    <text x={x} y={y} fontSize="8.5" style={mono} fill="currentColor" opacity="0.75">{text}</text>
+  );
+  const caption = (x: number, y: number, text: string, color?: string) => (
+    <text x={x} y={y} fontSize="8.5" style={mono} fill={color ?? "currentColor"} opacity={color ? 1 : 0.7}>{text}</text>
+  );
+  return (
+    <figure className="m-0 min-w-[520px]">
+      <svg viewBox="0 0 640 330" role="img" aria-label="The four shapes an edge entry takes. A chain: START, scan_trends, join_research run in that order. Two entries from the same source: scan_trends and read_backlog both start when START finishes, at the same time. Two chains arriving at a JoinNode: join_research waits for both, then one chain continues. A dictionary target: policy_check's route name, OK or BLOCK, picks which edge is taken." className="h-auto w-full text-fg">
+        <defs>
+          <marker id="eg-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />
+          </marker>
+        </defs>
+        <line x1="320" y1="8" x2="320" y2="322" stroke="var(--hairline)" />
+        <line x1="10" y1="166" x2="630" y2="166" stroke="var(--hairline)" />
+
+        {/* 1 · a chain */}
+        {entry(12, 22, "(START, scan_trends, join_research)")}
+        {node(12, 66, 50, "START")}
+        {arrow(62, 77, 96, 77)}
+        {node(98, 66, 92, "scan_trends")}
+        {arrow(190, 77, 224, 77)}
+        {node(226, 66, 84, "join_research", CYAN)}
+        {caption(12, 116, "one entry, left to right:")}
+        {caption(12, 128, "each node starts when the one before it is done")}
+
+        {/* 2 · two entries from one source */}
+        {entry(332, 22, "(START, scan_trends, …)")}
+        {entry(332, 34, "(START, read_backlog, …)")}
+        {node(332, 66, 50, "START")}
+        <path d="M382 77 C 404 77, 404 55, 424 55" fill="none" stroke="currentColor" strokeWidth="1.1" markerEnd="url(#eg-arrow)" />
+        <path d="M382 77 C 404 77, 404 99, 424 99" fill="none" stroke="currentColor" strokeWidth="1.1" markerEnd="url(#eg-arrow)" />
+        {node(426, 44, 92, "scan_trends")}
+        {node(426, 88, 92, "read_backlog")}
+        {caption(332, 128, "the same source in two entries:")}
+        {caption(332, 140, "both start the moment START is done, at the same time", GREEN)}
+
+        {/* 3 · arriving at a JoinNode */}
+        {entry(12, 186, "(START, scan_trends, join_research)")}
+        {entry(12, 198, "(START, read_backlog, join_research)")}
+        {entry(12, 210, "(join_research, propose_directions, …)")}
+        {node(12, 226, 72, "scan_trends")}
+        {node(12, 264, 72, "read_backlog")}
+        <path d="M84 237 C 100 237, 100 256, 108 256" fill="none" stroke="currentColor" strokeWidth="1.1" markerEnd="url(#eg-arrow)" />
+        <path d="M84 275 C 100 275, 100 256, 108 256" fill="none" stroke="currentColor" strokeWidth="1.1" markerEnd="url(#eg-arrow)" />
+        {node(110, 245, 82, "join_research", CYAN)}
+        {arrow(192, 256, 210, 256, CYAN)}
+        {node(212, 245, 102, "propose_directions", PURPLE)}
+        {caption(12, 308, "the join waits for every entry that ends in it,", CYAN)}
+        {caption(12, 320, "then the entry that starts from it continues")}
+
+        {/* 4 · a dict target */}
+        {entry(332, 186, "(policy_check, {\"OK\": scripter,")}
+        {entry(412, 198, "\"BLOCK\": quarantine})")}
+        {node(332, 245, 84, "policy_check", RED)}
+        <path d="M416 256 C 440 256, 440 234, 462 234" fill="none" stroke={GREEN} strokeWidth="1.1" markerEnd="url(#eg-arrow)" />
+        <path d="M416 256 C 440 256, 440 278, 462 278" fill="none" stroke={RED} strokeWidth="1.1" markerEnd="url(#eg-arrow)" />
+        <text x="440" y="230" fontSize="8" style={mono} fill={GREEN} textAnchor="middle">"OK"</text>
+        <text x="440" y="292" fontSize="8" style={mono} fill={RED} textAnchor="middle">"BLOCK"</text>
+        {node(464, 223, 72, "scripter", PURPLE)}
+        {node(464, 267, 72, "quarantine", PURPLE)}
+        {caption(332, 308, "the router returns a route name;")}
+        {caption(332, 320, "the dict says which edge that name takes", RED)}
+      </svg>
+    </figure>
   );
 }
 

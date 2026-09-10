@@ -350,7 +350,7 @@ export function Summary() {
               and select the event you are in.
             </li>
             <li>Click on your video.</li>
-            <li>Write your thoughts about it, or brag about it, on social.</li>
+            <li>Share it on social media and say what you made: the idea you started from, and the video the workflow made of it.</li>
           </ol>
           <ShareImage />
         </section>

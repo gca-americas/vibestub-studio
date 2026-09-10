@@ -975,6 +975,16 @@ def _git(*args: str) -> str:
 RUNNING_COMMIT = _git("rev-parse", "--short", "HEAD")
 
 
+@router.get("/room")
+async def room():
+    """The vibetube.dev room the app publishes to, from .env: the platform
+    URL and the event code, and the room's address built from them."""
+    platform = (os.environ.get("VIBETUBE_URL") or "https://vibetube.dev").rstrip("/")
+    event = os.environ.get("VIBETUBE_EVENT", "")
+    return {"platform_url": platform, "event_code": event,
+            "room_url": f"{platform}/e/{event}" if event else ""}
+
+
 @router.get("/version")
 async def version():
     """What this server is running, and whether the checkout has moved since."""

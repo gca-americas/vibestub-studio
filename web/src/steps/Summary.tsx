@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { In, StepHeader } from "../components/shared";
-import { api } from "../lib/api";
 import { COLORS, tint } from "./colors";
 import { SnakeGraph } from "./Overview";
 
@@ -200,22 +199,6 @@ const RULES: { text: string; figure: React.ReactNode }[] = [
 
 /* ── share the video ────────────────────────────────────────────────────── */
 
-const SHARE_EXAMPLE = "https://vibetube.dev/e/sandbox?v=v_d0af3758159d";
-
-/** The student's room on vibetube.dev, from the workbench's .env. */
-function RoomLink() {
-  const [room, setRoom] = useState<{ room_url: string; event_code: string } | null>(null);
-  useEffect(() => {
-    api.room().then(setRoom).catch(() => setRoom(null));
-  }, []);
-  if (!room?.room_url) return <span className="font-mono text-xs text-fg-muted">vibetube.dev/e/&lt;your event code&gt; · VIBETUBE_EVENT is not set in .env</span>;
-  return (
-    <a href={room.room_url} target="_blank" rel="noreferrer" className="font-mono text-xs underline decoration-hairline underline-offset-4 hover:text-fg">
-      {room.room_url}
-    </a>
-  );
-}
-
 /** The screenshot slot: web/public/share.png when it exists, a marked space until then. */
 function ShareImage() {
   const [missing, setMissing] = useState(false);
@@ -360,14 +343,14 @@ export function Summary() {
           <h2 className="font-display mt-2 text-2xl">Post your video.</h2>
           <ol className="mt-3 max-w-3xl list-decimal space-y-2 pl-5 text-sm text-fg-muted">
             <li>
-              In step 9 the Vibe Studio app published your video to vibetube.dev. Open your room:{" "}
-              <RoomLink />
+              Go to{" "}
+              <a href="https://vibetube.dev" target="_blank" rel="noreferrer" className="font-mono text-fg underline decoration-hairline underline-offset-4">
+                vibetube.dev
+              </a>{" "}
+              and select the event you are in.
             </li>
-            <li>Click your video. The address bar now holds its link. Copy it. A video link looks like this, with your own id after <code className="font-mono text-fg">v=</code>:</li>
-          </ol>
-          <div className="mt-3 rounded-xl border border-hairline bg-input px-4 py-2.5 font-mono text-xs text-fg">{SHARE_EXAMPLE}</div>
-          <ol start={3} className="mt-3 max-w-3xl list-decimal space-y-2 pl-5 text-sm text-fg-muted">
-            <li>Post that link on your social media, with the idea you typed in step 8.</li>
+            <li>Click on your video.</li>
+            <li>Write your thoughts about it, or brag about it, on social.</li>
           </ol>
           <ShareImage />
         </section>

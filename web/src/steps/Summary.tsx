@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { In, StepHeader } from "../components/shared";
-import { COLORS } from "./colors";
+import { COLORS, tint } from "./colors";
 import { SnakeGraph } from "./Overview";
 
 /*
@@ -11,6 +11,212 @@ import { SnakeGraph } from "./Overview";
  */
 
 const PURPLE = COLORS.purple;
+const AMBER = COLORS.amber;
+const CYAN = COLORS.cyan;
+const GREEN = COLORS.green;
+const RED = COLORS.red;
+const BLUE = COLORS.blue;
+const mono = { fontFamily: "var(--font-mono)" } as const;
+
+/* ── the design rules, each with a picture ─────────────────────────────── */
+
+const box = (x: number, y: number, w: number, label: string, color?: string, dashed = false, h = 22) => (
+  <g>
+    <rect x={x} y={y} width={w} height={h} rx={7} fill={color ? tint(color, 0.1) : "var(--overlay)"} stroke={color ?? "var(--hairline)"} strokeWidth={color ? 1.3 : 1} strokeDasharray={dashed ? "4 3" : undefined} />
+    <text x={x + w / 2} y={y + h / 2 + 3.5} fontSize="8.5" style={mono} textAnchor="middle" fill={color ?? "currentColor"}>{label}</text>
+  </g>
+);
+const arrow = (x1: number, y1: number, x2: number, y2: number, color = "currentColor", dashed = false) => (
+  <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth="1.1" strokeDasharray={dashed ? "4 3" : undefined} markerEnd="url(#rule-arrow)" />
+);
+const note = (x: number, y: number, text: string, color?: string, anchor: "start" | "middle" | "end" = "start") => (
+  <text x={x} y={y} fontSize="7.5" style={mono} textAnchor={anchor} fill={color ?? "currentColor"} opacity={color ? 1 : 0.7}>{text}</text>
+);
+const person = (cx: number, cy: number, color = BLUE) => (
+  <g>
+    <circle cx={cx} cy={cy} r="4.5" fill={tint(color, 0.15)} stroke={color} strokeWidth="1.2" />
+    <path d={`M${cx - 8} ${cy + 16} a8 8 0 0 1 16 0`} fill={tint(color, 0.15)} stroke={color} strokeWidth="1.2" />
+  </g>
+);
+
+function RuleFigure({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <svg viewBox="0 0 320 118" role="img" aria-label={label} className="h-auto w-full text-fg">
+      <defs>
+        <marker id="rule-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="context-stroke" />
+        </marker>
+      </defs>
+      {children}
+    </svg>
+  );
+}
+
+const RULES: { text: string; figure: React.ReactNode }[] = [
+  {
+    text: "Graphs pause for people and for receipts, never for a wait. RequestInput and the pending tool call both suspend the run; nothing stays alive on a timer.",
+    figure: (
+      <RuleFigure label="Two paused nodes: direction_gate, resumed by a person's answer, and render_desk, resumed by the receipt of the render. A clock, struck out: nothing waits on a timer.">
+        {person(60, 14)}
+        {note(60, 46, "a person answers", BLUE, "middle")}
+        {arrow(60, 50, 60, 62, BLUE)}
+        {box(16, 64, 88, "direction_gate", AMBER)}
+        <rect x="186" y="8" width="26" height="30" rx="3" fill="var(--overlay)" stroke={AMBER} strokeWidth="1.1" />
+        <line x1="191" y1="16" x2="207" y2="16" stroke={AMBER} strokeWidth="1" /><line x1="191" y1="22" x2="207" y2="22" stroke={AMBER} strokeWidth="1" /><line x1="191" y1="28" x2="203" y2="28" stroke={AMBER} strokeWidth="1" />
+        {note(199, 50, "the render's receipt", AMBER, "middle")}
+        {arrow(199, 54, 199, 62, AMBER)}
+        {box(155, 64, 88, "render_desk", AMBER)}
+        {note(60, 100, "paused, on disk", undefined, "middle")}
+        {note(199, 100, "paused, on disk", undefined, "middle")}
+        <circle cx="290" cy="75" r="11" fill="none" stroke={RED} strokeWidth="1.2" />
+        <line x1="290" y1="75" x2="290" y2="68" stroke={RED} strokeWidth="1.2" /><line x1="290" y1="75" x2="295" y2="78" stroke={RED} strokeWidth="1.2" />
+        <line x1="280" y1="86" x2="300" y2="64" stroke={RED} strokeWidth="1.6" />
+        {note(290, 100, "never a wait", RED, "middle")}
+      </RuleFigure>
+    ),
+  },
+  {
+    text: "Every resume is one function_response carrying the call's id, whoever sends it: a page, a console, another process, after a restart.",
+    figure: (
+      <RuleFigure label="Three senders, a page, a console and another process after a restart, each sending the same function_response with the call's id into the one open call.">
+        {box(8, 8, 92, "the page", BLUE)}
+        {box(8, 42, 92, "a console", BLUE)}
+        {box(8, 76, 92, "another process", BLUE)}
+        {note(54, 112, "even after a restart", undefined, "middle")}
+        <path d="M100 19 C 140 19, 150 53, 186 53" fill="none" stroke="currentColor" strokeWidth="1.1" markerEnd="url(#rule-arrow)" />
+        <path d="M100 53 L 186 53" fill="none" stroke="currentColor" strokeWidth="1.1" markerEnd="url(#rule-arrow)" />
+        <path d="M100 87 C 140 87, 150 53, 186 53" fill="none" stroke="currentColor" strokeWidth="1.1" markerEnd="url(#rule-arrow)" />
+        {note(143, 86, "function_response(id)", undefined, "middle")}
+        {box(188, 40, 124, "the open call", AMBER, true, 26)}
+        {note(250, 82, "id call_3719769", AMBER, "middle")}
+        {note(250, 96, "one id, one answer, one resume", undefined, "middle")}
+      </RuleFigure>
+    ),
+  },
+  {
+    text: "Nodes share state by key name. candidates, direction, render_url move through the graph without being passed between nodes.",
+    figure: (
+      <RuleFigure label="A state store in the middle with three keys. propose_directions writes candidates and persist_direction reads it; persist_direction writes direction and scripter reads it; store_video writes render_url and the app reads it. No edge carries any of them.">
+        <rect x="110" y="6" width="100" height="106" rx="9" fill={tint(GREEN, 0.06)} stroke={GREEN} strokeWidth="1.1" />
+        {note(160, 20, "state", GREEN, "middle")}
+        {["candidates", "direction", "render_url"].map((k, i) => (
+          <g key={k}>
+            <rect x="118" y={30 + i * 26} width="84" height="18" rx="4" fill="var(--overlay)" stroke="var(--hairline)" />
+            <text x="160" y={42 + i * 26} fontSize="8" style={mono} textAnchor="middle" fill="currentColor">{k}</text>
+          </g>
+        ))}
+        {["propose_directions", "persist_direction", "store_video"].map((n, i) => (
+          <g key={n}>
+            <text x="100" y={42 + i * 26} fontSize="7.5" style={mono} textAnchor="end" fill="currentColor">{n}</text>
+            {arrow(102, 39 + i * 26, 116, 39 + i * 26, GREEN)}
+          </g>
+        ))}
+        {["persist_direction", "scripter", "the app"].map((n, i) => (
+          <g key={n}>
+            {arrow(204, 39 + i * 26, 218, 39 + i * 26, GREEN)}
+            <text x="222" y={42 + i * 26} fontSize="7.5" style={mono} fill="currentColor">{n}</text>
+          </g>
+        ))}
+        {note(6, 108, "writes by key")}
+        {note(314, 108, "reads by key", undefined, "end")}
+      </RuleFigure>
+    ),
+  },
+  {
+    text: "Routing is plain code and policy is data. The gate is a function and a text file, decided before any money is spent.",
+    figure: (
+      <RuleFigure label="policy_check, a plain function, reads policy_words.txt, a text file, and routes OK to the scripter or BLOCK to quarantine, before the render that costs money.">
+        <rect x="6" y="10" width="88" height="34" rx="4" fill="var(--overlay)" stroke="currentColor" strokeOpacity="0.5" />
+        <path d="M84 10 L 94 20 L 84 20 Z" fill="var(--overlay)" stroke="currentColor" strokeOpacity="0.5" />
+        {note(50, 26, "policy_words.txt", undefined, "middle")}
+        {note(50, 37, "data", RED, "middle")}
+        {arrow(50, 46, 50, 62)}
+        {box(8, 64, 84, "policy_check", RED)}
+        {note(50, 100, "a function · code", RED, "middle")}
+        <path d="M92 70 C 118 70, 118 44, 140 44" fill="none" stroke={GREEN} strokeWidth="1.1" markerEnd="url(#rule-arrow)" />
+        <path d="M92 80 C 118 80, 118 100, 140 100" fill="none" stroke={RED} strokeWidth="1.1" markerEnd="url(#rule-arrow)" />
+        {note(116, 40, '"OK"', GREEN, "middle")}
+        {note(116, 112, '"BLOCK"', RED, "middle")}
+        {box(142, 33, 66, "scripter", PURPLE)}
+        {box(142, 89, 66, "quarantine", PURPLE)}
+        {arrow(208, 44, 232, 44)}
+        {box(234, 33, 78, "render_desk", AMBER, true)}
+        {note(273, 70, "Veo · costs money", AMBER, "middle")}
+        {note(273, 82, "decided before this", undefined, "middle")}
+      </RuleFigure>
+    ),
+  },
+  {
+    text: "Context that belongs to one agent rides a callback on that agent. Research that produces data before the model runs is a node in the fan-out.",
+    figure: (
+      <RuleFigure label="Left: propose_directions with a before_model_callback that reads Memory Bank, the creator's taste, context for that one agent. Right: read_feedback, a node in the fan-out beside the other readers, that reads the RAG corpus and hands data to the join before any model runs.">
+        <line x1="164" y1="8" x2="164" y2="110" stroke="var(--hairline)" />
+        {box(32, 40, 100, "propose_directions", PURPLE)}
+        <rect x="30" y="10" width="104" height="18" rx="9" fill={tint(CYAN, 0.12)} stroke={CYAN} strokeWidth="1" />
+        <text x="82" y="22" fontSize="7.5" style={mono} textAnchor="middle" fill={CYAN}>before_model_callback</text>
+        {arrow(82, 28, 82, 38, CYAN)}
+        {note(82, 78, "Memory Bank · the creator's taste", CYAN, "middle")}
+        {note(82, 92, "one agent's context", undefined, "middle")}
+        {note(82, 104, "rides that agent", undefined, "middle")}
+        {box(172, 12, 72, "scan_trends")}
+        {box(172, 40, 72, "read_backlog")}
+        {box(172, 68, 72, "read_feedback", CYAN)}
+        {arrow(244, 23, 268, 46)}
+        {arrow(244, 51, 268, 51)}
+        {arrow(244, 79, 268, 56)}
+        {box(270, 40, 44, "join", CYAN)}
+        {note(208, 96, "RAG Engine · the comments", CYAN, "middle")}
+        {note(244, 108, "data, before any model: a node", undefined, "middle")}
+      </RuleFigure>
+    ),
+  },
+  {
+    text: "The app owns the loop, not the graph: a Runner drives it, an event stream shows it, the graph itself does not know a page exists.",
+    figure: (
+      <RuleFigure label="The app, holding the page, a Runner and an event stream, drives the graph and shows its events. The graph, in its own box, has no arrow back to the page.">
+        <rect x="8" y="8" width="150" height="104" rx="10" fill={tint(BLUE, 0.05)} stroke={BLUE} strokeWidth="1.1" />
+        {note(83, 22, "the app", BLUE, "middle")}
+        {box(18, 30, 60, "the page", BLUE)}
+        {box(88, 30, 60, "Runner", BLUE)}
+        {box(18, 82, 130, "event stream", BLUE)}
+        {arrow(48, 52, 48, 80, BLUE)}
+        {note(52, 68, "shows", BLUE)}
+        <rect x="186" y="8" width="126" height="104" rx="10" fill="var(--overlay)" stroke="var(--hairline)" />
+        {note(249, 22, "the graph", undefined, "middle")}
+        {box(196, 32, 50, "join")}
+        {box(256, 32, 48, "propose")}
+        {box(196, 62, 50, "gate", AMBER)}
+        {box(256, 62, 48, "desk", AMBER)}
+        {arrow(148, 41, 184, 41, BLUE)}
+        {note(166, 36, "runs", BLUE, "middle")}
+        <path d="M186 90 L 150 90" fill="none" stroke={BLUE} strokeWidth="1.1" markerEnd="url(#rule-arrow)" />
+        {note(166, 100, "events", BLUE, "middle")}
+        {note(249, 104, "knows no page", undefined, "middle")}
+      </RuleFigure>
+    ),
+  },
+];
+
+/* ── share the video ────────────────────────────────────────────────────── */
+
+const SHARE_EXAMPLE = "https://vibetube.dev/e/sandbox?v=v_d0af3758159d";
+
+/** The screenshot slot: web/public/share.png when it exists, a marked space until then. */
+function ShareImage() {
+  const [missing, setMissing] = useState(false);
+  return (
+    <div className="mt-5">
+      {!missing && (
+        <img src="/share.png" alt="A published clip on vibetube.dev" className="w-full rounded-2xl border border-hairline" onError={() => setMissing(true)} />
+      )}
+      {missing && (
+        <div className="flex aspect-[16/7] w-full items-center justify-center rounded-2xl border border-dashed border-hairline bg-overlay font-mono text-[11px] text-fg-muted">
+          image · web/public/share.png
+        </div>
+      )}
+    </div>
+  );
+}
 
 type Kind = "start" | "func" | "join" | "agent" | "human" | "router" | "task" | "desk";
 
@@ -122,26 +328,31 @@ export function Summary() {
       <In delay={0.3}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Design rules the graph follows</p>
-          <ul className="mt-3 grid gap-2 text-sm text-fg-muted md:grid-cols-2">
-            <li className="rounded-2xl border border-hairline bg-overlay p-3">Graphs pause for people and for receipts, never for a wait. RequestInput and the pending tool call both suspend the run; nothing stays alive on its behalf.</li>
-            <li className="rounded-2xl border border-hairline bg-overlay p-3">Every resume is one function_response carrying the call's id, whoever sends it: a page, a console, another process, after a restart.</li>
-            <li className="rounded-2xl border border-hairline bg-overlay p-3">Nodes share state by key name. candidates, direction, render_url move through the graph without being passed between nodes.</li>
-            <li className="rounded-2xl border border-hairline bg-overlay p-3">Routing is plain code and policy is data. The gate is a function and a text file, decided before any money is spent.</li>
-            <li className="rounded-2xl border border-hairline bg-overlay p-3">Context that belongs to one agent rides a callback on that agent. Research that produces data before the model runs is a node in the fan-out.</li>
-            <li className="rounded-2xl border border-hairline bg-overlay p-3">The app owns the loop, not the graph: a Runner drives it, an event stream shows it, the graph itself does not know a page exists.</li>
+          <ul className="mt-3 grid gap-3 md:grid-cols-2">
+            {RULES.map((r) => (
+              <li key={r.text} className="rounded-2xl border border-hairline bg-overlay p-3">
+                <div className="rounded-xl bg-card p-2">{r.figure}</div>
+                <p className="mt-3 text-sm text-fg-muted">{r.text}</p>
+              </li>
+            ))}
           </ul>
         </section>
       </In>
 
       <In delay={0.4}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
-          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Where to go next</p>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-fg-muted">
-            <li>Replace DatabaseSessionService with VertexAiSessionService, so the app's sessions live beside the Memory Bank and instances can come and go.</li>
-            <li>Deliver the render by webhook instead of polling: the same function_response, sent by whoever hears from Veo first.</li>
-            <li>Add a second person to the graph: a reviewer's RequestInput before publish.</li>
-            <li>Give the audience's comments a way in: append new comments to the corpus after each publish, and watch the next run lean.</li>
-          </ul>
+          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Share it</p>
+          <h2 className="font-display mt-2 text-2xl">Post your video.</h2>
+          <p className="mt-2 max-w-3xl text-sm text-fg-muted">
+            Your clip is on vibetube.dev. The Vibe Studio app published it there in step 9 and showed the link when it did; the link is
+            also on your room's page, under your name. It looks like this:
+          </p>
+          <div className="mt-3 rounded-xl border border-hairline bg-input px-4 py-2.5 font-mono text-xs text-fg">{SHARE_EXAMPLE}</div>
+          <p className="mt-3 max-w-3xl text-sm text-fg-muted">
+            Post that link where you post, with the idea you typed in step 8 and what the workflow made of it. The clip, its title and
+            its thumbnail are the app's; the direction, the script and the render behind them are the graph you built.
+          </p>
+          <ShareImage />
         </section>
       </In>
     </div>

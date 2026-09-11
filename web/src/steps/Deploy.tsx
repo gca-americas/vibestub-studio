@@ -47,7 +47,7 @@ function ArchFigure() {
   );
   return (
     <figure className="m-0 mt-4">
-      <svg viewBox="0 0 940 320" className="h-auto w-full text-fg" role="img" aria-label="Google Cloud holds everything. Inside it, one Cloud Run service runs the whole app: vibestudio/web, the React page, and vibestudio/server, the FastAPI process with the Runner over the finished workflow. The page and the server talk over REST and one SSE stream. The server's run_async calls reach GEAP: Gemini, Memory Bank, RAG Engine and Veo. Your browser opens the service URL from outside. deploy.py ships the folder with gcloud run deploy.">
+      <svg viewBox="0 0 940 320" className="h-auto w-full text-fg" role="img" aria-label="Google Cloud architectural boundary. Cloud Run hosts the unified service, containing vibestudio/web (React frontend) and vibestudio/server (FastAPI application with ADK Runner over the production workflow). The frontend and backend communicate via REST endpoints and a Server-Sent Events (SSE) telemetry stream. Asynchronous runner execution invokes GEAP platform services including Gemini, Memory Bank, RAG Engine, and Veo.">
         <defs>
           <marker id="arch-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />
@@ -55,8 +55,8 @@ function ArchFigure() {
         </defs>
         {/* the viewer, outside */}
         <rect x="14" y="120" width="110" height="60" rx="10" fill="var(--overlay)" stroke="var(--hairline)" />
-        <text x="69" y="145" textAnchor="middle" fontSize="10" style={mono} fill="currentColor">your browser</text>
-        <text x="69" y="161" textAnchor="middle" fontSize="8" style={mono} fill="currentColor" opacity="0.6">the service URL</text>
+        <text x="69" y="145" textAnchor="middle" fontSize="10" style={mono} fill="currentColor">client browser</text>
+        <text x="69" y="161" textAnchor="middle" fontSize="8" style={mono} fill="currentColor" opacity="0.6">https endpoint</text>
         <line x1="124" y1="150" x2="176" y2="150" stroke="currentColor" strokeOpacity="0.6" strokeWidth="1.2" markerEnd="url(#arch-arrow)" />
         <text x="150" y="142" textAnchor="middle" fontSize="7.5" style={mono} fill="currentColor" opacity="0.7">https</text>
 
@@ -77,9 +77,9 @@ function ArchFigure() {
         {box(454, 106, 190, 160, "vibestudio/server", "FastAPI · one process", AMBER)}
         <rect x="466" y="150" width="166" height="24" rx="7" fill={tint(AMBER, 0.14)} stroke={AMBER} />
         <text x="549" y="166" textAnchor="middle" fontSize="8.5" style={mono} fill={AMBER}>Runner(agent=wf)</text>
-        <text x="468" y="194" fontSize="8" style={mono} fill="currentColor" opacity="0.7">platform: bus · files · publish</text>
+        <text x="468" y="194" fontSize="8" style={mono} fill="currentColor" opacity="0.7">platform · bus · files · publish</text>
         <text x="468" y="208" fontSize="8" style={mono} fill="currentColor" opacity="0.7">avatar · telemetry · graphinfo</text>
-        <text x="468" y="222" fontSize="8" style={mono} fill="currentColor" opacity="0.7">agent/: the finished graph</text>
+        <text x="468" y="222" fontSize="8" style={mono} fill="currentColor" opacity="0.7">agent/ · the finished graph</text>
         <text x="468" y="236" fontSize="8" style={mono} fill="currentColor" opacity="0.7">the render poller answers the call</text>
 
         {/* GEAP */}
@@ -96,7 +96,7 @@ function ArchFigure() {
         <text x="418" y="298" textAnchor="middle" fontSize="8.5" style={mono} fill={GREEN}>gcloud run deploy --source vibestudio · the folder becomes the container</text>
       </svg>
       <figcaption className="mt-2 text-xs text-fg-muted">
-        The page never imports ADK or reads a file. The server owns the Runner, the poller, the publisher and the files, and every model, memory, retrieval and render call leaves the container for GEAP in the same project.
+        The web frontend never interfaces with ADK directly or accesses disk storage. The FastAPI server hosts the ADK Runner, render poller, asset publishing pipeline, and session state. Outbound model inference, semantic memory, vector retrieval, and video generation dispatch to GEAP platform services in the same project.
       </figcaption>
     </figure>
   );
@@ -156,16 +156,15 @@ function DeployRunner() {
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.3em]" style={{ color: GREEN }}>
-            Deploy
+            Deployment
           </p>
-          <h2 className="font-display mt-2 text-2xl">Ship it to Cloud Run.</h2>
+          <h2 className="font-display mt-2 text-2xl">Deploying to Cloud Run.</h2>
           <p className="mt-2 max-w-2xl text-sm text-fg-muted">
-            The button runs the gcloud command below from this server and streams its output. Cloud Build reads the Dockerfile, builds the page and the server
-            into one image, and Cloud Run serves it. The first deploy takes a few minutes; later ones are faster.
+            Triggering deployment executes the gcloud deployment command via a background subshell and streams stdout directly to the console. Cloud Build parses the multi-stage Dockerfile, compiles the frontend bundle and FastAPI server into a unified container image, and deploys it to Cloud Run. Initial container builds require several minutes for dependency resolution and layer caching.
             {status?.gcloud_project ? (
               <>
                 {" "}
-                Project: <code className="font-mono text-fg">{status.gcloud_project}</code>.
+                Project <code className="font-mono text-fg">{status.gcloud_project}</code>.
               </>
             ) : null}
           </p>
@@ -177,20 +176,20 @@ function DeployRunner() {
       </div>
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-wider text-fg-muted">the command</p>
+          <p className="font-mono text-[10px] uppercase tracking-wider text-fg-muted">Deployment command</p>
           <pre className="mt-1 overflow-x-auto rounded-lg border border-hairline bg-input px-3 py-2 font-mono text-[11px] leading-relaxed text-fg">{CODE_GCLOUD}</pre>
           <p className="mt-2 text-xs text-fg-muted">
-            One instance kept warm with session affinity, because a run's state lives in the process. The env values come from{" "}
-            <code className="font-mono text-fg">.env</code> and from <code className="font-mono text-fg">runs/memorybank.json</code> and{" "}
-            <code className="font-mono text-fg">runs/ragcorpus.json</code>; the button fills them in and runs this command.
+            Allocates a warm instance with session affinity enabled to maintain workflow session continuity within the hosting process. Target environment variables ingest configuration from{" "}
+            <code className="font-mono text-fg">.env</code> alongside provisioned resource identifiers in <code className="font-mono text-fg">runs/memorybank.json</code> and{" "}
+            <code className="font-mono text-fg">runs/ragcorpus.json</code>.
           </p>
         </div>
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-wider text-fg-muted">before you deploy</p>
+          <p className="font-mono text-[10px] uppercase tracking-wider text-fg-muted">Pre-deployment checklist</p>
           <ul className="mt-1 space-y-1 text-xs text-fg-muted">
-            <li>{status?.app_built ? "✓" : "·"} the page is built ({status?.app_built ? "vibestudio/web/dist exists" : "run vibestudio/run.sh once, or let the Dockerfile build it"})</li>
-            <li>· gcloud is logged in and the Cloud Run, Cloud Build and Artifact Registry APIs are on</li>
-            <li>· the service account Cloud Run uses can call GEAP (roles/aiplatform.user)</li>
+            <li>{status?.app_built ? "✓" : "·"} Frontend bundle built ({status?.app_built ? "vibestudio/web/dist verified" : "run vibestudio/run.sh once or build via Dockerfile"})</li>
+            <li>· Active gcloud credentials with Cloud Run, Cloud Build, and Artifact Registry APIs enabled</li>
+            <li>· Cloud Run runtime service account granted GEAP permissions (roles/aiplatform.user)</li>
           </ul>
         </div>
       </div>
@@ -207,11 +206,11 @@ function DeployRunner() {
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-4 flex flex-col gap-3 rounded-2xl border p-4 md:flex-row md:items-center md:justify-between" style={{ borderColor: tint(GREEN, 0.4), background: tint(GREEN, 0.06) }}>
           <div>
             <p className="font-mono text-[10px] uppercase tracking-wider" style={{ color: GREEN }}>
-              live
+              Active Service Endpoint
             </p>
             <p className="mt-1 font-mono text-sm text-fg">{url}</p>
             <p className="mt-1 text-xs text-fg-muted">
-              Head over there: type an idea, pick a direction, watch the render land, publish. It is the same workflow you built, driven by the Runner, on Cloud Run.
+              Access the live service endpoint to initiate end-to-end runs. Submit prompt concepts, resolve policy approval gates, monitor asynchronous video generation, and publish completed assets. The application executes the complete ADK workflow on serverless infrastructure.
             </p>
           </div>
           <a href={url} target="_blank" rel="noreferrer" className="flex shrink-0 items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-black" style={{ background: GREEN }}>
@@ -230,14 +229,14 @@ export function Deploy() {
       <StepHeader
         kicker="Step 9 · Deploy"
         color={GREEN}
-        title="The Runner, an app on top, Cloud Run."
+        title="Production deployment architecture."
         blurb="Deploy the production application to Cloud Run. The service wraps the workflow in an ADK Runner, exposing Server-Sent Events (SSE) to stream live execution progress directly to the web client."
       />
 
       <In delay={0.2}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
-          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">How it is put together</p>
-          <h2 className="font-display mt-2 text-2xl">The app on Cloud Run, the graph's services on GEAP.</h2>
+          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Architecture & Topology</p>
+          <h2 className="font-display mt-2 text-2xl">System topology across Cloud Run and GEAP platform services.</h2>
           <ArchFigure />
           <div className="mt-4 max-w-3xl overflow-hidden rounded-2xl border border-hairline bg-input">
             <div className="border-b border-hairline px-4 py-1.5 font-mono text-[10px] uppercase tracking-wider text-fg-muted">vibestudio/server/runner.py · the Runner</div>
@@ -246,20 +245,17 @@ export function Deploy() {
             </pre>
           </div>
           <p className="mt-4 max-w-3xl text-sm text-fg-muted">
-            The Runner drives the graph on a worker thread with its own event loop, so a slow node never stalls the server. Every ADK event is folded into one
-            state object and published as one app event: node starts and ends, the gate opening with its candidates, the render receipt and every Veo check,
-            the delivery, publishing. The page draws the graph from <code className="font-mono text-fg">GET /api/graph</code>, which reads{" "}
-            <code className="font-mono text-fg">wf.graph</code>, so a change to the workflow changes the picture.
+            The ADK Runner executes workflow graphs asynchronously on a dedicated worker thread with an isolated event loop, ensuring long-running node execution does not block HTTP request processing. Each ADK event stream item folds into the aggregate run state and broadcasts downstream via SSE, streaming node transitions, gate suspensions with option candidates, render receipts, polling status checks, video deliveries, and publication events. The frontend renders workflow topologies dynamically via <code className="font-mono text-fg">GET /api/graph</code>, reflecting the current state of <code className="font-mono text-fg">wf.graph</code>.
           </p>
           <div className="mt-4 overflow-x-auto rounded-2xl border border-hairline bg-input px-4 py-3 font-mono text-[11px] leading-relaxed text-fg">
             <pre className="m-0">{`vibestudio/
   server/
-    main.py                 FastAPI: the page, /api, /static
-    api.py                  the REST surface: run, pick, publish, backlog, profile, history
+    main.py                 FastAPI — the page, /api, /static
+    api.py                  the REST surface — run, pick, publish, backlog, profile, history
     runner.py               the Runner over the finished workflow, the render poller
     platform/               bus (the SSE stream), files, publish, avatar, telemetry, graphinfo
     agent/                  the finished agent, byte-equal to the lab's agent/ (checks/verify_app.py)
-      graph.py              the workflow: direction_gate (4d), persist_direction (5a), policy_check (5b),
+      graph.py              the workflow — direction_gate (4d), persist_direction (5a), policy_check (5b),
                             quarantine and the edge list (5c), read_feedback (7b), store_video (8b)
       desk.py               render_desk and render_submit, the LongRunningFunctionTool (8a)
       schemas.py            Directions, CleanedDirection, Script (4c, 5b, 5c)
@@ -273,21 +269,18 @@ export function Deploy() {
   web/                      the React page
   Dockerfile · deploy.py · run.sh
 
-The stage exercise apps (stage0_prompt … stage6_video) each wired an incremental subset of this graph.
-The production application runs wf from agent/graph.py, the complete workflow. The standalone delivery
-process is not needed here: runner.py polls Veo and answers the pending call itself.`}</pre>
+The developmental stage applications (stage0_prompt through stage6_video) incrementally verified discrete subgraphs.
+The production deployment executes wf from agent/graph.py as a unified graph. The external delivery
+script is superseded because runner.py polls Veo asynchronously in-process and dispatches the resumption call automatically.`}</pre>
           </div>
         </section>
       </In>
 
       <In delay={0.3}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
-          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">What Cloud Run is</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Runtime environment</p>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            Cloud Run is a serverless service for hosting your application and your agents. It scales instances up and down with traffic, and bills per
-            request time. You can deploy with one <code className="font-mono text-fg">gcloud</code> command; here that command is embedded in a process behind
-            the button below. This app keeps a run's state in its process, so the deploy asks for
-            one instance kept warm and session affinity; a production version would keep that state in the session store and let instances come and go.
+            Cloud Run provides fully managed serverless container execution for web applications and agent workflows. Compute resources scale dynamically with traffic while maintaining per-request billing granularity. The deployment configuration mandates min-instances=1 and session affinity to preserve ephemeral in-memory state across multi-turn asynchronous workflow suspensions. In distributed enterprise topologies, session persistence delegates to an external state store such as GEAP Agent Runtime or Cloud Spanner.
           </p>
         </section>
       </In>

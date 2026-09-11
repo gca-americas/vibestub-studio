@@ -16,7 +16,7 @@ with in-page editors, runners, and verify panels are served by
 |---|---|
 | 3 · A single prompt | An `Agent` with function tools; `function_call` and `function_response` events |
 | 4 · Fan-out and the human pause | `Workflow`, `START`, edges as tuples, `JoinNode`; an `Agent` as a node with `output_schema`; `RequestInput` |
-| 5 · State and the policy gate | `Event(state=...)`, parameter binding, the `user:` prefix; a router node; policy as data; `mode="task"` with tools |
+| 5 · State and Router | `Event(state=...)`, parameter binding, the `user:` prefix; a router node; policy as data; `mode="task"` with tools |
 | 6 · Memory Bank | Scope, extraction, consolidation, custom topics; `before_model_callback` and `after_agent_callback` |
 | 7 · RAG Engine | A corpus, chunking, an embedding model, retrieval by meaning as one more reader in the fan-out |
 | 8 · The video | `LongRunningFunctionTool`, the pending receipt, a suspended workflow resumed by id from another process |

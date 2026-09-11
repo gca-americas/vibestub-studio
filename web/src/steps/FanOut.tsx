@@ -863,12 +863,12 @@ function HumanInTheLoop() {
       <In delay={0.1}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Where the graph stands</p>
-          <h2 className="font-display mt-2 text-2xl">Send an idea, read four candidates.</h2>
+          <h2 className="font-display mt-2 text-2xl">Execution flow before the approval gate.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            You are the only person in this run. Your idea goes in at adk web; the readers run, the join gathers their outputs, and{" "}
-            <code className="font-mono text-fg">propose_directions</code> makes its one call and produces four candidates. The run ends
-            there: the candidates are the workflow's output, the last event in the chat, and nobody is asked anything. Two edits add the
-            pause. First the gate joins the chain; then the node learns to wait.
+            Currently, the workflow executes from end to end without pausing. When an idea prompt is submitted, the reader nodes run in parallel,
+            the join consolidates the research, and <code className="font-mono text-fg">propose_directions</code> emits four candidate directions as
+            terminal output. To prevent the pipeline from advancing without human confirmation, you will append <code className="font-mono text-fg">direction_gate</code> to
+            the execution chain and configure it to suspend execution until a choice is submitted.
           </p>
           <div className="mt-5 overflow-x-auto">
             <HumanRunFigure />
@@ -876,10 +876,10 @@ function HumanInTheLoop() {
         </section>
       </In>
 
-      <In delay={0.3}>
+      <In delay={0.25}>
         <EditPanel
           label="Edit 1 of 2"
-          title="Add direction_gate to the stage 2 chain."
+          title="Add direction_gate to the workflow."
           intro={<>Only the edge list of the stage 2 app is shown. Append the gate to the last chain, after propose_directions.</>}
           pill={status ? (gateWired ? "gate in the chain ✓" : `chain: ${status.chain.length ? status.chain.join(" → ") : "none"}`) : "…"}
           ok={gateWired}
@@ -897,18 +897,6 @@ function HumanInTheLoop() {
           pattern={/propose_directions\)\]\)|direction_gate\)\]\)/}
           onSaved={check}
         />
-      </In>
-
-      <In delay={0.35}>
-        <section className="rounded-3xl border border-hairline bg-card p-6">
-          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">The node today</p>
-          <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            With the gate in the chain, a run writes the candidates to shared state and completes. Still no pause: the
-            node has no <code className="font-mono text-fg">RequestInput</code> yet. That is edit 2, in the function itself, which
-            lives in the production file <code className="font-mono text-fg">agent/graph.py</code>. The stage apps import the same
-            function, so the change applies to every graph that uses it.
-          </p>
-        </section>
       </In>
 
       <In delay={0.4}>

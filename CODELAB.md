@@ -1,6 +1,6 @@
 ---
 id: vibe-studio-codelab
-title: VibeStudio — Agentic workflow with ADK
+title: VibeStudio: Agentic workflow with ADK
 summary: Design agentic workflows as graphs with the Agent Development Kit (ADK): parallel nodes and joins, an agent as a node, RequestInput for human decisions, deterministic routers, and task-mode agents. Then add state, memory, and knowledge: session state and the user: prefix, GEAP Memory Bank through callbacks, and a GEAP RAG Engine corpus as one more reader in the fan-out.
 authors: Qingyue(Annie) Wang, Christina Lin
 keywords: ADK,category:AiAndMachineLearning,category:Cloud,docType:Codelab,language:Python,product:BigQuery,product:VertexAi,skill:Advanced
@@ -191,7 +191,7 @@ The interactive diagram groups agent components into five operational domains:
 
 - **Reasoning layer (Model)**: The core language model (such as Gemini 3 Flash) executing cognitive tasks, prompt reasoning, and tool selection. Everything else in the architecture either informs or constrains this model.
 - **Context layer (Instruction and Skills)**: Directives that shape model reasoning. `instruction` establishes the permanent system prompt, persona, and operational rules. `skills` provide versioned, procedural guidance (`SKILL.md`) for repeatable workflows.
-- **Collaboration and action layer (Tools, Subagents, Workflow, Output Schema)**: Interfaces enabling the agent to act on external systems and emit typed data. `tools` provide callable Python functions or Model Context Protocol (MCP) endpoints. `subagents` execute subordinate delegated tasks. `workflow` coordinates multi-agent graphs. `output_schema` applies Pydantic models to guarantee downstream consumers receive validated JSON rather than unstructured text.
+- **Collaboration and action layer (Tools, Subagents, Workflow, Output Schema)**: Interfaces enabling the agent to act on external systems and emit typed data. `tools` provide callable Python functions or Model Context Protocol (MCP) endpoints. `subagents` execute subordinate delegated tasks. `workflow` coordinates multi-agent graphs. `output_schema` applies Pydantic models to guarantee downstream consumers receive validated JSON instead of unstructured text.
 - **Interceptor layer (Lifecycle Callbacks)**: Deterministic guardrails executing custom code before and after agent execution (`before_agent`/`after_agent`), individual model turns (`before_model`/`after_model`), and tool calls (`before_tool`/`after_tool`). Interceptors enforce policy rules without relying on model compliance.
 - **External state (Session and Memory)**: Stateful persistence separated from agent logic. `Session` preserves transient working memory and the event trace for the current execution thread. `Memory` maintains durable cross-session facts and preferences using managed services such as GEAP Memory Bank.
 
@@ -265,7 +265,7 @@ When you send this prompt, observe the following execution sequence in the sessi
 - **The agent proposes a direction and pauses for confirmation**: The response suggests a video direction synthesizing the trends and backlog, and asks you to confirm.
   - **Why**: The instruction directive asked the model to agree on the direction with the creator before generating the script.
 - **Bypassing confirmation in a follow-up turn**: Send a second message: `skip the questions, just describe the video`. The agent immediately bypasses confirmation and drafts the title and shots.
-  - **Why**: Prompt instructions are advisory guidelines rather than deterministic barriers. In a monolithic agent, user instructions can override standing system prompt rules because no external workflow controls execution flow.
+  - **Why**: Prompt instructions are advisory guidelines instead of deterministic barriers. In a monolithic agent, user instructions can override standing system prompt rules because no external workflow controls execution flow.
 
 ### Architectural limitations of a monolithic prompt
 
@@ -292,7 +292,7 @@ An ADK `Workflow` structures agent execution as a directed graph defined by an e
 - **Chains**: Sequential tuples define linear node execution (`(node_a, node_b, node_c)`).
 - **Parallel branches**: Independent chains sharing an origin node execute concurrently.
 - **Synchronization**: Chains converging on a `JoinNode` wait until all incoming branches report before releasing.
-- **Deterministic control**: Execution flow is governed by declared code structures rather than inferred from prompt text.
+- **Deterministic control**: Execution flow is governed by declared code structures instead of being inferred from prompt text.
 
 #### Node archetypes in ADK
 
@@ -313,7 +313,7 @@ root_agent = Workflow(
     edges=[...])
 ```
 
-In this configuration, `root_agent` is an instance of `Workflow` rather than a standalone `Agent`. ADK treats workflows as first-class agents, allowing an entire graph to be loaded, served, and inspected as a unified application. The `name` registers the application in ADK Web, while the `edges` list defines its execution topology.
+In this configuration, `root_agent` is an instance of `Workflow` instead of a standalone `Agent`. ADK treats workflows as first-class agents, allowing an entire graph to be loaded, served, and inspected as a unified application. The `name` registers the application in ADK Web, while the `edges` list defines its execution topology.
 
 ### Parallel research fan-out (4B)
 
@@ -365,7 +365,7 @@ When embedded within a `Workflow`, an `Agent` runs in `single_turn` mode by defa
 - It executes a single inference call without conversational back-and-forth.
 - It outputs structured data to the next node.
 
-By assigning `output_schema=Directions`, the agent enforces Pydantic validation on model output. The downstream graph receives typed objects rather than unstructured prose:
+By assigning `output_schema=Directions`, the agent enforces Pydantic validation on model output. The downstream graph receives typed objects instead of unstructured prose:
 
 ```python
 class Direction(BaseModel):
@@ -442,16 +442,16 @@ In `agent/graph.py`, implement the suspension call inside `direction_gate`:
   - **Why**: The engine encountered a yielded `RequestInput` and persisted execution state to `runs/sessions.db`.
 - **Resumption requires structured input**: Sending arbitrary chat text does not advance the graph. Selecting an option (1, 2, 3, or 4) submits a typed `function_response` that satisfies `response_schema` and resumes execution.
 
-## State and the policy gate
+## State and Router
 Duration: 0:11:00
 
-In the **VibeStudio Workbench**, navigate to **Step 5 · State and the policy gate**, parts **(5A)** through **(5C)**.
+In the **VibeStudio Workbench**, navigate to **Step 5 · State and Router**, parts **(5A)** through **(5C)**.
 
-This step completes the core production pipeline. You will persist user selections into session state, enforce channel safety policies using deterministic router nodes, and assemble an iterative task agent to automatically remediate policy violations before generating video scripts.
+You will persist user selections into session state, enforce channel safety policies using deterministic router nodes, and assemble an iterative task agent to automatically remediate policy violations before generating video scripts.
 
-### State and parameter binding (5A)
+### Workflow State (5A)
 
-In the workbench, navigate to **State (5A)**. Open `agent/graph.py` and `stage3_router/agent.py`.
+In the workbench, navigate to **Workflow State (5A)**.
 
 #### Session state vs node output
 
@@ -460,17 +460,16 @@ In an ADK workflow, data moves across the graph through two distinct mechanisms:
 - **Node output (`Event(output=...)`)**: Data directed strictly to immediate downstream consumers defined in the edge list.
 - **Session state (`Event(state=...)`)**: A shared key-value dictionary accessible by any subsequent node in the execution lifecycle.
 
-When a user selects a candidate at `direction_gate`, the selection arrives as a numeric index (`{"pick": "2"}`). Downstream nodes need the complete direction object: title, narrative angle, and hook line. Rather than passing verbose metadata through every intermediate node payload, `persist_direction` writes the resolved candidate to shared session state.
+When a user selects a candidate at `direction_gate`, the selection arrives as a numeric index (`{"pick": "2"}`). Downstream nodes need the complete direction object: title, narrative angle, and hook line. Instead of passing verbose metadata through every intermediate node payload, `persist_direction` writes the resolved candidate to shared session state.
 
-Each state mutation is emitted as a delta on an `Event`. ADK merges these deltas sequentially into the session store:
+Nodes do not need to pass the entire session state dictionary. When a node yields `Event(state=...)`, it supplies only the new or updated key-value pairs. ADK automatically merges these updates into the session store:
 
-<!-- code: PERSIST_STATE -->
 ```python
     yield Event(state={"direction": chosen["title"], "angle": chosen.get("angle", ""),
                        "hook": hook, "user:prefs": {"last_direction": chosen["title"]}})
 ```
 
-Yielding this `Event` hands control to the `Workflow` runtime, which appends the delta to the session journal in `runs/sessions.db`.
+Yielding this `Event` hands control to the `Workflow` runtime, which persists the new values to the session journal in `runs/sessions.db`.
 
 #### Parameter binding
 
@@ -538,7 +537,6 @@ In the workflow definition, an edge target defined as a dictionary maps route na
 
 The workflow router `policy_check` reads prohibited phrases from `agent/policy_words.txt` and performs whole-word matching against the chosen direction's title and angle:
 
-<!-- code: POLICY_ROUTE -->
 ```python
     return Event(output=node_input, route="BLOCK" if bad else "OK")
 ```
@@ -667,16 +665,22 @@ Test both execution paths in ADK Web or VibeStudio Workbench:
 <b>Routers and fallbacks.</b> The development UI flags a router with no fallback edge. If <code>policy_check</code> returned a route other than <code>OK</code> or <code>BLOCK</code>, the run would have no destination. Adding <code>DEFAULT_ROUTE: quarantine</code> to the edge dict covers that case; import <code>DEFAULT_ROUTE</code> from <code>google.adk.workflow</code>.
 </aside>
 
-## Memory: what the channel remembers about its creator
+## Memory Bank
 Duration: 0:10:00
 
-Learning center: **step 6, Memory Bank**, parts **a** and **b**.
+In the **VibeStudio Workbench**, navigate to **Step 6 · Memory Bank**, parts **(6A)** and **(6B)**.
 
-The agent has no memory of the creator yet. The more the creator uses it, the more it should remember about their preferences. This creator has a history: animals first, then gadgets, and lately fantasy. In this step that history lives in GEAP Agent Engine Memory Bank, and the graph reads it before it proposes. The graph does not change shape, because memory is a concern of two agents rather than a step in the pipeline.
+The workflow currently operates without memory across sessions. Each execution begins from scratch, unaware of what the creator selected previously or which genres they prefer. In this step, you connect **Vertex AI Agent Engine Memory Bank** to store and retrieve creator preferences across runs.
 
-### Memory Bank
+Crucially, memory is integrated through agent lifecycle callbacks instead of pipeline nodes. Because memory extraction and retrieval serve individual agents instead of intermediate data stages, attaching callbacks preserves a clean, decoupled graph topology.
 
-Memory Bank is a managed service for long-term memory about a person. It holds facts about one user under a scope, and this codelab scopes it to the creator with an application name and a user ID.
+### Memory Bank (6A)
+
+In the workbench, navigate to **Memory Bank (6A)**.
+
+#### Managed user-level memory
+
+Memory Bank is a managed service for long-term user memory. It organizes facts about a person under a defined scope, here identified by the application name and user ID:
 
 ```python
 SCOPE = {"app_name": config.APP, "user_id": config.USER}
@@ -688,29 +692,57 @@ TOPICS = {
 }
 ```
 
-Custom memory topics decide what a memory is allowed to be about. You define them once, when the bank is created, as a label and a description. At write time the service runs its extraction model once per topic, using the description as the instruction for what to look for, so the service decides which topic a fact belongs to. Text that matches no topic produces no memory.
+Custom memory topics define the boundaries of what the bank records:
 
-A write is one `memories.generate` call carrying the scope and an exchange from the run. The service extracts the facts worth keeping, embeds them, and compares each one against the memories already in the scope. A close match updates that memory; no match creates a new one. The call returns what it did for each fact, which is how three sessions about cats become one memory about cats rather than three.
+- **Topic extraction**: When new conversation text is submitted via `memories.generate`, the service applies an extraction model against each topic description. Text that does not match a topic produces no memories.
+- **Consolidation and deduplication**: The service converts newly extracted facts into embeddings and compares them with existing memories in the scope. When an observation aligns with an existing memory, the service updates that memory. When it represents novel information, the service creates a new entry. This consolidation process ensures multiple sessions about a topic merge into a coherent summary instead of producing redundant entries.
+- **Retrieval**: Calling `memories.retrieve` with the user scope returns stored facts, ordered oldest first.
 
-A read is one `memories.retrieve` call with the scope, which returns everything the bank holds for that person. The same embeddings support retrieval by query when you need a subset rather than the whole scope.
+Both operations are implemented in `agent/platform/memory.py`. The provisioned bank resource name is cached locally in `runs/memorybank.json`.
 
-Both calls are in `agent/platform/memory.py`. The bank itself is an Agent Engine resource in your project, and its resource name is cached in `runs/memorybank.json`.
+#### Setting up the Memory Bank
 
-Memory Bank holds a person's preferences. Documents and transcripts belong in RAG Engine, which is the next step.
+Use the workbench controls or run the CLI commands in your terminal:
 
-### Callbacks
+1. **Connect and provision the bank**:
+   ```bash
+   python -m agent.platform.bank
+   ```
+   Creates the Agent Engine instance and configures the `CREATOR_TASTE` and `CHANNEL_RULES` topics.
 
-A callback is a plain function passed as an argument to `Agent`. ADK calls it at a fixed point in the agent's turn, with the objects in play at that point, and reads its return value: `None` means continue as normal, and anything else replaces what would have happened next. There are six, arranged as a pair around the agent's turn, a pair around each model call, and a pair around each tool call.
+2. **Seed historical sessions**:
+   ```bash
+   python -m agent.platform.bank load
+   ```
+   Loads four historical creator sessions (two animal themes with style constraints, one gadget theme, and one recent fantasy theme).
 
-| Pair | When | What it receives | Return value |
+3. **Inspect consolidated facts**:
+   ```bash
+   python -m agent.platform.bank list
+   ```
+   Examine the output. Notice how narrative transcripts were converted into structured, consolidated statements of fact.
+
+### Callbacks (6B)
+
+In the workbench, navigate to **Callbacks (6B)**. Open `stage4_memory/agent.py`.
+
+#### ADK agent lifecycle callbacks
+
+A callback is a function passed as an argument to an `Agent`. ADK invokes callbacks at predefined lifecycle moments, passing the active context. Returning `None` continues normal execution; returning a replacement object overrides or intercepts the operation.
+
+ADK provides three pairs of callbacks:
+
+| Callback Pair | Invocation Point | Parameters Received | Return Value Behavior |
 |---|---|---|---|
-| `before_agent_callback` and `after_agent_callback` | Around the whole turn | A `CallbackContext`: state, the session, the invocation | `Content` replaces the agent's reply; `None` keeps it |
-| `before_model_callback` and `after_model_callback` | Around each model call | The `LlmRequest` about to be sent, or the `LlmResponse` that came back | An `LlmResponse` skips or replaces the model's answer; `None` proceeds |
-| `before_tool_callback` and `after_tool_callback` | Around each tool call | The tool, its arguments, and its result | A dict replaces the tool's result; `None` proceeds |
+| `before_agent_callback`<br>`after_agent_callback` | Surrounding the entire agent turn | `CallbackContext` (state, session, invocation) | Returning `Content` replaces the agent reply; `None` proceeds normally. |
+| `before_model_callback`<br>`after_model_callback` | Surrounding each LLM inference call | `LlmRequest` or `LlmResponse` | Returning `LlmResponse` intercepts or skips the model call; `None` proceeds. |
+| `before_tool_callback`<br>`after_tool_callback` | Surrounding each tool execution | Tool definition, arguments, result | Returning a dict overrides the tool output; `None` proceeds. |
 
-Callbacks are where guardrails, logging, caching, and context injection belong. This step uses two of them.
+Callbacks provide a clean location for context injection, guardrails, telemetry, and cache lookups without introducing extraneous nodes into the workflow graph.
 
-`recall_taste` runs as `before_model_callback` on `propose_directions`, immediately before its model call. It retrieves the creator's memories oldest first, appends them to the outgoing request with one instruction, to lean candidates 1 to 3 toward the most recent taste and treat the stated rules as constraints, and returns `None` so the call proceeds.
+#### Hands-on edit: wiring recall and remember callbacks
+
+1. In `stage4_memory/agent.py`, update `propose_directions` to attach `before_model_callback=recall_taste`:
 
 <!-- code: MEMORY_RECALL -->
 ```python
@@ -718,7 +750,9 @@ Callbacks are where guardrails, logging, caching, and context injection belong. 
     before_model_callback=recall_taste)
 ```
 
-`remember_pick` runs as `after_agent_callback` on `scripter`, once its turn is over and the session state holds the direction that was chosen. It composes one sentence about tonight's pick and hands it to the bank.
+`recall_taste` executes immediately before Gemini generates candidate directions. It fetches the creator's history from Memory Bank, formats the memories oldest first, and appends them to the outgoing `LlmRequest`. The prompt directs the model to lean candidates 1 to 3 toward the creator's current taste while treating channel rules as strict constraints.
+
+2. In `stage4_memory/agent.py`, update `scripter` to attach `after_agent_callback=remember_pick`:
 
 <!-- code: MEMORY_REMEMBER -->
 ```python
@@ -726,26 +760,47 @@ Callbacks are where guardrails, logging, caching, and context injection belong. 
     after_agent_callback=remember_pick)
 ```
 
-The design rule this demonstrates: context that belongs to one agent rides a callback on that agent. Memory is not a node, because no other node in the graph needs it.
+`remember_pick` runs after `scripter` completes its turn. It reads the chosen direction from session state, synthesizes a concise statement summarizing the creator's decision, and calls `memories.generate` to update the Memory Bank.
 
-### In the learning center
+#### What to expect and why
 
-Step **6a** explains the service and has three buttons that run the console commands: one creates the Agent Engine that hosts the bank, one seeds four past sessions covering the three eras of the creator's taste, and one lists what the bank holds. Compare the list with the four sessions in `agent/platform/bank.py`: the sessions were prose, and the memories are facts.
+Test the callback-augmented workflow in the workbench or ADK Web:
 
-Step **6b** covers callbacks and has the two edits. Run the graph with an empty message so the proposal works from the backlog, the trends, and the memory alone, and read the model request in the development UI: it carries a memory block, and candidates 1 to 3 lean toward fantasy even when the trends suggest something else. After the run, list the bank again to see what tonight's pick changed.
+1. Execute a run with an empty prompt:
+   - In the session trace, inspect the `LlmRequest` for `propose_directions`. Notice the appended memory context detailing the creator's preference for fantasy themes and concise pacing.
+   - Observe the proposed directions: candidates 1 to 3 align with the creator's historical preferences even when trends emphasize other topics.
+2. Select a candidate at `direction_gate`.
+3. After `scripter` completes, review the Memory Bank records:
+   ```bash
+   python -m agent.platform.bank list
+   ```
+   The bank now reflects the latest choice, consolidating it with previous taste records.
 
-## The audience's feedback in RAG Engine
+## RAG Engine
 Duration: 0:10:00
 
-Learning center: **step 7, RAG Engine**, parts **a** and **b**.
+In the **VibeStudio Workbench**, navigate to **Step 7 · RAG Engine**, parts **(7A)** and **(7B)**.
 
-The channel has viewers, and they leave comments. Thirty of them are collected in `agent/comments.md`: praise for a cat video and a sock-drawer dragon, a complaint that a gadget video felt like an advertisement, captions that covered the cat's face, an intro five seconds too long. In this step that file becomes a GEAP RAG Engine corpus, and the workflow asks it what viewers said about tonight's idea before it proposes.
+Published videos accumulate ongoing viewer feedback. Thirty representative comments are collected in `agent/comments.md`, capturing viewer praises, critique of sponsored pacing, and audio preferences. In this step, you index these comments using **Vertex AI RAG Engine** and connect semantic retrieval into the research fan-out.
 
-### Retrieval over documents
+### Retrieval over documents (7A)
 
-RAG Engine is retrieval over documents. You upload files to a corpus. The service splits each file into passages, converts each passage into a vector with an embedding model, and stores the vectors. A question is embedded with the same model, and the passages whose vectors are nearest to it are returned. Vectors that sit near each other represent similar meaning, so a comment about a tiny dragon guarding one sock answers a question about small magic in the kitchen without sharing a word with it.
+In the workbench, navigate to **RAG Engine (7A)**.
 
-The corpus is created with its embedding model, and the file is uploaded with a chunking configuration that puts about 120 tokens in a passage, which is two or three comments.
+#### Memory Bank vs RAG Engine
+
+Both tools ground workflows in external data, but they serve distinct architectural purposes:
+
+| Dimension | Memory Bank | RAG Engine |
+|---|---|---|
+| Primary Use Case | Long-term user preferences and operational rules | Semantic retrieval over large document collections |
+| Scope | Scoped to individual user IDs and application names | Scoped to shared corpus resources across all users |
+| Data Processing | Real-time extraction, embedding, and semantic consolidation | Document chunking, vector embedding, and nearest-neighbor search |
+| Graph Integration | Agent lifecycle callbacks (`before_model_callback`, `after_agent_callback`) | Dedicated function node in research fan-out (`read_feedback`) |
+
+#### Document chunking and embeddings
+
+RAG Engine indexes documents by dividing text into semantic passages and storing their vectors in a managed database:
 
 ```python
 corpus = rag.create_corpus(
@@ -762,13 +817,32 @@ rag.upload_file(
         chunking_config=rag.ChunkingConfig(chunk_size=120, chunk_overlap=20)))
 ```
 
-A query is one `retrieval_query` call with the corpus and the text. It returns the nearest passages, each with a score that is the distance between the question's vector and the passage's, where lower is closer. `retrieve` in `agent/platform/rag.py` wraps the call and returns rows of text, score, and source. The corpus is a RAG Engine resource in your project, and its name is cached in `runs/ragcorpus.json`.
+- **Chunk size**: Configured to 120 tokens with 20 tokens of overlap. This captures two to three comments per passage, ensuring each vector represents a cohesive sentiment without diluting meaning across unrelated feedback.
+- **Embedding model**: `text-embedding-005` converts text into high-dimensional vectors. When a query is submitted, the model converts the query into a vector and finds nearest matches based on semantic distance. A comment about a tiny dragon guarding socks matches a prompt about magical creatures without requiring exact keyword overlap.
 
-Chunk size is a design decision rather than a detail. Passages that are too small lose the context that makes them meaningful, and passages that are too large dilute the vector with unrelated content. Two or three comments per passage keeps each vector about one reaction.
+#### Setting up the RAG corpus
 
-### Retrieval as a node
+Initialize the corpus using the workbench buttons or terminal commands:
 
-Memory was context for one agent, so it rode a callback on that agent. Feedback is different: it is research, like the trends and the backlog, and it produces data the whole graph works from. That makes it a function node in the fan-out.
+1. **Create the corpus**:
+   ```bash
+   python -m agent.platform.rag
+   ```
+   Provisions the managed vector database and records the resource ID in `runs/ragcorpus.json`.
+
+2. **Upload and index comments**:
+   Uploads `agent/comments.md` with chunking configuration and waits for indexing to complete.
+
+3. **Query the corpus**:
+   Test similarity retrieval with queries that do not share exact words with the comments (for example, query "small magical creatures" to retrieve comments about dragons).
+
+### The retrieval node (7B)
+
+In the workbench, navigate to **The third reader (7B)**. Open `stage5_rag/agent.py`.
+
+#### Retrieval as a graph node
+
+Audience feedback represents research data shared across the workflow. Unlike personal creator memory, viewer sentiment feeds directly into `join_research` alongside trends and backlog data. It is therefore implemented as a function node:
 
 ```python
 def read_feedback(node_input):
@@ -786,7 +860,11 @@ def read_feedback(node_input):
     return Event(output={"query": query, "feedback": [h["text"] for h in hits]})
 ```
 
-The question is the idea that started the run, and with no idea it asks what viewers liked and complained about. Because `join_research` waits for every edge that enters it, adding the reader to the graph is one more edge, and the bundle the join produces gains a third key.
+`read_feedback` extracts the user's initial idea and executes a vector query against the RAG Engine corpus. It emits the retrieved comments in an `Event(output=...)` payload.
+
+#### Hands-on edit: wiring the third reader into the fan-out
+
+In `stage5_rag/agent.py`, update `edges` to add `read_feedback` as a third parallel branch entering `join_research`:
 
 <!-- code: RAG_NODE -->
 ```python
@@ -794,26 +872,34 @@ The question is the idea that started the run, and with no idea it asks what vie
            (START, read_feedback, join_research),
 ```
 
-The instruction of `propose_directions` already names that key: let the feedback steer candidates 1 to 3, lean into what viewers praised, avoid what they complained about, and cite the feedback in the evidence.
+Because `join_research` is a `JoinNode`, it synchronizes all incoming branches, waiting until `scan_trends`, `read_backlog`, and `read_feedback` have all emitted events before passing the aggregated bundle downstream.
 
-### In the learning center
+#### What to expect and why
 
-Step **7a** explains the service and has three buttons: one creates the corpus, one uploads the comments and waits for indexing, and one queries the corpus with a question you type. Ask something that shares no word with the comment you expect and read what comes back.
+Run the workflow in the workbench:
 
-Step **7b** covers the reader node and has the edit. After running it, compare two runs of the same idea: the retrieved passages are identical both times, and the candidates are not. Retrieval is deterministic, and the model that reads it is not.
+1. Submit an idea prompt (such as "a miniature dragon guarding a kitchen counter").
+2. In the execution trace, verify that all three reader nodes execute concurrently.
+3. Observe `join_research`: its output dictionary now contains `trends`, `backlog`, and `feedback`.
+4. Inspect the generated candidates from `propose_directions`: the model incorporates viewer comments into its proposals and references audience sentiment in the evidence fields.
+5. Notice that RAG retrieval is deterministic (identical queries return identical comment passages), whereas the generative proposal node produces creative variations.
 
-## The video: a long-running tool
+## Asynchronous video generation with Veo
 Duration: 0:10:00
 
-Learning center: **step 8, The video**, parts **a** and **b**.
+In the **VibeStudio Workbench**, navigate to **Step 8 · The video**, parts **(8A)** and **(8B)**.
 
-Generating a video with Veo takes a few minutes. Keeping the graph running for that whole time is a poor fit: the process occupies resources while doing nothing, and anything that goes wrong in the meantime takes the run down with it. This step makes the render asynchronous.
+Generating high-definition video with Google Veo requires several minutes per render. Blocking graph execution during this period wastes compute resources, locks thread pools, and exposes the run to HTTP connection dropouts. In this step, you make video rendering asynchronous using ADK's `LongRunningFunctionTool`.
 
-### Long-running work and a turn
+### Long-running tools (8A)
 
-An ordinary function tool completes inside the model's turn. The model calls it, ADK appends the result, and the model continues with that result in context. A render does not fit that shape, because the result does not exist for minutes.
+In the workbench, navigate to **A long-running tool (8A)**. Open `stage6_video/agent.py` and `agent/deliver.py`.
 
-`LongRunningFunctionTool` changes what ADK does with a pending result. The tool submits the work and returns a receipt immediately.
+#### Synchronous tools vs long-running tools
+
+Standard ADK function tools execute synchronously inside an agent turn: the model calls the tool, awaits the return payload, and incorporates the result into the ongoing turn.
+
+Video rendering cannot complete within a single turn. Instead, `render_submit` initiates the generation job and immediately returns an operational receipt with status `"pending"`:
 
 ```python
 def render_submit(prompt: str) -> dict:
@@ -823,16 +909,33 @@ def render_submit(prompt: str) -> dict:
     return {"status": "pending", "operation": receipt["operation"], "prompt": receipt["prompt"]}
 ```
 
-As a plain function tool, that dict would be a result like any other: the model would read it, answer in the same turn, and the graph would move on with nothing rendered. Wrapped as a long-running tool, a result whose `status` is `pending` marks the call id as long-running. The agent's turn ends there, the workflow suspends at that node, and the session holds the call, its id, and the receipt.
+When wrapped with `LongRunningFunctionTool`, ADK intercepts the `"pending"` status. The agent's turn concludes, the workflow suspends at the node, and the pending call metadata (including call ID and receipt) is recorded in `runs/sessions.db`. The execution process exits cleanly without maintaining active network connections or worker threads.
+
+#### Hands-on edit: wrapping the render tool
+
+In `stage6_video/agent.py`, update `render_desk` to wrap `render_submit` in `LongRunningFunctionTool`:
 
 <!-- code: VIDEO_TOOL -->
 ```python
     tools=[LongRunningFunctionTool(render_submit)])
 ```
 
-### Resuming by id
+### Resuming by call ID
 
-Resuming is one message: a `function_response` carrying the same call id and name, and the final result.
+#### The universal resumption pattern
+
+ADK applies an identical mechanism to suspend and resume workflows for both humans and external tools:
+
+| Suspension Trigger | Initiating Construct | Stored Suspension State | Resumption Event |
+|---|---|---|---|
+| Human Decision | `yield RequestInput(...)` | Open input prompt in session store | `FunctionResponse` carrying the suspension call ID |
+| Long-Running Tool | `LongRunningFunctionTool(...)` returning `pending` | Open tool call in session store | `FunctionResponse` carrying the suspension call ID |
+
+In both scenarios, the workflow halts completely and resumes only when an event bearing a matching `FunctionResponse` arrives from an external source: a user interface, a webhook, or a background worker.
+
+#### Hands-on edit: completing the delivery response
+
+In `agent/deliver.py`, construct the resumption `FunctionResponse` part:
 
 <!-- code: DELIVER_RESPONSE -->
 ```python
@@ -840,21 +943,19 @@ Resuming is one message: a `function_response` carrying the same call id and nam
         id=row["call_id"], name=row["name"], response=response))
 ```
 
-That answer completes the `render_desk` node, and the graph continues to the next node. The agent does not take another turn, and completed nodes do not run again.
+The delivery daemon polls Veo until the video file is generated, then dispatches this `FunctionResponse` to the session. ADK matches the call ID and resumes the workflow directly at the next node. Completed nodes do not re-execute, and the agent does not take another generative turn.
 
-This is the same mechanism as the human pause. `RequestInput` suspends a run for a person and `LongRunningFunctionTool` suspends it for a receipt, and both are resumed by one `function_response` carrying the id of the call that suspended them. Whoever sends that message resumes the run: a web page, a console command, another process, or the same process after a restart.
+Setting `STUDIO_REAL_VIDEO=0` in `.env` enables mock rendering: `start` returns an immediate test receipt, and `check` simulates completion in five seconds without making billable Veo API calls.
 
-Because nothing in the workflow polls, the polling belongs to a separate process. In this step that process is a console command, `python -m agent.deliver`, which reads the pending call out of the session store, polls Veo until the clip exists, and sends the response. In the deployment step, the application runs the same loop inside its own server.
+### Pipeline integration (8B)
 
-### Veo
+In the workbench, navigate to **render_desk in the graph (8B)**. Open `stage6_video/agent.py`.
 
-`agent/platform/videogen.py` talks to Veo. `start(prompt)` calls `generate_videos` and returns at once with the operation name. `check(operation)` calls `operations.get` and reports `{"done": False}` while the clip renders, then the file's path and URL once it exists. Every Veo call retries eight times, seventy seconds apart, configurable through `STUDIO_VIDEO_RETRIES` and `STUDIO_VIDEO_INTERVAL`.
+The terminal node in the pipeline is `store_video`. It reads the completed render information from `runs/state.json` (where the delivery process recorded it) and commits the video URL and generation status to shared session state.
 
-With `STUDIO_REAL_VIDEO=0` in `.env`, `start` returns a stand-in receipt that `check` reports as done after five seconds with no file. The path through the graph is identical, at no cost.
+#### Hands-on edit: wiring the complete video pipeline
 
-### The node after the desk
-
-`store_video` reads the delivered render from `runs/state.json`, where the delivery wrote it, and puts the URL and the status into shared state. It is the last node of the workflow.
+In `stage6_video/agent.py`, update `edges` to append `render_desk` and `store_video`:
 
 <!-- code: VIDEO_EDGES -->
 ```python
@@ -862,24 +963,30 @@ With `STUDIO_REAL_VIDEO=0` in `.env`, `start` returns a stand-in receipt that `c
            (scripter, render_desk, store_video)])
 ```
 
-`runs/state.json` is the one place in this codelab where a file rather than session state carries a value, and the reason is that two processes are involved. The delivery process and the workflow do not share a session object, so the render is handed over through a file both can read.
+#### What to expect and why
 
-### In the learning center
+Test the asynchronous generation flow in the workbench:
 
-Step **8a** covers the long-running tool and has two edits: the wrapper on the tool, and the `FunctionResponse` in the delivery command. Step **8b** adds the last chain and runs the workflow until it suspends. Read the events in the development UI: a function call to `render_submit`, its response with `status: pending`, and no further events. The State tab has no render URL, and nothing is waiting for Veo.
+1. Execute the workflow through candidate selection and script generation.
+2. At `render_desk`, observe the agent invoke `render_submit`.
+3. The workflow immediately suspends. In the workbench or ADK Web, observe the pending status: the session holds the open call ID, and no background processes are consuming resources.
+4. Run the delivery daemon using the workbench console or in your terminal:
+   ```bash
+   python -m agent.deliver
+   ```
+   The delivery process monitors Veo until the video is ready, then dispatches the resumption event.
+5. In ADK Web, refresh the session: execution resumes at `store_video`, commits the video URL to session state, and completes the workflow.
 
-The console panel on that page runs the delivery and streams its output. When it finishes, use the button beside it to reload the development UI on that session, because the development UI does not re-read a session that another process changed. The function response and `store_video` then follow the pending call, and the State tab holds the render URL.
-
-## Deploy: the Runner, an application, Cloud Run
+## Deploy to Cloud Run
 Duration: 0:10:00
 
-Learning center: **step 9, Deploy**.
+In the **VibeStudio Workbench**, navigate to **Step 9 · Deploy**.
 
-Every step so far ran the graph through the ADK development UI. The application in `vibestudio/` runs it through the same class the development UI uses, a `Runner`, with its own page in front and one event stream between them.
+You have developed and verified each component of the pipeline across dedicated sandboxes. In this step, you assemble the complete production pipeline and deploy it to **Google Cloud Run**.
 
-### The Runner
+### The ADK Runner
 
-A `Runner` takes an application name, the agent or workflow, and a session service. `run_async(user_id, session_id, new_message)` yields every event the graph produces and stores them in the session.
+In development, `adk web` orchestrated the graph. In production, the application hosts the workflow using ADK's `Runner` class:
 
 ```python
 self._svc = DatabaseSessionService(db_url=config.DB_URL)
@@ -892,40 +999,34 @@ async for ev in self._runner.run_async(user_id=config.USER, session_id=run_id, n
 part = Part(function_response=FunctionResponse(id=call_id, name=name, response=response))
 ```
 
-The gate's answer and the render's delivery reach the graph through the same call, which is the mechanism you used by hand in the earlier steps.
+- **`run_async`**: Drives workflow execution, yielding events sequentially as nodes execute and persisting updates to the session service.
+- **Unified resumption**: Both user decisions at `direction_gate` and completed video deliveries from Veo resume execution through identical `FunctionResponse` objects submitted to `run_async`.
 
-### The application
+### The production application architecture
 
-The sandbox applications of the earlier steps each wired a subset of the graph. This application skips them and runs `wf` from `agent/graph.py`, the complete workflow, so the files you edited are the files it executes. The delivery console is not needed here, because the server polls Veo and answers the pending call itself.
+The production application in `vibestudio/` integrates the complete pipeline:
 
 ```
 vibestudio/
   server/
-    main.py                 FastAPI: the page, /api, /static
-    api.py                  the REST surface: run, pick, publish, backlog, profile, history
-    runner.py               the Runner over the finished workflow, the render poller
-    platform/               bus (the SSE stream), files, publish, avatar, telemetry, graphinfo
-    agent/                  the finished agent, byte-equal to the lab's agent/ (checks/verify_app.py)
-      graph.py              the workflow: direction_gate (4d), persist_direction (5a), policy_check (5b),
-                            quarantine and the edge list (5c), read_feedback (7b), store_video (8b)
-      desk.py               render_desk and render_submit, the LongRunningFunctionTool (8a)
-      schemas.py            Directions, CleanedDirection, Script (4c, 5b, 5c)
-      cleanup_tools.py      find_policy_hits, suggest_replacement (5c)
-      trends.py · backlog.txt · comments.md · policy_words.txt · policy_replacements.txt
-      platform/
-        memory.py           recall_taste, remember_pick, Memory Bank (6)
-        rag.py              retrieve, RAG Engine (7)
-        videogen.py         start, check, Veo (8)
-        state.py · config.py
-  web/                      the React page
+    main.py                 FastAPI: application server, REST routes, static assets
+    api.py                  REST API endpoints: run, pick, publish, backlog, profile, history
+    runner.py               Runner orchestration over the workflow, background render poller
+    platform/               Event bus (SSE stream), file storage, publishing, telemetry
+    agent/                  Production agent package, verified by checks/verify_app.py
+      graph.py              The complete workflow graph and node definitions
+      desk.py               render_desk and render_submit wrapped with LongRunningFunctionTool
+      schemas.py            Pydantic schemas: Directions, CleanedDirection, Script
+      cleanup_tools.py      Deterministic policy tools: find_policy_hits, suggest_replacement
+      platform/             Memory Bank, RAG Engine, and Veo integrations
+  web/                      Production React user interface
   Dockerfile · deploy.py · run.sh
 ```
 
-The server owns the Runner, the render poller, the publisher, and the files. The page draws the graph from `GET /api/graph`, which reads `wf.graph`, so a change to the workflow changes the picture. Every change is one event on a single stream, and each event carries the run state after it, so a page that connects late is current from its first message.
+- **Single event stream**: The FastAPI backend publishes events across a single Server-Sent Events (SSE) stream. The React frontend visualizes graph progression in real time and handles late connections without losing state.
+- **Decoupled execution**: The application manages the event loop. The workflow graph focuses entirely on execution logic, unaware of the frontend interface.
 
-The last design rule is visible here: the application owns the loop, not the graph. A `Runner` drives the workflow, an event stream reports it, and the graph itself does not know that a page exists.
-
-The workflow the application drives is the edge list you built, with the third reader and the render desk in place.
+The complete workflow edge list in `agent/graph.py` combines every architectural pattern built throughout this codelab:
 
 <!-- code: EDGES -->
 ```python
@@ -939,53 +1040,51 @@ The workflow the application drives is the edge list you built, with the third r
         (scripter, render_desk, store_video),
 ```
 
-### Cloud Run
+### Deploying to Cloud Run
 
-Cloud Run is a serverless service for hosting your application and your agents. It scales instances up and down with traffic, and bills per request time. `gcloud run deploy --source` builds the container from the Dockerfile in the folder as part of the deployment, so shipping the application is one command.
+Google Cloud Run provides serverless hosting with automatic scaling, request routing, and integrated container builds:
 
-```console
+```bash
 gcloud run deploy vibestudio --source vibestudio \
   --project $GOOGLE_CLOUD_PROJECT --region us-central1 \
   --labels dev-tutorial-codelab=vibetube --allow-unauthenticated \
   --memory 2Gi --cpu 2 --timeout 3600 --concurrency 40 \
   --max-instances 1 --min-instances 1 --session-affinity \
-  --set-env-vars GOOGLE_CLOUD_PROJECT=…,STUDIO_VERTEX=1,STUDIO_MEMORY_BANK=…,STUDIO_RAG_CORPUS=…,VIBETUBE_URL=…,VIBETUBE_EVENT=…,VIBETUBE_NAME=…,VIBETUBE_PROJECT=…
+  --set-env-vars GOOGLE_CLOUD_PROJECT=...,STUDIO_VERTEX=1,STUDIO_MEMORY_BANK=...,STUDIO_RAG_CORPUS=...,VIBETUBE_URL=...,VIBETUBE_EVENT=...,VIBETUBE_NAME=...,VIBETUBE_PROJECT=...
 ```
 
-This application keeps a run's state in its process, so the deployment asks for one instance kept warm and for session affinity. A production version would keep that state in the session store and let instances come and go freely. The label makes the service easy to find and clean up afterwards.
+- **Container build**: `gcloud run deploy --source` packages the `vibestudio/` directory, builds the container image using Cloud Build, and deploys the service in a single operation.
+- **Session affinity**: Directs requests from the same user to the same container instance, preserving local session state across iterative steps.
+- **Observability**: Cloud Trace integration records distributed spans for every node, LLM call, and tool execution, accessible in the Google Cloud Console under Trace Explorer.
 
-The application also exports ADK's traces to Cloud Trace in the same project, giving one trace per run with a span for each node, each model call, and each tool call. Open Trace Explorer in the Cloud console and filter on the service name `vibestudio`. Setting `STUDIO_TRACING=0` turns the export off.
-
-### In the learning center
-
-Step **9** explains the architecture, shows the Runner code and the folder layout, and has the Deploy button, which runs the command above with the values filled in from `.env` and the two cached resource names, and streams the output. The last line is the service URL.
+Click the **Deploy** button in the workbench to execute the deployment script. When the build completes, the terminal displays the live service URL.
 
 ## Summary
 Duration: 0:03:00
 
-Learning center: **step 10, Summary**, which draws the finished graph and links each node back to the step that built it.
+In the **VibeStudio Workbench**, navigate to **Step 10 · Summary** to review the completed architecture.
 
-| Step | Concepts |
-|---|---|
-| A single prompt | An `Agent` with function tools; `function_call` and `function_response` events; the limits of prose as an interface between steps |
-| The research fan-out | `Workflow`, `START`, edges as tuples, `JoinNode`; an `Agent` as a node with `output_schema`; `RequestInput` with a response schema and a payload |
-| State and the policy gate | `Event(state=...)`, parameter binding, the `user:` prefix; a router node; policy as data; agent modes and a task agent with tools |
-| Memory Bank | Scope, extraction, embedding, consolidation, custom topics; `memories.generate` and `memories.retrieve`; `before_model_callback` and `after_agent_callback` |
-| RAG Engine | A corpus, chunking, an embedding model, retrieval by meaning; a retrieval node as one more edge into the join |
-| The video | `LongRunningFunctionTool`, the pending receipt, a workflow suspended at an agent node, resume by id from another process |
-| Deploy | The `Runner` and `run_async`; an application on top with one event stream; a container on Cloud Run |
+| Step | Architecture & Concepts | Implementation Pattern |
+|---|---|---|
+| A single prompt | Single prompt, function tools, sequential chat loop | `Agent(tools=[...])`, `function_call` / `function_response` |
+| Agentic workflow fundamentals | Graph workflow, parallel research, schema outputs, human gate | `Workflow`, `START`, `JoinNode`, `output_schema`, `RequestInput` |
+| State and Router | Shared session state, parameter binding, deterministic routing, task agent | `Event(state=...)`, `Event(route=...)`, `mode="task"`, `finish_task` |
+| Memory Bank | User-level long-term memory, semantic consolidation, lifecycle hooks | `memories.generate` / `retrieve`, `before_model_callback`, `after_agent_callback` |
+| RAG Engine | Document retrieval over audience comments, semantic embeddings | `rag.create_corpus`, `RagEmbeddingModelConfig`, `read_feedback` node |
+| Asynchronous video generation with Veo | Long-running tools, pending receipts, external delivery daemon | `LongRunningFunctionTool`, `FunctionResponse(id=...)` resumption |
+| Deploy to Cloud Run | Programmatic orchestration, Server-Sent Events, serverless container | `Runner(agent=wf)`, `run_async`, Cloud Run deployment |
 
-The design rules from the introduction, as the finished graph applies them.
+### Core architectural principles
 
-- A graph pauses for a person or for a receipt, never for a wait. `RequestInput` and the pending tool call both suspend the run, and nothing stays alive on its behalf.
-- Every resume is one `function_response` carrying the call's id, whoever sends it: a page, a console, another process, or the same process after a restart.
-- Nodes share state by key name. The candidates, the direction, and the render URL move through the graph without being passed between nodes.
-- Routing is plain code and policy is data, decided before any money is spent.
-- Context that belongs to one agent rides a callback on that agent, and research that produces data for the graph is a node in the fan-out.
+1. **Suspend instead of waiting**: Workflows pause cleanly for human input (`RequestInput`) or long-running operations (`LongRunningFunctionTool`). Processes do not wait idle on threads or network sockets.
+2. **Universal resumption**: Every suspension resumes through an identical mechanism: a single `function_response` carrying the call ID of the suspended node.
+3. **Decoupled state management**: Nodes share data through named session state keys and parameter binding instead of verbose, tightly coupled intermediate payloads.
+4. **Deterministic routing before generative cost**: Rule-based routers and regex filters evaluate policy at zero token cost before generative models run.
+5. **Separation of concerns**: Context specific to an individual agent belongs in lifecycle callbacks, while shared data dependencies belong in the workflow DAG as dedicated nodes.
 
-### Next steps
+### Production extensions
 
-- Replace `DatabaseSessionService` with `VertexAiSessionService`, so the application's sessions live beside the Memory Bank and instances can come and go.
-- Deliver the render by webhook instead of by polling: the same `function_response`, sent by whoever hears from Veo first.
-- Add a second person to the graph, with a reviewer's `RequestInput` before publishing.
-- Append new audience comments to the corpus after each publish, and watch the next run lean toward them.
+- **Managed session storage**: Replace `DatabaseSessionService` with `VertexAiSessionService` to persist sessions in Google Cloud, enabling seamless multi-instance horizontal scaling.
+- **Webhook-based resumption**: Replace delivery polling with an asynchronous Cloud Run webhook endpoint to receive notifications from Veo.
+- **Multi-stakeholder approval**: Add additional `RequestInput` review gates before publishing videos to external video platforms.
+- **Continuous audience feedback**: Automatically append viewer comments to the RAG Engine corpus following each video release.

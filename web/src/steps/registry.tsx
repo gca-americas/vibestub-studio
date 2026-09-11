@@ -63,11 +63,11 @@ export const STEPS: Step[] = [
   },
   {
     slug: "policy-gate",
-    label: "State and the policy gate",
+    label: "State and Router",
     color: COLORS.red,
     element: <PolicyGate />,
     parts: [
-      { id: "a", label: "State" },
+      { id: "a", label: "Workflow State" },
       { id: "b", label: "The router node" },
       { id: "c", label: "Agent modes and the task node" },
     ],

@@ -206,7 +206,7 @@ function MeaningFigure() {
                 <motion.line x1="400" y1="258" x2="432" y2="258" stroke="currentColor" strokeOpacity="0.5" strokeWidth="1.2" markerEnd="url(#rag-arrow)" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 1.5, duration: 0.4 }} />
                 <text x="416" y="250" textAnchor="middle" fontSize="8.5" style={mono} fill="currentColor" opacity="0.7">nearest</text>
                 <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.0 }}>
-                  <text x="440" y="250" fontSize="9.5" style={mono} fill={GREEN}>3 passages, by distance</text>
+                  <text x="440" y="250" fontSize="9.5" style={mono} fill={GREEN}>Three passages, by distance</text>
                   {NEAREST.map((t, k) => (
                     <motion.text key={t} x="440" y={266 + k * 15} fontSize="10" style={mono} fill="currentColor" initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 2.3 + k * 0.25 }}>
                       <tspan fill={GREEN}>✓ </tspan>{t}
@@ -224,8 +224,8 @@ function MeaningFigure() {
         </button>
         <figcaption className="text-xs text-fg-muted">
           {asking
-            ? "Nearby vectors mean similar things: the dragon comment comes back for a question that never says dragon."
-            : "Indexing: split the file into passages, embed each passage into a vector, store the vectors. Distance in that space is similarity of meaning."}
+            ? "Nearby vectors represent similar semantics, so the dragon comment returns for a query that never explicitly mentions dragon."
+            : "Indexing splits the file into passages, embeds each passage into a vector, and stores the vectors. Vector proximity corresponds to semantic similarity."}
         </figcaption>
       </div>
     </figure>
@@ -237,14 +237,14 @@ function MeaningFigure() {
 type RagCmd = "connect" | "load" | "query";
 /** What each command leaves behind, said when it finishes. */
 const RAG_DONE: Record<RagCmd, string> = {
-  connect: "The corpus exists in your project and this lab is connected to it. Next: load the comments.",
-  load: "The comments are split into passages, embedded, and indexed. Next: ask the corpus a question.",
+  connect: "The corpus exists in your project and this lab is connected to it. Next, load the comments.",
+  load: "The comments are split into passages, embedded, and indexed. Next, ask the corpus a question.",
   query: "Those are the passages nearest to your question, closest first.",
 };
 
 const RAG_COMMANDS: { cmd: RagCmd; line: string; what: string }[] = [
   { cmd: "connect", line: "python -m agent.platform.rag", what: "Creates the corpus in your project, once, with text-embedding-005 as its embedding model. Runs again as connect." },
-  { cmd: "load", line: "python -m agent.platform.rag load", what: "Uploads agent/comments.md: the file is split into passages, each passage embedded and stored. About two minutes while the index builds. Rerun it after editing the comments; the previous copy is replaced." },
+  { cmd: "load", line: "python -m agent.platform.rag load", what: "Uploads agent/comments.md where the file is split into passages, each passage embedded and stored. About two minutes while the index builds. Rerun it after editing the comments; the previous copy is replaced." },
   { cmd: "query", line: `python -m agent.platform.rag query "${QUERY}"`, what: "Embeds the question and returns the five passages nearest to it, with their distance. Lower is closer." },
 ];
 
@@ -500,7 +500,7 @@ function LoadAnimation({ lines, done }: { lines: string[]; done: boolean }) {
   const stage = indexed ? 4 : indexing ? 3 : uploading ? 2 : 1;
   const loop = done ? { repeat: 0 } : { repeat: Infinity };
   const steps = [
-    { name: "upload", sub: `${n} comments`, color: AMBER },
+    { name: "upload", sub: `batch of ${n} comments`, color: AMBER },
     { name: "split", sub: "~120-token passages", color: "currentColor" },
     { name: "embed", sub: "text-embedding-005", color: PURPLE },
     { name: "store", sub: "nearby = similar", color: GREEN },
@@ -573,7 +573,7 @@ function CorpusLedger({ refreshKey = 0 }: { refreshKey?: number }) {
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">The corpus</p>
           <h2 className="font-display mt-2 text-2xl">What the corpus holds.</h2>
-          <p className="mt-1 max-w-2xl text-sm text-fg-muted">Reads the corpus in your project: the resource name and the files in it. Passages are not listed by the API; the query command shows them.</p>
+          <p className="mt-1 max-w-2xl text-sm text-fg-muted">Reads the corpus in your project, displaying the resource name and the files in it. Passages are not listed by the API; the query command shows them.</p>
         </div>
         <button onClick={load} className="flex items-center gap-2 rounded-xl border border-hairline bg-overlay px-4 py-2 font-mono text-xs text-fg-muted hover:text-fg">
           <RefreshCw size={13} className={loading ? "animate-spin" : ""} /> Show the corpus
@@ -668,7 +668,7 @@ function StoresFigure() {
   );
   return (
     <figure className="m-0 mt-4">
-      <svg viewBox="0 0 740 190" className="h-auto w-full text-fg" role="img" aria-label="Three stores: session state holds what one run knows; Memory Bank holds consolidated facts about a person; RAG Engine holds what people wrote, verbatim, searchable by meaning.">
+      <svg viewBox="0 0 740 190" className="h-auto w-full text-fg" role="img" aria-label="Three stores where session state holds what one run knows, Memory Bank holds consolidated facts about a person, and RAG Engine holds what people wrote, verbatim, searchable by meaning.">
         {col(10, "State", "what one run knows", "keys, for this run", PURPLE, ["direction: \"cat vs the air fryer\"", "candidates: [ ...four... ]", "render_url: /static/renders/..."])}
         {col(260, "Memory Bank", "facts about a person, consolidated", "one fact per memory, per creator", AMBER, ["[TASTE] prefers fantasy lately", "[RULES] one room, no captions", "(three sessions became one fact)"])}
         {col(510, "RAG Engine", "what people wrote, verbatim", "passages, found by meaning", CYAN, ["\"Creatures in ordinary places.\"", "\"Intro five seconds too long.\"", "\"Let a shot breathe.\""])}
@@ -718,7 +718,7 @@ function PlatformFigure() {
   const sources = ["local files (upload_file)", "Cloud Storage", "Google Drive", "Slack", "Jira", "SharePoint"];
   return (
     <figure className="m-0 mt-4">
-      <svg viewBox="0 0 760 250" className="h-auto w-full text-fg" role="img" aria-label="RAG Engine runs on GEAP: a corpus with an embedding model and a vector store, and files imported from local disk, Cloud Storage, Google Drive, Slack, Jira, or SharePoint.">
+      <svg viewBox="0 0 760 250" className="h-auto w-full text-fg" role="img" aria-label="RAG Engine runs on GEAP with a corpus containing an embedding model and a vector store, alongside files imported from local disk, Cloud Storage, Google Drive, Slack, Jira, or SharePoint.">
         <defs>
           <marker id="plat-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />
@@ -744,7 +744,7 @@ function PlatformFigure() {
             <line x1="184" y1={59 + i * 30} x2="262" y2="143" stroke="currentColor" strokeOpacity={i === 0 ? 0.8 : 0.3} strokeWidth={i === 0 ? 1.4 : 1} markerEnd="url(#plat-arrow)" />
           </g>
         ))}
-        <text x="99" y="240" textAnchor="middle" fontSize="9" style={mono} fill={AMBER}>this lab: agent/comments.md</text>
+        <text x="99" y="240" textAnchor="middle" fontSize="9" style={mono} fill={AMBER}>this lab · agent/comments.md</text>
       </svg>
     </figure>
   );
@@ -761,7 +761,7 @@ function RetrieveFigure() {
   );
   return (
     <figure className="m-0 mt-4">
-      <svg viewBox="0 0 760 116" className="h-auto w-full text-fg" role="img" aria-label="retrieval_query: the question is embedded with the corpus's model, the nearest vectors are found, their passages come back with a distance each.">
+      <svg viewBox="0 0 760 116" className="h-auto w-full text-fg" role="img" aria-label="retrieval_query embeds the question with the corpus model, finds the nearest vectors, and returns their passages with an associated distance.">
         <defs>
           <marker id="rq-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />
@@ -787,18 +787,16 @@ function TheCorpus() {
       <StepHeader
         kicker="Step 7a · RAG Engine"
         color={CYAN}
-        title="What the audience wrote, searchable by meaning."
-        blurb="The channel has viewers, and they leave comments. Thirty of them sit in one markdown file. GEAP RAG Engine turns that file into passages a question can find, so the next node can ask what viewers said about tonight's idea."
+        title="Grounding agents with RAG Engine."
+        blurb="Retrieval-Augmented Generation grounds model reasoning on unstructured corpus data. Using GEAP RAG Engine, documents are ingested, chunked, and embedded into a managed vector store, enabling semantic passage retrieval during workflow execution."
       />
 
       <In delay={0.1}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Knowledge base</p>
-          <h2 className="font-display mt-2 text-2xl">Where a run can draw from.</h2>
+          <h2 className="font-display mt-2 text-2xl">Context architecture across State, Memory Bank, and RAG.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            State holds what one run knows: the candidates, the pick, the render. Memory Bank holds facts about a person, consolidated: three
-            sessions about cats become one fact about cats. RAG Engine holds what people wrote, verbatim, and finds the passages that fit a
-            question by meaning. The audience's comments belong in the third.
+            Each context layer serves a distinct architectural purpose. Session State maintains transient run variables such as candidates and render receipts. Memory Bank stores consolidated episodic and profile facts for a given user. RAG Engine indexes external unstructured documents to support semantic similarity search.
           </p>
           <StoresFigure />
         </section>
@@ -809,12 +807,9 @@ function TheCorpus() {
           <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr] lg:items-center">
             <div>
               <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Retrieval over documents</p>
-              <h2 className="font-display mt-2 text-2xl">Only the passages that fit.</h2>
+              <h2 className="font-display mt-2 text-2xl">Semantic chunking and token efficiency.</h2>
               <p className="mt-2 text-sm text-fg-muted">
-                A model has a context window, and a pile of documents does not fit in it. Retrieval-augmented generation (RAG) puts a search in
-                front of the model: the documents are split into passages and indexed once; at run time a question fetches the few passages
-                that fit it, and the model reads those. The comments file is small enough to paste whole today; a year of comments is not, and
-                the retrieval phase is what keeps the run the same size either way.
+                Injecting massive document sets directly into prompt contexts degrades performance and escalates token costs. RAG decouples indexing from inference by pre-chunking source files and embedding them once into vector space. At runtime, targeted semantic queries retrieve only the top relevant passages, maintaining consistent context window utilization regardless of total corpus scale.
               </p>
             </div>
             <RetrievalFigure />
@@ -825,11 +820,9 @@ function TheCorpus() {
       <In delay={0.2}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">How the search works</p>
-          <h2 className="font-display mt-2 text-2xl">Meaning in, meaning out.</h2>
+          <h2 className="font-display mt-2 text-2xl">Dense embeddings and vector similarity.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            Each passage is turned into a vector by an embedding model. Passages about the same thing land near each other, whatever words they
-            use. A question is embedded the same way and the nearest vectors are the answer, so no keyword has to match. Indexing happens once
-            per file; asking happens on every run. Press the button to see a question take the path.
+            An embedding model maps text passages to dense numerical vectors in a high-dimensional semantic space. Semantically related concepts cluster together, overcoming vocabulary mismatch. Queries are embedded using the identical model, and vector distance metrics (cosine similarity) retrieve the nearest matching passages deterministically without relying on lexical keyword matches.
           </p>
           <div className="mt-4">
             <MeaningFigure />
@@ -840,11 +833,9 @@ function TheCorpus() {
       <In delay={0.25}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">GEAP RAG Engine</p>
-          <h2 className="font-display mt-2 text-2xl">A corpus in your project.</h2>
+          <h2 className="font-display mt-2 text-2xl">Managed RAG infrastructure on Google Cloud.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            RAG Engine is the managed version of that search on GEAP. A corpus is one resource: the embedding model it uses and a vector
-            store, both managed. Files go in from local disk, Cloud Storage, Google Drive, Slack, Jira, or SharePoint, and every file is split,
-            embedded, and stored the same way. This lab creates one corpus and uploads one local file.
+            GEAP RAG Engine provides enterprise-grade, serverless vector search infrastructure. A corpus resource encapsulates the embedding model configuration (<code className="font-mono text-fg">text-embedding-005</code>) and managed vector indexing. Ingestion pipelines ingest documents from local sources or cloud storage, applying automated chunking and embedding.
           </p>
           <PlatformFigure />
           <div className="mt-4 overflow-hidden rounded-2xl border border-hairline bg-input">
@@ -864,11 +855,9 @@ function TheCorpus() {
       <In delay={0.3}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Retrieve</p>
-          <h2 className="font-display mt-2 text-2xl">Ask, get passages back.</h2>
+          <h2 className="font-display mt-2 text-2xl">Executing semantic similarity queries.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            One call. The question is embedded with the corpus's model, the store finds the nearest vectors, and their passages come back with a
-            distance each; lower is closer. <code className="font-mono text-fg">retrieve</code> in <code className="font-mono text-fg">agent/platform/rag.py</code>{" "}
-            wraps the call and returns rows of text, score, and source. The workflow calls it in 7b.
+            The <code className="font-mono text-fg">retrieve</code> function executes a vector retrieval query against the corpus, projecting query text into vector space and retrieving the top-k nearest passages along with similarity scores and provenance metadata. The workflow invokes this function directly inside a reader node.
           </p>
           <RetrieveFigure />
           <div className="mt-4 overflow-hidden rounded-2xl border border-hairline bg-input">
@@ -885,11 +874,9 @@ function TheCorpus() {
           <p className="font-mono text-[11px] uppercase tracking-[0.3em]" style={{ color: CYAN }}>
             Console
           </p>
-          <h2 className="font-display mt-2 text-2xl">Create the corpus, load the comments, ask it something.</h2>
+          <h2 className="font-display mt-2 text-2xl">Initialize RAG corpus and ingest document chunks.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            Each button runs the command shown as a process on this server and streams its output here; the copy button gives you the same line
-            for a terminal at the repo root. The load takes about two minutes. The query is yours to edit: try a question that shares no word
-            with the comment you expect back.
+            Run the commands below to provision the corpus resource, upload audience comment documents with 120-token chunking, and test semantic retrieval against the indexed vector database.
           </p>
           <RagRunner onDone={() => setTick((t) => t + 1)} />
           <div className="flex flex-wrap gap-3">
@@ -950,7 +937,7 @@ function WorkflowFigure() {
   const edge = (x1: number, y1: number, x2: number, y2: number, color = "currentColor") => <line key={`${x1}${y1}${x2}${y2}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeOpacity={color === "currentColor" ? 0.55 : 0.9} strokeWidth={color === CYAN ? 1.8 : 1.2} markerEnd="url(#wf7-arrow)" />;
   return (
     <figure className="m-0 mt-4">
-      <svg viewBox="0 0 1016 260" className="h-auto w-full text-fg" role="img" aria-label="The workflow with audience feedback retrieval: START fans out to scan_trends, read_backlog and the new read_feedback, all into join_research, then propose_directions, direction_gate, persist_direction, policy_check routing OK to scripter and BLOCK to quarantine, which continues to scripter.">
+      <svg viewBox="0 0 1016 260" className="h-auto w-full text-fg" role="img" aria-label="The workflow with audience feedback retrieval where START fans out to scan_trends, read_backlog and the new read_feedback, all into join_research, then propose_directions, direction_gate, persist_direction, policy_check routing OK to scripter and BLOCK to quarantine, which continues to scripter.">
         <defs>
           <marker id="wf7-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />
@@ -987,7 +974,7 @@ function WorkflowFigure() {
         <text x="120" y="232" fontSize="9" style={mono} textAnchor="middle" fill={CYAN}>the corpus, asked with tonight's idea</text>
         <text x="245" y="160" fontSize="8.5" style={mono} textAnchor="middle" fill="currentColor" opacity="0.6">waits for three</text>
       </svg>
-      <figcaption className="mt-2 text-xs text-fg-muted">One edge is the whole change: START to read_feedback to the join. The join now waits for three readers.</figcaption>
+      <figcaption className="mt-2 text-xs text-fg-muted">One edge is the whole change — START to read_feedback to the join. The join now waits for three readers.</figcaption>
     </figure>
   );
 }
@@ -1045,7 +1032,7 @@ function NodeRetrievalFigure() {
         <line x1="406" y1="44" x2="516" y2="44" stroke={CYAN} strokeWidth="1.4" markerEnd="url(#nr-arrow)" />
         <text x="461" y="36" textAnchor="middle" fontSize="8.5" style={mono} fill={CYAN}>rag.retrieve(query)</text>
         <line x1="516" y1="62" x2="406" y2="62" stroke={GREEN} strokeWidth="1.4" markerEnd="url(#nr-arrow)" />
-        <text x="461" y="76" textAnchor="middle" fontSize="8.5" style={mono} fill={GREEN}>5 passages</text>
+        <text x="461" y="76" textAnchor="middle" fontSize="8.5" style={mono} fill={GREEN}>Five passages</text>
         <rect x="518" y="10" width="236" height="88" rx="14" fill="var(--overlay)" stroke={CYAN} strokeOpacity="0.5" />
         <text x="636" y="30" textAnchor="middle" fontSize="9.5" style={mono} fill={CYAN}>RAG Engine · vibestudio-feedback</text>
         {[0, 1, 2, 3, 4].map((k) => (
@@ -1076,8 +1063,8 @@ function TheReader() {
       <StepHeader
         kicker="Step 7b · The third reader"
         color={CYAN}
-        title="One more edge into the join."
-        blurb="The corpus exists and answers questions. The workflow asks it the way it asks for trends and the backlog: a function node in the research fan-out. Add the edge, run the graph, and read how the candidates change."
+        title="Expanding the research fan-out."
+        blurb="Integrate semantic corpus retrieval directly into the parallel execution fan-out. By appending read_feedback as a third concurrent reader node, the join synchronizes structured feedback alongside trends and backlog data before direction synthesis."
       />
 
       <CatchUp needs={["GATE_INPUT", "PERSIST_STATE", "POLICY_ROUTE"]} color={CYAN} />
@@ -1085,10 +1072,9 @@ function TheReader() {
       <In delay={0.1}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">The graph</p>
-          <h2 className="font-display mt-2 text-2xl">A third reader in the fan-out.</h2>
+          <h2 className="font-display mt-2 text-2xl">Parallel synchronization with three reader nodes.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            Research that produces data before propose_directions runs belongs in the fan-out, next to the trends and the backlog. One edge from START
-            into the join adds the reader; the join waits for all three and hands propose_directions a bundle with a third key.
+            Research nodes executing prior to proposal generation operate in parallel fan-out chains. Adding an edge from START through <code className="font-mono text-fg">read_feedback</code> to <code className="font-mono text-fg">join_research</code> configures the join node to synchronize all three inputs into a unified dictionary.
           </p>
           <WorkflowFigure />
         </section>
@@ -1097,11 +1083,9 @@ function TheReader() {
       <In delay={0.2}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">The node</p>
-          <h2 className="font-display mt-2 text-2xl">Retrieve relevant comments.</h2>
+          <h2 className="font-display mt-2 text-2xl">Deterministic semantic retrieval node.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            <code className="font-mono text-fg">read_feedback</code> takes tonight's idea, asks the corpus for the five passages nearest to it with{" "}
-            <code className="font-mono text-fg">rag.retrieve</code>, and returns them as its output. With no idea it asks what viewers liked and
-            complained about. Without a corpus it returns an empty list and a note, and the run continues.
+            <code className="font-mono text-fg">read_feedback</code> extracts the input idea, issues a vector query via <code className="font-mono text-fg">rag.retrieve</code>, and emits the top 5 passages as node output. If no idea is provided, it falls back to a baseline audience feedback query. Built-in error handling returns an empty set if the corpus is unreachable, preventing workflow aborts.
           </p>
           <NodeRetrievalFigure />
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
@@ -1130,19 +1114,17 @@ function TheReader() {
       <In delay={0.3}>
         <EditPanel
           label="Edit 1 of 1"
-          title="Add the third reader to the fan-out."
+          title="Append read_feedback to the parallel fan-out."
           intro={
             <>
-              Only the <code className="font-mono text-fg">Workflow</code> is shown. The stage app is <code className="font-mono text-fg">stage5_rag</code>, containing the
-              workflow graph and memory callbacks. Replace the TODO line with two: the backlog edge as it is, then{" "}
-              <code className="font-mono text-fg">(START, read_feedback, join_research)</code>.
+              In <code className="font-mono text-fg">stage5_rag/agent.py</code>, extend the workflow edge list by adding the third concurrent chain tuple <code className="font-mono text-fg">(START, read_feedback, join_research)</code>.
             </>
           }
           pill={status ? (wired ? "read_feedback enters the join ✓" : "two readers into the join") : "…"}
           ok={wired}
           hint={hint}
           setHint={setHint}
-          hint1={<>A third tuple with the same shape as the first two: it starts at <code className="font-mono">START</code> and ends at <code className="font-mono">join_research</code>.</>}
+          hint1={<>Add a third tuple with the same shape as the first two, starting at <code className="font-mono">START</code> and ending at <code className="font-mono">join_research</code>.</>}
           hint2={`    edges=[(START, scan_trends, join_research),
            (START, read_backlog, join_research),
            (START, read_feedback, join_research),
@@ -1158,7 +1140,7 @@ function TheReader() {
       </In>
 
       <In delay={0.35}>
-        <LoadCheck app="stage5_rag" intro="Save, then click the button. It loads your saved file the way adk web will and tells you either that it loads or what ADK objects to." />
+        <LoadCheck app="stage5_rag" intro="Save, then verify module loading to confirm the updated edge list and reader imports compile cleanly." />
       </In>
 
       <In delay={0.4}>
@@ -1166,13 +1148,13 @@ function TheReader() {
           app="stage5_rag"
           open={open}
           setOpen={setOpen}
-          title="Run it with an idea, then read the bundle."
-          intro="Send an idea close to something viewers commented on. The candidates of propose_directions now come from three sources, and the model decides how to weigh them: the same idea gives different candidates on different runs. Compare the lean, not the titles."
+          title="Execute workflow and inspect multi-source research."
+          intro="Submit an idea prompt to observe parallel execution across all three research readers. The join consolidates the three streams into a unified research bundle that steers candidate proposal generation."
           idea={idea}
           setIdea={setIdea}
           steps={[
-            "Open the read_feedback event: the query is your idea, and the output holds the five passages nearest to it. Open join_research: the bundle has a third key. Then open propose_directions: candidates 1 to 3 lean toward what viewers praised and away from what they complained about, and their evidence cites feedback. The wording varies run to run.",
-            "Pick one and let the run finish. Then run the same idea again and compare: the passages are the same, the candidates are not. Retrieval is deterministic; propose_directions is a model.",
+            "Open the read_feedback event to verify the query matches your idea, with the output containing the five nearest passages. Open join_research to confirm the bundle includes the third key. Then inspect propose_directions to observe candidates 1 to 3 aligning with audience feedback citations.",
+            "Pick one candidate and let the run finish. Then submit the same idea again to compare. The retrieved passages remain identical while the proposed candidates vary, demonstrating deterministic retrieval paired with probabilistic generation.",
           ]}
         />
       </In>
@@ -1186,7 +1168,7 @@ function TheReader() {
             {status ? (wired ? "(START, read_feedback, join_research) is in the edge list." : "The edit above.") : "…"}
           </CheckRow>
           <CheckRow ok={ran && passages.length > 0} label="read_feedback ran and retrieved passages">
-            {ran ? (passages.length ? `query: ${status?.feedback_query} · ${passages.length} passages · first: ${passages[0].slice(0, 90)}…` : status?.feedback_note || "ran, but no passages came back") : "No run yet."}
+            {ran ? (passages.length ? `query · ${status?.feedback_query} · ${passages.length} passages · first · ${passages[0].slice(0, 90)}…` : status?.feedback_note || "ran, but no passages came back") : "No run yet."}
           </CheckRow>
           <CheckRow ok={status?.cited_feedback ?? false} label="a candidate cites feedback">
             {proposed.length ? (status?.cited_feedback ? "Yes. The model chose how; another run may cite it elsewhere." : "Not in this run. The model is not obliged to; run again.") : "No candidates yet."}

@@ -75,7 +75,7 @@ function WorkflowFigure() {
   const edge = (x1: number, y1: number, x2: number, y2: number, color = "currentColor", dashed = false) => <line key={`${x1}${y1}${x2}${y2}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeOpacity={color === "currentColor" ? 0.55 : 0.9} strokeWidth="1.2" strokeDasharray={dashed ? "4 3" : undefined} markerEnd="url(#wf-arrow)" />;
   return (
     <figure className="m-0 mt-4">
-      <svg viewBox="0 0 1016 250" className="h-auto w-full text-fg" role="img" aria-label="The workflow with memory callbacks: START fans out to scan_trends and read_backlog, join_research, propose_directions with before_model_callback recall_taste, direction_gate, persist_direction, policy_check routing OK to scripter with after_agent_callback remember_pick and BLOCK to quarantine, which continues to scripter.">
+      <svg viewBox="0 0 1016 250" className="h-auto w-full text-fg" role="img" aria-label="The workflow with memory callbacks where START fans out to scan_trends and read_backlog, join_research, propose_directions with before_model_callback recall_taste, direction_gate, persist_direction, policy_check routing OK to scripter with after_agent_callback remember_pick and BLOCK to quarantine, which continues to scripter.">
         <defs>
           <marker id="wf-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />
@@ -86,11 +86,11 @@ function WorkflowFigure() {
         {node(120, 60, "scan_trends", "func")}
         {node(120, 140, "read_backlog", "func")}
         {node(245, 100, "join_research", "join")}
-        {node(375, 100, "propose_directions", "agent", "before_model_callback: recall_taste")}
+        {node(375, 100, "propose_directions", "agent", "before_model_callback · recall_taste")}
         {node(505, 100, "direction_gate", "human")}
         {node(635, 100, "persist_direction", "func")}
         {node(765, 100, "policy_check", "router")}
-        {node(910, 55, "scripter", "agent", "after_agent_callback: remember_pick")}
+        {node(910, 55, "scripter", "agent", "after_agent_callback · remember_pick")}
         {node(910, 175, "quarantine", "task")}
         {edge(42, 95, 62, 65)}
         {edge(42, 105, 62, 135)}
@@ -223,15 +223,15 @@ function BankLedger({ title, refreshKey = 0 }: { title: string; refreshKey?: num
 type BankCmd = "connect" | "load" | "list" | "reset";
 /** What each command leaves behind, said when it finishes. */
 const BANK_DONE: Record<BankCmd, string> = {
-  connect: "The bank exists in your project and this lab is connected to it. Next: load the creator's history.",
-  load: "The creator's history is in the bank, consolidated into facts. Next: list what it kept.",
+  connect: "The bank exists in your project and this lab is connected to it. Next, load the creator's history.",
+  load: "The creator's history is in the bank, consolidated into facts. Next, list what it kept.",
   list: "That is everything the bank holds for this creator, oldest first.",
   reset: "Every memory in the creator's scope is deleted. The bank itself is still there.",
 };
 
 const BANK_COMMANDS: { cmd: BankCmd; line: string; what: string }[] = [
-  { cmd: "connect", line: "python -m agent.platform.bank", what: "Creates the Agent Engine that hosts the bank, once, and prints the scope and the topics. Runs again as connect." },
-  { cmd: "load", line: "python -m agent.platform.bank load", what: "Seeds four past sessions, oldest first: two picks of animals with one stated rule, one of gadgets, one of fantasy. Under a minute." },
+  { cmd: "connect", line: "python -m agent.platform.bank", what: "Creates the Agent Runtime that hosts the bank, once, and prints the scope and the topics. Runs again as connect." },
+  { cmd: "load", line: "python -m agent.platform.bank load", what: "Seeds four past sessions, oldest first, including two animal picks with one stated rule, one gadget pick, and one fantasy pick." },
   { cmd: "list", line: "python -m agent.platform.bank list", what: "Everything the bank holds for the creator, oldest first. Compare it with the four sessions." },
 ];
 
@@ -436,7 +436,7 @@ function BankOverlay({ cmd, lines, running, exit, onClose }: { cmd: BankCmd; lin
   );
 }
 
-/** `python -m agent.platform.bank`: an Agent Engine resource appears in the project,
+/** `python -m agent.platform.bank`: an Agent Runtime resource appears in the project,
  *  then the two memory topics are attached to it. The motion repeats while
  *  the command runs; the final state holds once it has finished. */
 function ConnectAnimation({ lines, done }: { lines: string[]; done: boolean }) {
@@ -454,15 +454,15 @@ function ConnectAnimation({ lines, done }: { lines: string[]; done: boolean }) {
   return (
     <div>
       <p className="text-sm text-fg-muted">
-        Creating an Agent Engine in your project to host the bank, then attaching the two memory topics. The first run takes about half a
+        Creating an Agent Runtime in your project to host the bank, then attaching the two memory topics. The first run takes about half a
         minute; every later run reconnects to the cached resource.
       </p>
-      <svg viewBox="0 0 620 180" className="mt-3 h-auto w-full text-fg" role="img" aria-label="An Agent Engine is created in the project, then the CREATOR_TASTE and CHANNEL_RULES topics are attached to its Memory Bank.">
+      <svg viewBox="0 0 620 180" className="mt-3 h-auto w-full text-fg" role="img" aria-label="An Agent Runtime is created in the project, then the CREATOR_TASTE and CHANNEL_RULES topics are attached to its Memory Bank.">
         <rect x="10" y="14" width="600" height="156" rx="16" fill="var(--overlay)" stroke="var(--hairline)" />
         <text x="26" y="36" fontSize="10" fontFamily="var(--font-mono)" fill="currentColor" opacity="0.6">GOOGLE CLOUD · your project · us-central1</text>
         <motion.g initial={{ opacity: 0.2, scale: 0.9 }} animate={done ? { opacity: 1, scale: 1 } : { opacity: [0.2, 1, 1, 0.2], scale: [0.9, 1, 1, 0.9] }} transition={{ duration: 3.6, ...loop }} style={{ transformOrigin: "120px 92px" }}>
           <rect x="40" y="52" width="160" height="80" rx="14" fill={tint(PURPLE, 0.12)} stroke={created ? PURPLE : "var(--hairline)"} strokeWidth={1.6} />
-          <text x="120" y="82" textAnchor="middle" fontSize="12" fontFamily="var(--font-mono)" fill={PURPLE}>Agent Engine</text>
+          <text x="120" y="82" textAnchor="middle" fontSize="12" fontFamily="var(--font-mono)" fill={PURPLE}>Agent Runtime</text>
           <text x="120" y="100" textAnchor="middle" fontSize="10" fontFamily="var(--font-mono)" fill="currentColor" opacity="0.7">Memory Bank</text>
           <text x="120" y="118" textAnchor="middle" fontSize="9" fontFamily="var(--font-mono)" fill="currentColor" opacity="0.55">{created ? "vibestudio-membank" : "creating…"}</text>
         </motion.g>
@@ -496,11 +496,11 @@ function LoadAnimation({ lines, done }: { lines: string[]; done: boolean }) {
     <div>
       <p className="text-sm text-fg-muted">
         Each past session is one <code className="font-mono text-fg">memories.generate</code> call. Memory Bank extracts the facts with a
-        Gemini model, embeds them so it can find the memories they resemble, and consolidates: a session either creates a memory or
+        Gemini model, embeds them so it can find the memories they resemble, and consolidates them so a session either creates a memory or
         updates one under the two topics.
       </p>
       <svg viewBox="0 0 620 210" className="mt-3 h-auto w-full text-fg" role="img" aria-label="Twelve past sessions in three eras flow into the CREATOR_TASTE and CHANNEL_RULES topics of the Memory Bank as memories are created or updated.">
-        <text x="14" y="22" fontSize="10" fontFamily="var(--font-mono)" fill="currentColor" opacity="0.6">4 past sessions · oldest first</text>
+        <text x="14" y="22" fontSize="10" fontFamily="var(--font-mono)" fill="currentColor" opacity="0.6">Four past sessions · oldest first</text>
         {eras.map((e, i) => (
           <g key={e.name}>
             <rect x="14" y={34 + i * 56} width="150" height="44" rx="10" fill={tint(e.color, 0.08)} stroke={e.color} strokeOpacity="0.6" />
@@ -592,7 +592,7 @@ function BankFigure() {
   const mono = { fontFamily: "var(--font-mono)" } as const;
   return (
     <figure className="m-0 min-w-[840px]">
-      <svg viewBox="0 0 940 318" role="img" aria-label="The scripter's callback hands one exchange to Memory Bank with memories.generate. Memory Bank, an Agent Engine resource on GEAP, keeps facts under a scope of app_name and user_id and two topics, CREATOR_TASTE and CHANNEL_RULES. Inside, a Gemini model extracts facts, the facts are embedded, and similar facts are consolidated into one memory. propose_directions' callback reads them back with memories.retrieve by scope. Documents go to RAG Engine; a person's preferences go here." className="h-auto w-full text-fg">
+      <svg viewBox="0 0 940 318" role="img" aria-label="The scripter's callback hands one exchange to Memory Bank with memories.generate. Memory Bank, an Agent Runtime resource on GEAP, keeps facts under a scope of app_name and user_id and two topics, CREATOR_TASTE and CHANNEL_RULES. Inside, a Gemini model extracts facts, the facts are embedded, and similar facts are consolidated into one memory. propose_directions' callback reads them back with memories.retrieve by scope. Documents go to RAG Engine; a person's preferences go here." className="h-auto w-full text-fg">
         <defs>
           <marker id="mb-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />
@@ -614,10 +614,10 @@ function BankFigure() {
         {/* the bank */}
         <rect x="250" y="18" width="440" height="230" rx="14" fill={tint(PURPLE, 0.05)} stroke={PURPLE} strokeWidth="1.3" />
         <text x="266" y="38" fontSize="11" style={mono} fill={PURPLE}>Memory Bank</text>
-        <text x="674" y="38" fontSize="8.5" style={mono} textAnchor="end" fill="currentColor" opacity="0.6">an Agent Engine resource on GEAP</text>
+        <text x="674" y="38" fontSize="8.5" style={mono} textAnchor="end" fill="currentColor" opacity="0.6">an Agent Runtime resource on GEAP</text>
         <rect x="266" y="50" width="196" height="40" rx="8" {...box} />
         <text x="276" y="65" fontSize="8.5" style={mono} fill="currentColor" opacity="0.65">scope · whose memories</text>
-        <text x="276" y="81" fontSize="9" style={mono} fill="currentColor">{'{app_name, user_id}'}: the creator</text>
+        <text x="276" y="81" fontSize="9" style={mono} fill="currentColor">{'{app_name, user_id}'} · the creator</text>
         <rect x="478" y="50" width="196" height="40" rx="8" {...box} />
         <text x="488" y="65" fontSize="8.5" style={mono} fill="currentColor" opacity="0.65">topics · what a memory may be about</text>
         <text x="488" y="81" fontSize="9" style={mono} fill="currentColor">CREATOR_TASTE · CHANNEL_RULES</text>
@@ -656,7 +656,7 @@ function BankFigure() {
         <text x="14" y="290" fontSize="8.5" style={mono} fill="currentColor" opacity="0.65">what goes where</text>
         <text x="140" y="290" fontSize="8.5" style={mono} fill="currentColor">documents, transcripts → RAG Engine</text>
         <text x="420" y="290" fontSize="8.5" style={mono} fill={PURPLE}>a person's preferences → Memory Bank</text>
-        <text x="14" y="306" fontSize="8" style={mono} fill="currentColor" opacity="0.55">not a document store, not analytics: facts about one user</text>
+        <text x="14" y="306" fontSize="8" style={mono} fill="currentColor" opacity="0.55">not a document store, not analytics — facts about one user</text>
       </svg>
     </figure>
   );
@@ -670,7 +670,7 @@ function GenerateFigure() {
   const mono = { fontFamily: "var(--font-mono)" } as const;
   return (
     <figure className="m-0 min-w-[840px]">
-      <svg viewBox="0 0 940 292" role="img" aria-label="One memories.generate call. The exchange text goes in with the scope. A Gemini model extracts facts, one per topic that applies: a CREATOR_TASTE fact and, when the text states a rule, a CHANNEL_RULES fact; anything outside the two topics is dropped. Each fact is embedded and compared with the memories already in the scope: a close match updates that memory, no match creates a new one. The response lists each generated memory with its action, CREATED or UPDATED." className="h-auto w-full text-fg">
+      <svg viewBox="0 0 940 292" role="img" aria-label="One memories.generate call. The exchange text goes in with the scope. A Gemini model extracts facts, one per topic that applies, including a CREATOR_TASTE fact and, when the text states a rule, a CHANNEL_RULES fact; anything outside the two topics is dropped. Each fact is embedded and compared with the memories already in the scope; a close match updates that memory, no match creates a new one. The response lists each generated memory with its action, CREATED or UPDATED." className="h-auto w-full text-fg">
         <defs>
           <marker id="gn-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />
@@ -704,12 +704,12 @@ function GenerateFigure() {
         <line x1="428" y1="99" x2="470" y2="86" stroke="currentColor" strokeWidth="1.1" markerEnd="url(#gn-arrow)" />
         <line x1="428" y1="139" x2="470" y2="150" stroke="currentColor" strokeOpacity="0.5" strokeWidth="1.1" strokeDasharray="4 3" markerEnd="url(#gn-arrow)" />
         <rect x="472" y="66" width="200" height="40" rx="8" {...box} />
-        <text x="482" y="81" fontSize="8.5" style={mono} fill="currentColor">fact: picks small-magic scenes</text>
+        <text x="482" y="81" fontSize="8.5" style={mono} fill="currentColor">fact · picks small-magic scenes</text>
         <text x="482" y="96" fontSize="7.5" style={mono} fill="currentColor" opacity="0.65">tagged CREATOR_TASTE</text>
         <rect x="472" y="134" width="200" height="34" rx="8" fill="none" stroke="var(--hairline)" strokeDasharray="4 3" />
         <text x="482" y="149" fontSize="8.5" style={mono} fill="currentColor" opacity="0.6">no rule stated tonight</text>
         <text x="482" y="161" fontSize="7.5" style={mono} fill="currentColor" opacity="0.5">nothing for CHANNEL_RULES</text>
-        <text x="572" y="196" fontSize="8" style={mono} textAnchor="middle" fill="currentColor" opacity="0.6">"a script was written": outside both topics, dropped</text>
+        <text x="572" y="196" fontSize="8" style={mono} textAnchor="middle" fill="currentColor" opacity="0.6">"a script was written" · outside both topics, dropped</text>
 
         {/* embed + compare */}
         <line x1="672" y1="86" x2="712" y2="86" stroke="currentColor" strokeWidth="1.1" markerEnd="url(#gn-arrow)" />
@@ -741,17 +741,16 @@ function TheBank() {
       <StepHeader
         kicker="Step 6a · Memory Bank"
         color={PURPLE}
-        title="What the channel remembers about its creator."
-        blurb="The agent has no memory of the creator yet. The more the creator uses it, the more it should remember about their preferences. This creator has a history: animals first, then gadgets, and lately fantasy. Memory Bank is where that history lives, and we will read it before generating the script."
+        title="Cross-session personalization with Memory Bank."
+        blurb="Standard LLM interactions are stateless across distinct user sessions. Memory Bank introduces persistent episodic and semantic user memory, automatically extracting preferences, consolidating duplicate facts, and providing scoped retrieval without cluttering prompt context."
       />
 
       <In delay={0.1}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Memory about a person</p>
-          <h2 className="font-display mt-2 text-2xl">Facts about a person, kept under a scope.</h2>
+          <h2 className="font-display mt-2 text-2xl">Scoped entity memory architecture.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            Memory Bank is a GEAP service that keeps facts about one user. The write is a generate call with the run's exchange: the service extracts the facts, embeds
-            them, and merges each one into the matching memory it already has, or adds it as a new memory. The read is a retrieve call by scope. We will create two custom topics for it, CREATOR_TASTE and CHANNEL_RULES.
+            Memory Bank is an Agent Runtime service that persists structured user attributes across sessions. Ingestion extracts facts via Gemini, generates semantic embeddings, and consolidates new information against existing records to prevent duplication. Retrieval queries stored facts scoped by application and user ID across custom topics (CREATOR_TASTE and CHANNEL_RULES).
           </p>
           <div className="mt-4 overflow-x-auto">
             <BankFigure />
@@ -762,9 +761,9 @@ function TheBank() {
       <In delay={0.2}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">MemoryBank configuration</p>
-          <h2 className="font-display mt-2 text-2xl">The scope and the topics.</h2>
+          <h2 className="font-display mt-2 text-2xl">Scope definitions and ingestion lifecycle.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            Saving is the <code className="font-mono text-fg">memories.generate</code> call in <code className="font-mono text-fg">remember</code>. Under the hood:
+            Saving is the <code className="font-mono text-fg">memories.generate</code> call in <code className="font-mono text-fg">remember</code>. The underlying ingestion process executes as follows.
           </p>
           <div className="mt-4 overflow-x-auto">
             <GenerateFigure />
@@ -784,13 +783,7 @@ function TheBank() {
             </div>
           </div>
           <p className="mt-4 max-w-3xl text-sm text-fg-muted">
-            A write is one <code className="font-mono text-fg">memories.generate</code> call with a conversation and the scope. Memory Bank
-            extracts facts with a Gemini model, then embeds them so it can find the existing memories they resemble. That similarity is what
-            drives consolidation, merge or update rather than duplicate, and it returns what it did: CREATED, UPDATED, or nothing new. A read
-            is one <code className="font-mono text-fg">memories.retrieve</code> call with the scope; the same embeddings are what{" "}
-            <code className="font-mono text-fg">similarity_search_params</code> searches over when you retrieve by a query instead of the whole
-            scope, which this lab does not need. The bank lives on an Agent Engine resource in your project; its name is cached in{" "}
-            <code className="font-mono text-fg">runs/memorybank.json</code>.
+            Ingestion executes a single <code className="font-mono text-fg">memories.generate</code> call with the conversation payload and scope identifier. Memory Bank uses Gemini to extract key facts, then computes embeddings to evaluate similarity against existing entries. This semantic comparison drives consolidation—merging updates into matching records rather than duplicating entries—and returns status flags including CREATED, UPDATED, or NOOP. Retrieval executes <code className="font-mono text-fg">memories.retrieve</code> against the scope to recall all active facts before model inference.
           </p>
         </section>
       </In>
@@ -800,22 +793,20 @@ function TheBank() {
           <p className="font-mono text-[11px] uppercase tracking-[0.3em]" style={{ color: PURPLE }}>
             Console
           </p>
-          <h2 className="font-display mt-2 text-2xl">Create the bank, then load the creator's history.</h2>
+          <h2 className="font-display mt-2 text-2xl">Provision Memory Bank and seed historical interactions.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            Each button runs the command shown as a process on this server and streams its output here; the copy button gives you the
-            same line for a terminal at the repo root. The second one takes under a minute: four past sessions, each a generate call, and the
-            print shows what consolidation kept.
+            Execute the setup commands below to provision the Memory Bank resource on GEAP and seed historical session interactions. Ingestion processes past sessions sequentially, demonstrating how consolidation extracts and refines preferences across successive runs.
           </p>
           <BankRunner onDone={() => setTick((t) => t + 1)} />
           <div className="flex flex-wrap gap-3">
-            <SourceToggle path="agent/platform/bank.py" label="agent/platform/bank.py · the console: HISTORY and load()" />
-            <SourceToggle path="agent/platform/memory.py" label="agent/platform/memory.py · the client: remember() makes the generate call" />
+            <SourceToggle path="agent/platform/bank.py" label="agent/platform/bank.py · the console — HISTORY and load()" />
+            <SourceToggle path="agent/platform/memory.py" label="agent/platform/memory.py · the client — remember() makes the generate call" />
           </div>
         </section>
       </In>
 
       <In delay={0.4}>
-        <BankLedger title="What consolidation kept." refreshKey={tick} />
+        <BankLedger title="Consolidated memory records." refreshKey={tick} />
       </In>
     </div>
   );
@@ -824,7 +815,7 @@ function TheBank() {
 /* ───────────────────────── 6b ───────────────────────── */
 
 const CALLBACKS = [
-  { pair: "before_agent_callback / after_agent_callback", when: "Around the whole turn of an Agent.", sees: "CallbackContext: state, the session, the invocation.", override: "Return Content to replace the agent's reply, or None to keep it." },
+  { pair: "before_agent_callback / after_agent_callback", when: "Around the whole turn of an Agent.", sees: "CallbackContext carrying state, the session, and invocation details.", override: "Return Content to replace the agent's reply, or None to keep it." },
   { pair: "before_model_callback / after_model_callback", when: "Around each model call the agent makes.", sees: "The LlmRequest about to go out, or the LlmResponse that came back.", override: "Return an LlmResponse to skip or replace the model's answer, or None to proceed." },
   { pair: "before_tool_callback / after_tool_callback", when: "Around each tool call.", sees: "The tool, its arguments, and its result.", override: "Return a dict to replace the tool's result, or None to proceed." },
 ];
@@ -905,7 +896,7 @@ function CallbacksFigure() {
   );
   return (
     <figure className="m-0 min-w-[860px]">
-      <svg viewBox="0 0 940 246" role="img" aria-label="One agent run, left to right: before_agent, then before_model, the model call, after_model, then, when the model asks for a tool, before_tool, the tool call, after_tool, and finally after_agent. The workflow uses before_model on propose_directions, where recall_taste adds the memories to the request, and after_agent on scripter, where remember_pick hands the pick to Memory Bank. A callback that returns None lets the run continue; a value replaces what would come next." className="h-auto w-full text-fg">
+      <svg viewBox="0 0 940 246" role="img" aria-label="One agent run from left to right: before_agent, then before_model, the model call, after_model, then, when the model asks for a tool, before_tool, the tool call, after_tool, and finally after_agent. The workflow uses before_model on propose_directions, where recall_taste adds the memories to the request, and after_agent on scripter, where remember_pick hands the pick to Memory Bank. A callback that returns None lets the run continue; a value replaces what would come next." className="h-auto w-full text-fg">
         <defs>
           <marker id="cb-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
             <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />
@@ -937,7 +928,7 @@ function CallbacksFigure() {
         <line x1="860" y1="126" x2="860" y2="186" stroke={PURPLE} strokeWidth="1.1" strokeDasharray="3 3" />
         <text x="906" y="200" fontSize="8.5" style={mono} textAnchor="end" fill={PURPLE}>after_agent on scripter · remember_pick</text>
         <text x="906" y="213" fontSize="8" style={mono} textAnchor="end" fill="currentColor" opacity="0.7">hands the pick to Memory Bank, then returns None</text>
-        <text x="463" y="238" fontSize="8" style={mono} textAnchor="middle" fill="currentColor" opacity="0.6">return None: the run continues as normal · return a value: it replaces what would have come next</text>
+        <text x="463" y="238" fontSize="8" style={mono} textAnchor="middle" fill="currentColor" opacity="0.6">return None continues as normal · return a value replaces what would have come next</text>
       </svg>
     </figure>
   );
@@ -980,8 +971,8 @@ function TheCallbacks() {
       <StepHeader
         kicker="Step 6b · Callbacks"
         color={PURPLE}
-        title="Callbacks: code at fixed points in an agent's turn."
-        blurb="An Agent lets you attach functions that ADK runs at set moments: around the turn, around each model call, around each tool call. Memory uses two of them, attaching callbacks without modifying graph topology."
+        title="Agent lifecycle callbacks."
+        blurb="ADK lifecycle callbacks inject programmatic logic at deterministic points during execution, wrapping agent turns, individual LLM inference calls, and tool invocations. Callbacks enable memory injection and persistence without altering core workflow routing."
       />
 
       <CatchUp needs={["GATE_INPUT", "PERSIST_STATE", "POLICY_ROUTE"]} color={PURPLE} />
@@ -989,7 +980,7 @@ function TheCallbacks() {
       <In delay={0.05}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">The workflow so far</p>
-          <h2 className="font-display mt-2 text-2xl">The same graph, with memory on propose_directions and the scripter.</h2>
+          <h2 className="font-display mt-2 text-2xl">Execution graph with memory lifecycle hooks.</h2>
           <WorkflowFigure />
         </section>
       </In>
@@ -997,12 +988,9 @@ function TheCallbacks() {
       <In delay={0.1}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">ADK callbacks</p>
-          <h2 className="font-display mt-2 text-2xl">Hooks before and after the model, the agent, and a tool.</h2>
+          <h2 className="font-display mt-2 text-2xl">Interception points across agent execution.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            A callback is a plain function passed as an argument to <code className="font-mono text-fg">Agent</code>. ADK calls it at a
-            fixed point with the objects in play at that point, and reads its return value: <code className="font-mono text-fg">None</code>{" "}
-            means continue as normal, anything else replaces what would have happened next. That makes callbacks the place for guardrails,
-            logging, caching, and, as here, giving an agent context it did not ask for.
+            Callbacks are functions registered directly onto <code className="font-mono text-fg">Agent</code> configurations. ADK invokes them deterministically with active execution context. Returning <code className="font-mono text-fg">None</code> permits default execution to proceed, while returning an explicit value intercepts and overrides the operation. Callbacks serve as the primary mechanism for guardrails, telemetry, and dynamic prompt conditioning.
           </p>
           <div className="mt-4 overflow-x-auto">
             <CallbacksFigure />
@@ -1050,14 +1038,9 @@ function TheCallbacks() {
       <In delay={0.2}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">The callbacks</p>
-          <h2 className="font-display mt-2 text-2xl">Read before propose_directions, write after the scripter.</h2>
+          <h2 className="font-display mt-2 text-2xl">Memory recall and persistence callbacks.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            <code className="font-mono text-fg">recall_taste</code> retrieves the creator's memories, oldest first, appends them to the model
-            request with one instruction, lean toward the most recent taste and treat the rules as constraints, and stores what it read in
-            state so the verify panel can show it. <code className="font-mono text-fg">remember_pick</code> reads the direction from state, the
-            one <code className="font-mono text-fg">persist_direction</code> wrote, composes one sentence about tonight's pick, and hands it to{" "}
-            <code className="font-mono text-fg">remember</code>. Both return <code className="font-mono text-fg">None</code>, which tells ADK to
-            carry on as normal.
+            <code className="font-mono text-fg">recall_taste</code> retrieves active memory facts scoped to the creator, appends them to the incoming LLM request payload to steer direction proposals, and caches the retrieved facts in session state. Following script generation, <code className="font-mono text-fg">remember_pick</code> reads the chosen direction from state and dispatches the selection to Memory Bank for consolidation. Both callbacks return <code className="font-mono text-fg">None</code>, allowing the standard execution pipeline to proceed unimpeded.
           </p>
           <div className="mt-4 grid gap-4">
             <div className="overflow-hidden rounded-2xl border border-hairline bg-input">
@@ -1079,8 +1062,8 @@ function TheCallbacks() {
       <In delay={0.3}>
         <EditPanel
           label="Edit 1 of 2"
-          title="Give propose_directions its memory."
-          intro={<>Only <code className="font-mono text-fg">propose_directions</code> is shown, in this step's app, <code className="font-mono text-fg">stage4_memory</code>. Add one keyword argument: <code className="font-mono text-fg">before_model_callback=recall_taste</code>.</>}
+          title="Attach recall callback to propose_directions."
+          intro={<>In <code className="font-mono text-fg">stage4_memory/agent.py</code>, register the recall hook on <code className="font-mono text-fg">propose_directions</code> by adding <code className="font-mono text-fg">before_model_callback=recall_taste</code>.</>}
           pill={status ? (recallOk ? "recall_taste wired ✓" : status.recall_kw ? `before_model_callback=${status.recall_kw}` : "no before_model_callback") : "…"}
           ok={recallOk}
           hint={hintA}
@@ -1102,8 +1085,8 @@ function TheCallbacks() {
       <In delay={0.35}>
         <EditPanel
           label="Edit 2 of 2"
-          title="Let the scripter remember the pick."
-          intro={<>Only <code className="font-mono text-fg">scripter</code> is shown. Add <code className="font-mono text-fg">after_agent_callback=remember_pick</code>.</>}
+          title="Attach persistence callback to scripter."
+          intro={<>Register the memory persistence hook on <code className="font-mono text-fg">scripter</code> by adding <code className="font-mono text-fg">after_agent_callback=remember_pick</code>.</>}
           pill={status ? (rememberOk ? "remember_pick wired ✓" : status.remember_kw ? `after_agent_callback=${status.remember_kw}` : "no after_agent_callback") : "…"}
           ok={rememberOk}
           hint={hintB}
@@ -1123,7 +1106,7 @@ function TheCallbacks() {
       </In>
 
       <In delay={0.4}>
-        <LoadCheck app="stage4_memory" intro="Save both edits, then click the button. It loads your saved file the way adk web will and tells you either that it loads or what ADK objects to." />
+        <LoadCheck app="stage4_memory" intro="Save both edits, then verify module loading to confirm the agent callback configurations import cleanly." />
       </In>
 
       <In delay={0.45}>
@@ -1131,13 +1114,13 @@ function TheCallbacks() {
           app="stage4_memory"
           open={open}
           setOpen={setOpen}
-          title="Run it with no idea, then with one."
-          intro="Leave the chat box empty on the first run so propose_directions works from the backlog, the trends, and the memory alone. Each run is two model calls, propose_directions and the scripter, plus the memory read and write."
+          title="Execute workflow and verify memory conditioning."
+          intro="Execute the workflow with an empty prompt to observe propose_directions conditioning its proposals exclusively on recalled memory preferences, then verify the scripter writes the selection back to the bank."
           idea={idea}
           setIdea={setIdea}
           steps={[
-            "Send an empty message. Open the propose_directions event: the request carries a MEMORY block with the three eras, and candidates 1 to 3 lean toward fantasy, the most recent taste, while the trends say something else. Pick one.",
-            "After the scripter, the memory write runs. Click Show the bank below: one memory changed or was added, and it says what you picked tonight. Run again with an idea of your own and watch the lean follow it.",
+            "Send an empty message. Open the propose_directions event to confirm the request carries a MEMORY block with the three eras. Candidates 1 to 3 lean toward fantasy, reflecting the most recent taste, while trends suggest something else. Select a candidate.",
+            "After the scripter finishes, the memory write executes. Click Show the bank below to verify that a memory changed or was added reflecting tonight's selection. Run again with an idea of your own and observe the proposals adapt.",
           ]}
         />
       </In>
@@ -1151,13 +1134,13 @@ function TheCallbacks() {
             {status ? (rememberOk ? "Found in the file." : "Edit 2 above.") : "…"}
           </CheckRow>
           <CheckRow ok={!!status?.bank_connected} label="A Memory Bank is connected">
-            {status ? (status.bank_connected ? "runs/memorybank.json names the Agent Engine." : "Run python -m agent.platform.bank first (6a).") : "…"}
+            {status ? (status.bank_connected ? "runs/memorybank.json names the Agent Runtime." : "Run python -m agent.platform.bank first (6a).") : "…"}
           </CheckRow>
           <CheckRow ok={facts.length > 0} label="propose_directions read memories on the latest run">
-            {facts.length ? `${facts.length} memories read · newest: ${facts[facts.length - 1].fact.slice(0, 90)}` : "None read yet."}
+            {facts.length ? `Retrieved ${facts.length} memories · newest · ${facts[facts.length - 1].fact.slice(0, 90)}` : "None read yet."}
           </CheckRow>
           <CheckRow ok={written.some((w) => w.action && w.action !== "ERROR")} label="The scripter wrote tonight's pick to the bank">
-            {written.length ? written.map((w) => `${w.action}${w.fact ? `: ${w.fact.slice(0, 70)}` : ""}`).join("  ·  ") : status?.direction ? "The write runs after the scripter; wait for the run to finish." : "Not yet."}
+            {written.length ? written.map((w) => `${w.action}${w.fact ? ` · ${w.fact.slice(0, 70)}` : ""}`).join("  ·  ") : status?.direction ? "The write runs after the scripter; wait for the run to finish." : "Not yet."}
           </CheckRow>
         </VerifyPanel>
       </In>

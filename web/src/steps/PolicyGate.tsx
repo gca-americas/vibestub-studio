@@ -30,7 +30,7 @@ const GREEN = COLORS.green;
 
 type Part = "a" | "b" | "c";
 const PARTS: { id: Part; label: string }[] = [
-  { id: "a", label: "State" },
+  { id: "a", label: "Workflow State" },
   { id: "b", label: "The router node" },
   { id: "c", label: "Agent modes and the task node" },
 ];
@@ -119,7 +119,7 @@ function RouterFigure({ reroute }: { reroute: boolean }) {
         <text x="366" y="142" fontSize="9.5" fontFamily="var(--font-mono)" fill={RED}>route="BLOCK"</text>
         <rect x="432" y="137" width="108" height="26" rx="8" fill={reroute ? tint(PURPLE, 0.12) : "var(--overlay)"} stroke={reroute ? PURPLE : "var(--hairline)"} />
         <text x="486" y="154" fontSize="10" fontFamily="var(--font-mono)" textAnchor="middle" fill={reroute ? PURPLE : "currentColor"}>quarantine</text>
-        <text x="486" y="176" fontSize="8.5" fontFamily="var(--font-mono)" textAnchor="middle" fill="currentColor" opacity="0.6">{reroute ? "task agent: clean the words" : "placeholder: says blocked, run ends"}</text>
+        <text x="486" y="176" fontSize="8.5" fontFamily="var(--font-mono)" textAnchor="middle" fill="currentColor" opacity="0.6">{reroute ? "task agent · clean the words" : "placeholder · says blocked, run ends"}</text>
         {reroute && (
           <>
             <path d="M540 150 C 590 150, 590 40, 542 40" fill="none" stroke={PURPLE} strokeWidth="1.2" strokeDasharray="4 3" markerEnd="url(#rt-arrow)" />
@@ -128,7 +128,7 @@ function RouterFigure({ reroute }: { reroute: boolean }) {
         )}
       </svg>
       <figcaption className="mt-2 text-xs text-fg-muted">
-        {reroute ? "After 5c: the refused direction is cleaned and continues to the scripter instead of ending the run." : "The router returns a route name; the edge dict maps each name to a node. In 5b a blocked direction ends the run."}
+        {reroute ? "After Step 5c, the refused direction is cleaned and continues to the scripter instead of ending the run." : "The router returns a route name; the edge dict maps each name to a node. In Step 5b, a blocked direction ends the run."}
       </figcaption>
     </figure>
   );
@@ -231,10 +231,10 @@ function StateNode() {
   return (
     <div className="space-y-12">
       <StepHeader
-        kicker="Step 5a · State"
+        kicker="Step 5a · Workflow State"
         color={RED}
-        title="Where a run keeps what it knows."
-        blurb="You chose a direction by giving the number of your choice. The nodes after the gate need the direction that number points to. Session state holds values for the rest of the run. In this part you write the direction into state and read it back."
+        title="Session state persistence."
+        blurb="Downstream nodes require the candidate selected at the approval gate. Session state provides cross-node data persistence across the workflow execution lifecycle."
       />
 
       <CatchUp needs={["GATE_INPUT"]} color={RED} />
@@ -242,20 +242,20 @@ function StateNode() {
       <In delay={0.05}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">The graph so far</p>
-          <h2 className="font-display mt-2 text-2xl">The fan-out, propose_directions, your pick, and now a writer.</h2>
+          <h2 className="font-display mt-2 text-2xl">Extending the graph with state persistence.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            The workflow extends the research fan-out, join synchronization, direction proposer, and approval gate. This stage appends <code className="font-mono text-fg">persist_direction</code> after the gate: a function node that maps the selected choice into state for downstream nodes to read.
+            The workflow extends the research fan-out, join synchronization, direction proposer, and approval gate. This stage appends <code className="font-mono text-fg">persist_direction</code> after the gate, mapping the selected choice into state for downstream nodes to read.
           </p>
           <div className="mt-4">
-            <SnakeGraph only={["__START__", "scan_trends", "read_backlog", "join_research", "propose_directions", "direction_gate", "persist_direction"]} highlight="persist_direction" cols={6} label="The graph after this part: START fans out to scan_trends and read_backlog, then join_research, propose_directions, direction_gate, and the new persist_direction." />
+            <SnakeGraph only={["__START__", "scan_trends", "read_backlog", "join_research", "propose_directions", "direction_gate", "persist_direction"]} highlight="persist_direction" cols={6} label="The graph after this part. START fans out to scan_trends and read_backlog, then join_research, propose_directions, direction_gate, and the new persist_direction." />
           </div>
         </section>
       </In>
 
       <In delay={0.1}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
-          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Saving the direction</p>
-          <h2 className="font-display mt-2 text-2xl">Write once, read by key.</h2>
+          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">State persistence architecture</p>
+          <h2 className="font-display mt-2 text-2xl">Structured session state binding.</h2>
           <div className="mt-4 overflow-x-auto">
             <SaveFigure />
           </div>
@@ -265,28 +265,22 @@ function StateNode() {
       <In delay={0.3}>
         <EditPanel
           label="Edit 1 of 2"
-          title="Write the direction to state."
+          title="Persist chosen direction to session state."
           intro={
             <>
-              <code className="font-mono text-fg">persist_direction</code> in <code className="font-mono text-fg">agent/graph.py</code> is shown. The gate's answer,{" "}
-              <code className="font-mono text-fg">{"{"}"pick": "2"{"}"}</code>, arrives as <code className="font-mono text-fg">node_input</code>. The{" "}
-              <code className="font-mono text-fg">candidates</code> parameter is bound from state, where the gate wrote the four candidates. The function resolves the number to a
-              candidate and outputs it for the next node. Replace the TODO line with a <code className="font-mono text-fg">yield Event(state={"{...}"})</code> carrying four keys:{" "}
-              <code className="font-mono text-fg">direction</code>, <code className="font-mono text-fg">angle</code>, <code className="font-mono text-fg">hook</code>, and{" "}
-              <code className="font-mono text-fg">user:prefs</code>.
+              Open <code className="font-mono text-fg">agent/graph.py</code> and locate <code className="font-mono text-fg">persist_direction</code>.
+              When the user picks an idea, this function finds the matching candidate from <code className="font-mono text-fg">candidates</code>.
+              Replace the TODO comment with <code className="font-mono text-fg">yield Event(state={"{...}"})</code> to save <code className="font-mono text-fg">direction</code>, <code className="font-mono text-fg">angle</code>, <code className="font-mono text-fg">hook</code>, and <code className="font-mono text-fg">user:prefs</code> to session state.
               <span className="mt-2 block">
-                The yield hands the Event to the Workflow, which attaches the keys to that event as a state delta and appends the event to the session through the session
-                service. That service writes the event row to wherever it is pointed at, here a local database in <code className="font-mono text-fg">runs/sessions.db</code>, and
-                merges the delta into the session's state.
+                Saving state here makes these values available to subsequent nodes automatically.
               </span>
-              <span className="mt-2 block">The State tab in adk web shows the merged result, and a later function node gets a key by naming it as a parameter.</span>
             </>
           }
           pill={status ? (writeOk ? "state write in place ✓" : "no Event(state=...) yet") : "…"}
           ok={writeOk}
           hint={hintB}
           setHint={setHintB}
-          hint1={<>The values are already computed above the line: <code className="font-mono">chosen["title"]</code>, <code className="font-mono">chosen.get("angle", "")</code>, <code className="font-mono">hook</code>. For <code className="font-mono">user:prefs</code>, a dict with <code className="font-mono">last_direction</code>.</>}
+          hint1={<>The values are already computed above the line, including <code className="font-mono">chosen["title"]</code>, <code className="font-mono">chosen.get("angle", "")</code>, and <code className="font-mono">hook</code>. For <code className="font-mono">user:prefs</code>, supply a dict with <code className="font-mono">last_direction</code>.</>}
           hint2={`    yield Event(state={"direction": chosen["title"], "angle": chosen.get("angle", ""),
                        "hook": hook, "user:prefs": {"last_direction": chosen["title"]}})`}
           path="agent/graph.py"
@@ -299,8 +293,8 @@ function StateNode() {
       <In delay={0.35}>
         <EditPanel
           label="Edit 2 of 2"
-          title="Append persist_direction to the chain."
-          intro={<>The stage app is <code className="font-mono text-fg">stage3_router</code>; only its <code className="font-mono text-fg">Workflow</code> is shown. The chain ends at the gate; add <code className="font-mono text-fg">persist_direction</code> after it so the answer has a reader.</>}
+          title="Append persist_direction to the workflow chain."
+          intro={<>In <code className="font-mono text-fg">stage3_router/agent.py</code>, append <code className="font-mono text-fg">persist_direction</code> to the final chain tuple following <code className="font-mono text-fg">direction_gate</code> to consume and persist the gate's output.</>}
           pill={status ? (persistOk ? "persist_direction in the chain ✓" : `chain ends at ${status.chain[status.chain.length - 1] ?? "…"}`) : "…"}
           ok={persistOk}
           hint={hintA}
@@ -318,7 +312,7 @@ function StateNode() {
       </In>
 
       <In delay={0.4}>
-        <LoadCheck app="stage3_router" intro="Save both edits, then click the button. It loads your saved file the way adk web will and tells you either that it loads or what ADK objects to." />
+        <LoadCheck app="stage3_router" intro="Save both edits, then verify module loading to ensure the workflow graph imports cleanly without syntax or configuration errors." />
       </In>
 
       <In delay={0.45}>
@@ -326,13 +320,13 @@ function StateNode() {
           app="stage3_router"
           open={open}
           setOpen={setOpen}
-          title="Run it, answer, then open the State tab."
-          intro="One model call, for propose_directions. After you answer the form, persist_direction runs and the run ends."
+          title="Execute the workflow and inspect session state."
+          intro="The workflow invokes propose_directions, suspends execution at direction_gate, and resumes upon form submission to persist selected attributes into session state."
           idea={idea}
           setIdea={setIdea}
           steps={[
-            "Answer the form with 2. A State: direction chip follows the gate, then the run ends. The last event is persist_direction's output: the candidate you picked, as a dict.",
-            "Click the State tab on the left. candidates was written by the gate; direction, angle, hook, and user:prefs were written by your line. The verify panel below reads the same rows.",
+            "Submit '2' in the approval gate form. A state delta event follows the gate, and persist_direction outputs the resolved candidate dictionary before the run terminates.",
+            "Inspect the State tab in adk web. The candidates array was persisted by the gate; direction, angle, hook, and user:prefs are merged by persist_direction. The verification panel reads these persisted keys directly.",
           ]}
         />
       </In>
@@ -349,11 +343,11 @@ function StateNode() {
             {status?.direction ? `${status.direction}${status.angle ? ` · ${status.angle.slice(0, 60)}` : ""}` : "Not in state yet."}
           </CheckRow>
           <CheckRow ok={!!status?.user_prefs?.last_direction} label="state has user:prefs">
-            {status?.user_prefs?.last_direction ? `last_direction: ${status.user_prefs.last_direction}` : "Not in state yet."}
+            {status?.user_prefs?.last_direction ? `last_direction · ${status.user_prefs.last_direction}` : "Not in state yet."}
           </CheckRow>
           {keys.length ? (
             <li className="md:col-span-2 rounded-2xl border border-hairline bg-overlay p-3 font-mono text-[11px] text-fg-muted">
-              state keys: {keys.join(" · ")}
+              state keys · {keys.join(" · ")}
             </li>
           ) : null}
         </VerifyPanel>
@@ -416,32 +410,18 @@ function RouterNode() {
       <StepHeader
         kicker="Step 5b · The router node"
         color={RED}
-        title="A decision the model does not make."
-        blurb="We introduce a node, policy_check. It reads the chosen direction, checks whether it needs to be reworked because of harmful content or vocabulary to avoid, and returns the decision."
+        title="Deterministic conditional routing."
+        blurb="Router nodes introduce deterministic control flow without incurring LLM inference costs. By evaluating payloads against explicit policy rules, the router directs execution branches conditionally via dictionary edge mapping."
       />
 
       <CatchUp needs={["GATE_INPUT", "PERSIST_STATE"]} color={RED} />
 
       <In delay={0.1}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
-          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">The router node</p>
-          <h2 className="font-display mt-2 text-2xl">A function that returns a route.</h2>
-          <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            A router is a specialized function node. It evaluates the previous node's output against deterministic conditions and returns an{" "}
-            <code className="font-mono text-fg">Event</code> whose <code className="font-mono text-fg">route</code> field specifies which outgoing branch to take next.
-            In the edge list, a tuple whose target is a dict maps each route name to a node, so the router and the edge list have to agree on the names.
-            Here the decision is a word list and a regex: the same direction gives the same route every time, and the check costs nothing, since it runs before the scripter and the render.
-          </p>
-        </section>
-      </In>
-
-      <In delay={0.2}>
-        <section className="rounded-3xl border border-hairline bg-card p-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Where the graph stands</p>
-          <h2 className="font-display mt-2 text-2xl">The chain ends at persist_direction.</h2>
+          <h2 className="font-display mt-2 text-2xl">Integrating policy inspection into the chain.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            The chain resolves your pick into the chosen candidate, a dict with a title, an angle, and a hook, and its output is that
-            dict. The router reads it next. The router is missing its last line. The two nodes it routes to are defined below.
+            Upstream execution resolves the user's selection into a candidate dictionary (title, angle, hook). The router evaluates this payload next to determine downstream dispatch.
           </p>
           <div className="mt-4 grid gap-4 lg:grid-cols-[1.1fr_1fr]">
             <RouterFigure reroute={false} />
@@ -451,33 +431,27 @@ function RouterNode() {
                 <code>{CODE_ROUTER_SAMPLE}</code>
               </pre>
               <div className="border-t border-hairline px-4 py-2 font-mono text-[11.5px] text-fg">
-                <span className="text-fg-muted"># the edge that reads a route:</span>
+                <span className="text-fg-muted"># the edge that reads a route</span>
                 <br />
                 (length_check, {"{"}"TRIM": shorten, "PASS": scripter{"}"})
               </div>
             </div>
           </div>
           <p className="mt-4 max-w-3xl text-sm text-fg-muted">
-            The return does the routing: <code className="font-mono text-fg">Event(output=..., route=...)</code>. The output goes to whichever
-            node the route selects, and the edge list names the routes. The real router, <code className="font-mono text-fg">policy_check</code>{" "}
-            in <code className="font-mono text-fg">agent/graph.py</code>, computes <code className="font-mono text-fg">bad</code>, the list of refused
-            words found in the title and angle, records it, and stops short of returning.
+            The returned <code className="font-mono text-fg">Event(output=..., route=...)</code> dictates branch dispatch. The payload is forwarded to the node mapped by the selected route key in the edge dictionary. In <code className="font-mono text-fg">agent/graph.py</code>, <code className="font-mono text-fg">policy_check</code> identifies prohibited terms in the title and angle, preparing the route decision.
           </p>
         </section>
       </In>
 
-      <In delay={0.3}>
+      <In delay={0.2}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
-          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">The destinations</p>
-          <h2 className="font-display mt-2 text-2xl">The scripter, and quarantine to clean up.</h2>
+          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Branch destinations</p>
+          <h2 className="font-display mt-2 text-2xl">Production scripting vs. quarantine remediation.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            <code className="font-mono text-fg">scripter</code> is a simple agent: it generates the video script from the direction it is given. The direction
-            arrives as JSON, the same title, angle and hook you saw written to state in 5a. The instruction, <code className="font-mono text-fg">SCRIPT_INSTRUCTION</code> in{" "}
-            <code className="font-mono text-fg">agent/graph.py</code>, tells the agent how to build the script, and the output is again a schema,{" "}
-            <code className="font-mono text-fg">Script</code>: a title, a description, tags, an opening line, and exactly three shots for the render model.
+            The <code className="font-mono text-fg">scripter</code> agent generates production video scripts from approved directions. It receives the candidate JSON payload and generates a structured <code className="font-mono text-fg">Script</code> object matching the target schema (title, description, tags, opening line, and shot definitions).
           </p>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            <code className="font-mono text-fg">quarantine</code> is defined in the next part. For now it only ends the workflow when the direction contains something harmful.
+            When policy violations are detected, execution routes to <code className="font-mono text-fg">quarantine</code>. In this stage, quarantine terminates the workflow upon violation; in 5c, it will be upgraded to an autonomous remediation agent.
           </p>
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
             <div className="overflow-hidden rounded-2xl border border-hairline bg-input">
@@ -508,16 +482,16 @@ function RouterNode() {
         </section>
       </In>
 
-      <In delay={0.35}>
+      <In delay={0.3}>
         <EditPanel
           label="Edit 1 of 2"
-          title="Finish the router."
-          intro={<>Replace the TODO line with the return: an <code className="font-mono text-fg">Event</code> whose <code className="font-mono text-fg">output</code> is <code className="font-mono text-fg">node_input</code> and whose <code className="font-mono text-fg">route</code> is <code className="font-mono text-fg">"BLOCK"</code> when <code className="font-mono text-fg">bad</code> has anything in it and <code className="font-mono text-fg">"OK"</code> otherwise.</>}
+          title="Implement conditional routing logic."
+          intro={<>Replace the TODO line to return an <code className="font-mono text-fg">Event</code> with <code className="font-mono text-fg">output=node_input</code> and <code className="font-mono text-fg">route="BLOCK"</code> when <code className="font-mono text-fg">bad</code> contains violations, or <code className="font-mono text-fg">route="OK"</code> otherwise.</>}
           pill={status ? (routeOk ? "router returns a route ✓" : "no return with a route yet") : "…"}
           ok={routeOk}
           hint={hintA}
           setHint={setHintA}
-          hint1={<>Same shape as the sample above: <code className="font-mono">return Event(output=node_input, route=...)</code>, with a conditional expression on <code className="font-mono">bad</code> for the route.</>}
+          hint1={<>Follow the sample above using <code className="font-mono">return Event(output=node_input, route=...)</code> with a conditional expression on <code className="font-mono">bad</code> for the route.</>}
           hint2={`    return Event(output=node_input, route="BLOCK" if bad else "OK")`}
           path="agent/graph.py"
           symbol="policy_check"
@@ -526,16 +500,16 @@ function RouterNode() {
         />
       </In>
 
-      <In delay={0.45}>
+      <In delay={0.35}>
         <EditPanel
           label="Edit 2 of 2"
-          title="Wire the router."
-          intro={<>Append <code className="font-mono text-fg">policy_check</code> after <code className="font-mono text-fg">persist_direction</code>, then add the edge whose target is a dict: <code className="font-mono text-fg">OK</code> to the scripter, <code className="font-mono text-fg">BLOCK</code> to quarantine.</>}
+          title="Connect router branches to the execution graph."
+          intro={<>Append <code className="font-mono text-fg">policy_check</code> after <code className="font-mono text-fg">persist_direction</code>, then add the edge routing <code className="font-mono text-fg">OK</code> to the scripter and <code className="font-mono text-fg">BLOCK</code> to quarantine.</>}
           pill={status ? (routerOk ? "router wired ✓" : status.router_wired ? "policy_check in the chain; add the route dict" : `chain ends at ${status.chain[status.chain.length - 1] ?? "…"}`) : "…"}
           ok={routerOk}
           hint={hintB}
           setHint={setHintB}
-          hint1={<>Two changes: <code className="font-mono">policy_check</code> becomes the last name of the third chain, and a fourth tuple starts with <code className="font-mono">policy_check</code> and ends with the dict from the figure above.</>}
+          hint1={<>Apply two edits by making <code className="font-mono">policy_check</code> the final element of the third chain, then adding a fourth tuple that starts with <code className="font-mono">policy_check</code> and routes to the branch dictionary.</>}
           hint2={`    edges=[(START, scan_trends, join_research),
            (START, read_backlog, join_research),
            (join_research, propose_directions, direction_gate,
@@ -548,28 +522,28 @@ function RouterNode() {
         />
       </In>
 
-      <In delay={0.5}>
-        <LoadCheck app="stage3_router" intro="Save both edits above, then click the button. It loads your saved file the way adk web will and tells you either that it loads or what ADK objects to." />
+      <In delay={0.4}>
+        <LoadCheck app="stage3_router" intro="Save both edits above, then verify module loading to confirm the updated router edges compile cleanly." />
       </In>
 
-      <In delay={0.55}>
+      <In delay={0.45}>
         <RunPanel
           app="stage3_router"
           open={open}
           setOpen={setOpen}
-          title="Run both routes."
-          intro="Two runs in two sessions: one that passes the gate and one that is blocked. Each costs one model call for propose_directions, and the OK route costs one more for the scripter."
+          title="Execute both routing branches."
+          intro="Execute two sessions to validate both conditional branches, testing the compliant path to scripter as well as quarantine interception."
           idea={idea}
           setIdea={setIdea}
-          stepTitles={["Run 1 · the OK route", "Run 2 · the BLOCK route, in a new session"]}
+          stepTitles={["Run 1 · Compliant execution branch (OK)", "Run 2 · Policy violation branch (BLOCK)"]}
           steps={[
-            "Send the idea and answer the form with 1, 2 or 3. Candidates 1 to 3 are the publishable ones, so policy_check's event shows route: OK, the scripter runs, and its event holds a Script: a title, tags, an opening line, and three shots.",
-            "Click NEW SESSION at the top of adk web, send the same idea again, and answer with 4. Candidate 4 is the outrage-bait direction propose_directions writes on purpose, and its title or angle contains a word from agent/policy_words.txt. policy_check shows route: BLOCK, quarantine reports the block, and the run ends. Nothing was scripted.",
+            "Submit the idea and select candidate 1, 2, or 3. These candidates adhere to channel policy. The policy_check node emits the OK route, triggering scripter to generate the structured Script payload.",
+            "Click NEW SESSION, submit the prompt again, and select candidate 4. Candidate 4 contains policy-violating terminology. The policy_check node detects the infraction, emits the BLOCK route, and halts execution in quarantine without invoking the scripter.",
           ]}
         />
       </In>
 
-      <In delay={0.6}>
+      <In delay={0.5}>
         <VerifyPanel checking={checking} onCheck={check} intro="Read from agent/graph.py, this step's app file, and its sessions in runs/sessions.db.">
           <CheckRow ok={routeOk} label="policy_check returns an Event with a route">
             {status ? (routeOk ? "Found in agent/graph.py." : "Edit 1 above.") : "…"}
@@ -578,10 +552,10 @@ function RouterNode() {
             {status ? (routerOk ? `${status.chain.join(" → ")} → OK | BLOCK` : "Edit 2 above.") : "…"}
           </CheckRow>
           <CheckRow ok={!!status && status.ok_runs > 0 && !!status.script_title} label="An OK run reached the scripter">
-            {status?.script_title ? `script title: ${status.script_title}` : `${status?.ok_runs ?? 0} OK route${status?.ok_runs === 1 ? "" : "s"} so far`}
+            {status?.script_title ? `Script title · ${status.script_title}` : `Completed ${status?.ok_runs ?? 0} OK route${status?.ok_runs === 1 ? "" : "s"} so far`}
           </CheckRow>
           <CheckRow ok={!!status && status.block_runs > 0 && status.nodes_ran.includes("quarantine")} label="A BLOCK run reached quarantine">
-            {status ? (status.block_runs > 0 ? `${status.block_runs} BLOCK route${status.block_runs === 1 ? "" : "s"}${status.blocked_message ? ` · "${status.blocked_message}"` : ""}` : "Answer a run with 4.") : "…"}
+            {status ? (status.block_runs > 0 ? `Completed ${status.block_runs} BLOCK route${status.block_runs === 1 ? "" : "s"}${status.blocked_message ? ` · "${status.blocked_message}"` : ""}` : "Answer a run with candidate 4.") : "…"}
           </CheckRow>
         </VerifyPanel>
       </In>
@@ -599,7 +573,7 @@ const MODES = [
 
 const CODE_TOOLS = `"""Tools for the quarantine node.
 
-The node is a task-mode agent: it calls these until find_policy_hits comes
+The node is a task-mode agent that calls these until find_policy_hits comes
 back clean, then calls finish_task with the cleaned direction. Both tools are
 plain functions; ADK reads the signature and the docstring to describe them
 to the model.
@@ -698,7 +672,7 @@ function ModesFigure() {
   );
   return (
     <figure className="m-0 min-w-[820px]">
-      <svg viewBox="0 0 940 236" role="img" aria-label="Three agent modes. chat: a person and the model exchange messages turn after turn, and the model calls tools when it decides to; the conversation ends when the model stops. single_turn: the previous node's output goes into one model call, and one typed object comes out for the next node. task: the previous node's output goes to the model, which calls its tools as many times as it needs and ends by calling finish_task; what it hands to finish_task is the node's output." className="h-auto w-full text-fg">
+      <svg viewBox="0 0 940 236" role="img" aria-label="Three agent modes. In chat mode, a person and the model exchange messages turn after turn, and the model calls tools when it decides to; the conversation ends when the model stops. In single_turn mode, the previous node's output goes into one model call, and one typed object comes out for the next node. In task mode, the previous node's output goes to the model, which calls its tools as many times as it needs and ends by calling finish_task; what it hands to finish_task is the node's output." className="h-auto w-full text-fg">
         <defs>
           <marker id="md-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />
@@ -736,10 +710,10 @@ function ModesFigure() {
         <text x="437" y="96" fontSize="8" style={mono} textAnchor="middle" fill="currentColor" opacity="0.75">output</text>
         <text x="539" y="96" fontSize="8" style={mono} textAnchor="middle" fill="currentColor" opacity="0.75">object</text>
         <rect x="454" y="52" width="70" height="20" rx="10" fill={tint(AMBER, 0.12)} stroke={AMBER} strokeOpacity="0.6" />
-        <text x="489" y="66" fontSize="8.5" style={mono} textAnchor="middle" fill={AMBER}>1 model call</text>
+        <text x="489" y="66" fontSize="8.5" style={mono} textAnchor="middle" fill={AMBER}>One model call</text>
         <text x="489" y="146" fontSize="8" style={mono} textAnchor="middle" fill="currentColor" opacity="0.7">no tools, no follow-up</text>
         <text x="489" y="158" fontSize="8" style={mono} textAnchor="middle" fill="currentColor" opacity="0.7">the answer is typed by output_schema</text>
-        <text x="330" y="196" fontSize="8.5" style={mono} fill="currentColor" opacity="0.7">the default for an agent used as a node:</text>
+        <text x="330" y="196" fontSize="8.5" style={mono} fill="currentColor" opacity="0.7">the default for an agent used as a node</text>
         <text x="330" y="208" fontSize="8.5" style={mono} fill="currentColor" opacity="0.7">input from the node before, one object out</text>
 
         {/* task */}
@@ -808,7 +782,7 @@ function TaskFigure() {
         <text x="369" y="140" fontSize="7.5" style={mono} textAnchor="middle" fill={PURPLE}>result</text>
         <text x="410" y="170" fontSize="8.5" style={mono} fill="currentColor" opacity="0.7">as many rounds as it needs,</text>
         <text x="410" y="182" fontSize="8.5" style={mono} fill="currentColor" opacity="0.7">until title and angle are clean</text>
-        <text x="250" y="170" fontSize="8.5" style={mono} fill={PURPLE}>then: finish_task(…)</text>
+        <text x="250" y="170" fontSize="8.5" style={mono} fill={PURPLE}>then · finish_task(…)</text>
         <text x="250" y="182" fontSize="8" style={mono} fill="currentColor" opacity="0.6">the built-in tool task mode adds</text>
 
         {/* out */}
@@ -844,21 +818,18 @@ function TaskNode() {
       <StepHeader
         kicker="Step 5c · Agent modes and the task node"
         color={RED}
-        title="How an agent can run."
-        blurb="Every agent in this lab so far answered once. The refused direction needs an agent that works: check the words, replace them, check again, and stop only when the direction is clean. That is a third mode."
+        title="Autonomous remediation in task mode."
+        blurb="Unlike single-turn agents that return immediate structured responses, task-mode agents run autonomous tool-use loops until explicit completion criteria are met. When policy violations occur, quarantine iterates with analysis tools until the payload is sanitized."
       />
 
       <CatchUp needs={["GATE_INPUT", "PERSIST_STATE", "POLICY_ROUTE"]} color={RED} />
 
       <In delay={0.1}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
-          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Agent modes</p>
-          <h2 className="font-display mt-2 text-2xl">chat, single_turn, task.</h2>
+          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Agent execution modes</p>
+          <h2 className="font-display mt-2 text-2xl">chat, single_turn, and task modes.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            <code className="font-mono text-fg">mode</code> is an argument on <code className="font-mono text-fg">Agent</code>. A standalone agent
-            has one mode, a conversation. Inside a graph an agent faces the previous node's output instead of a person, and two other modes
-            become possible. ADK enforces the fit: a root agent must be <code className="font-mono text-fg">chat</code>, and a{" "}
-            <code className="font-mono text-fg">chat</code> agent cannot follow another node.
+            The <code className="font-mono text-fg">mode</code> parameter controls an Agent's execution lifecycle. While root conversational agents require <code className="font-mono text-fg">chat</code> mode, graph nodes typically operate in <code className="font-mono text-fg">single_turn</code> mode. For complex multi-step reasoning, <code className="font-mono text-fg">task</code> mode enables autonomous tool calling until explicit completion is reached.
           </p>
           <div className="mt-4 grid gap-3 md:grid-cols-3">
             {MODES.map((m) => (
@@ -868,7 +839,7 @@ function TaskNode() {
                 </div>
                 <p className="mt-2 text-xs text-fg-muted">{m.what}</p>
                 <p className="mt-2 text-xs">
-                  <span className="text-fg-muted">In this lab: </span>
+                  <span className="text-fg-muted">In this lab · </span>
                   {m.who}
                 </p>
               </div>
@@ -882,12 +853,10 @@ function TaskNode() {
 
       <In delay={0.2}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
-          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Quarantine, rebuilt</p>
-          <h2 className="font-display mt-2 text-2xl">Replace the refused words, then hand the direction on.</h2>
+          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Autonomous remediation</p>
+          <h2 className="font-display mt-2 text-2xl">Iterative policy remediation and graph reconnection.</h2>
           <p className="mt-2 max-w-3xl text-sm text-fg-muted">
-            In 5b a blocked direction ended the run. Now quarantine rewrites it. The replacement list below pairs each refused word with an approved stand-in.
-            The agent's <code className="font-mono text-fg">suggest_replacement</code> tool reads it whenever <code className="font-mono text-fg">find_policy_hits</code>{" "}
-            finds a refused word in the title or the angle. Like the policy word list, it is data: edit the file, and the next run uses the new pairs.
+            In 5b, blocked candidates abruptly terminated the pipeline. Rebuilding quarantine as a task-mode agent enables automatic payload remediation. The agent repeatedly inspects the payload with <code className="font-mono text-fg">find_policy_hits</code> and substitutes approved terms using <code className="font-mono text-fg">suggest_replacement</code> until the text passes validation, then forwards the cleaned candidate to the scripter.
           </p>
           <div className="mt-4 max-w-3xl overflow-hidden rounded-2xl border border-hairline bg-input">
             <div className="border-b border-hairline px-4 py-1.5 font-mono text-[10px] uppercase tracking-wider text-fg-muted">The replacement list · data, like the policy</div>
@@ -902,11 +871,10 @@ function TaskNode() {
         <EditPanel
           key={skel}
           label="Edit 1 of 2"
-          title="Assemble the task node."
+          title="Configure quarantine as a task-mode agent."
           intro={
             <>
-              <code className="font-mono text-fg">quarantine</code> begins as a placeholder function. The button below puts the Agent skeleton in its place: a name, the model, and
-              the instruction, with a TODO line where three arguments are missing. Add them and save: <code className="font-mono text-fg">mode="task"</code>,{" "}
+              Upgrade <code className="font-mono text-fg">quarantine</code> from a stub function to an autonomous Agent. Click the button below to insert the Agent definition, then provide the three required parameters, including <code className="font-mono text-fg">mode="task"</code>,{" "}
               <code className="font-mono text-fg">tools=[find_policy_hits, suggest_replacement]</code>, and <code className="font-mono text-fg">output_schema=CleanedDirection</code>.
             </>
           }
@@ -938,9 +906,7 @@ function TaskNode() {
                 </div>
               </div>
               <p className="max-w-3xl text-sm text-fg-muted">
-                Task mode equips the agent with tools and concludes execution by calling <code className="font-mono text-fg">finish_task</code>. ADK adds
-                that tool automatically when <code className="font-mono text-fg">mode="task"</code> is set, shaping its parameters from{" "}
-                <code className="font-mono text-fg">output_schema</code> to produce a typed <code className="font-mono text-fg">CleanedDirection</code>.
+                Task mode equips the agent with autonomous tool execution, concluding when the agent invokes <code className="font-mono text-fg">finish_task</code>. ADK automatically injects this completion tool, validating its arguments against <code className="font-mono text-fg">output_schema</code> to emit a strongly typed <code className="font-mono text-fg">CleanedDirection</code>.
               </p>
               <div className="flex flex-col gap-3 rounded-2xl border border-hairline bg-card p-4 md:flex-row md:items-center md:justify-between">
                 <p className="text-sm text-fg-muted">
@@ -1003,13 +969,13 @@ function TaskNode() {
       <In delay={0.35}>
         <EditPanel
           label="Edit 2 of 2"
-          title="Route the cleaned direction to the scripter."
-          intro={<>Only the <code className="font-mono text-fg">Workflow</code> is shown. Add one more tuple: <code className="font-mono text-fg">quarantine</code>, then <code className="font-mono text-fg">scripter</code>. The scripter now has two ways in, and its input has the same three fields either way.</>}
+          title="Route sanitized directions to the scripter."
+          intro={<>Update the workflow topology in <code className="font-mono text-fg">stage3_router/agent.py</code> by adding an edge tuple from <code className="font-mono text-fg">quarantine</code> to <code className="font-mono text-fg">scripter</code>. The scripter now receives compliant input from either the direct OK route or the remediated quarantine output.</>}
           pill={status ? (rerouteOk ? "quarantine → scripter ✓" : "no edge from quarantine yet") : "…"}
           ok={rerouteOk}
           hint={hintB}
           setHint={setHintB}
-          hint1={<>A fifth tuple after the route dict: <code className="font-mono">(quarantine, scripter)</code>.</>}
+          hint1={<>Add a fifth tuple after the route dict, specified as <code className="font-mono">(quarantine, scripter)</code>.</>}
           hint2={`    edges=[(START, scan_trends, join_research),
            (START, read_backlog, join_research),
            (join_research, propose_directions, direction_gate,
@@ -1031,7 +997,7 @@ function TaskNode() {
       </In>
 
       <In delay={0.45}>
-        <LoadCheck app="stage3_router" intro="Save both edits, then click the button. It loads your saved file the way adk web will and tells you either that it loads or what ADK objects to." />
+        <LoadCheck app="stage3_router" intro="Save both edits, then verify module loading to confirm the updated workflow graph topology is valid." />
       </In>
 
       <In delay={0.5}>
@@ -1039,14 +1005,14 @@ function TaskNode() {
           app="stage3_router"
           open={open}
           setOpen={setOpen}
-          title="Run the blocked route again. Answer the form with 4."
-          intro="One run, and it only shows what this part built if you answer the form with 4. Candidate 4 is the one written to be refused; 1, 2 and 3 pass the gate and never reach quarantine. The quarantine agent makes several model calls while it works."
+          title="Validate autonomous remediation on policy violation."
+          intro="Trigger the policy-violating branch to observe quarantine autonomously iterating with its tools to clean the direction before forwarding it to the scripter."
           idea={idea}
           setIdea={setIdea}
-          stepTitles={["Answer the form with 4, not 1, 2 or 3", "Then watch quarantine work"]}
+          stepTitles={["Select candidate 4 to trigger quarantine", "Observe autonomous tool remediation"]}
           steps={[
-            "Only candidate 4 trips the policy gate. Pick anything else and policy_check shows route: OK, the scripter runs, and quarantine never gets a turn, so there is nothing to see. With 4, policy_check shows route: BLOCK.",
-            "quarantine's events follow: a find_policy_hits call and its result, suggest_replacement calls, another find_policy_hits, and finally finish_task carrying the cleaned title, angle and hook. The scripter then runs on the cleaned direction. Compare its title with candidate 4's: the scene is the same, the refused words are gone.",
+            "Select candidate 4 in the approval form. Candidate 4 contains terms that trigger the policy gate. The policy_check node routes execution to quarantine.",
+            "Inspect the quarantine event stream as the agent calls find_policy_hits, invokes suggest_replacement to rewrite prohibited terms, re-validates the text, and finally calls finish_task with the sanitized CleanedDirection. Execution then advances to scripter to generate the script for the sanitized direction.",
           ]}
         />
       </In>
@@ -1066,7 +1032,7 @@ function TaskNode() {
             {status?.cleaned ? status.cleaned.title : "Not yet."}
           </CheckRow>
           <CheckRow ok={!!status?.cleaned_script_title} label="The scripter wrote the script for it">
-            {status?.cleaned_script_title ? `script title: ${status.cleaned_script_title}` : "Not yet."}
+            {status?.cleaned_script_title ? `script title · ${status.cleaned_script_title}` : "Not yet."}
           </CheckRow>
         </VerifyPanel>
       </In>

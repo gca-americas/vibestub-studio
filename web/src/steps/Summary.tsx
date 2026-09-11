@@ -23,33 +23,191 @@ interface NodeInfo {
 }
 
 const NODES: NodeInfo[] = [
-  { name: "START", kind: "start", step: "Step 4 · Agentic workflow fundamentals", to: "/step/fan-out/a", concepts: ["Workflow and its edge list", "START: the entry every chain begins at", "A tuple is a chain, a list of tuples is the graph"] },
-  { name: "scan_trends", kind: "func", step: "Step 4b · Parallel research fan-out", to: "/step/fan-out/b", concepts: ["A function node: node_input in, Event(output=...) out", "Two chains from START run in parallel", "Trends drawn from a pool beside the graph"] },
-  { name: "read_backlog", kind: "func", step: "Step 4b · Parallel research fan-out", to: "/step/fan-out/b", concepts: ["The creator's notes from a text file", "idea_text: the message that started the run", "The same function in the stage app and in production"] },
-  { name: "read_feedback", kind: "func", step: "Step 7 · RAG Engine", to: "/step/rag/a", concepts: ["A RAG Engine corpus: files, passages, embeddings", "retrieval_query: meaning in, meaning out", "Retrieval as a third reader, one more edge into the join"] },
-  { name: "join_research", kind: "join", step: "Step 4b · Parallel research fan-out", to: "/step/fan-out/b", concepts: ["JoinNode waits for every incoming edge", "Its output is one dict, keyed by node name", "Adding a reader changes one line"] },
-  { name: "propose_directions", kind: "agent", step: "Step 4c · Agent nodes", to: "/step/fan-out/c", concepts: ["An Agent as a node, single_turn", "output_schema: four typed candidates in one call", "Step 6: before_model_callback recall_taste appends Memory Bank"] },
-  { name: "direction_gate", kind: "human", step: "Step 4d · Human-in-the-loop", to: "/step/fan-out/d", concepts: ["RequestInput suspends the graph", "response_schema, payload, interrupt_id", "Resume by function_response with the call's id"] },
-  { name: "persist_direction", kind: "func", step: "Step 5a · State", to: "/step/policy-gate/a", concepts: ["Event(state=...) writes shared state", "parameter_binding: candidates arrives by name", "user: keys outlive the session; runs/state.json is the app's copy"] },
-  { name: "policy_check", kind: "router", step: "Step 5b · The router node", to: "/step/policy-gate/b", concepts: ["A router: Event(route=...) picks the edge", "Policy as data: policy_words.txt read at decision time", "A dict target maps route names to nodes"] },
-  { name: "scripter", kind: "agent", step: "Step 5b · The router node", to: "/step/policy-gate/b", concepts: ["An agent node after the gate", "Step 6: after_agent_callback remember_pick writes the pick to Memory Bank"] },
-  { name: "quarantine", kind: "task", step: "Step 5c · Agent modes", to: "/step/policy-gate/c", concepts: ["mode='task': tools until finish_task", "find_policy_hits and suggest_replacement", "A refused direction repaired, then rerouted to the scripter"] },
-  { name: "render_desk", kind: "desk", step: "Step 8 · The video", to: "/step/video/a", concepts: ["LongRunningFunctionTool and the pending receipt", "The workflow suspends at an agent node", "Delivered by id from another process, after a restart"] },
-  { name: "store_video", kind: "func", step: "Step 8b · render_desk in the graph", to: "/step/video/b", concepts: ["The delivered render into shared state", "runs/state.json as the bridge between processes", "The run ends with a clip"] },
+  {
+    name: "START",
+    kind: "start",
+    step: "Step 4a · Graph architecture and execution chains",
+    to: "/step/fan-out/a",
+    concepts: [
+      "Workflow graph initialization and edge list definition",
+      "START sentinel routing concurrent root execution chains",
+      "Tuple-based linear subgraphs composed into an execution DAG",
+    ],
+  },
+  {
+    name: "scan_trends",
+    kind: "func",
+    step: "Step 4b · Parallel research fan-out",
+    to: "/step/fan-out/b",
+    concepts: [
+      "Deterministic FunctionNode that receives node_input and emits Event(output=...)",
+      "Concurrent edge traversal from START executed in parallel",
+      "Dynamic trend ingestion into structured context dictionaries",
+    ],
+  },
+  {
+    name: "read_backlog",
+    kind: "func",
+    step: "Step 4b · Parallel research fan-out",
+    to: "/step/fan-out/b",
+    concepts: [
+      "Local file ingestion of creator backlog context",
+      "Resolves idea_text from initial invocation payload",
+      "Stateless node execution shared between development and production",
+    ],
+  },
+  {
+    name: "read_feedback",
+    kind: "func",
+    step: "Step 7b · The third reader",
+    to: "/step/rag/b",
+    concepts: [
+      "GEAP RAG Engine corpus integration with dense vector search",
+      "Semantic similarity query for context-driven passage retrieval",
+      "Parallel retrieval reader feeding directly into JoinNode synchronization",
+    ],
+  },
+  {
+    name: "join_research",
+    kind: "join",
+    step: "Step 4b · Parallel research fan-out",
+    to: "/step/fan-out/b",
+    concepts: [
+      "JoinNode synchronization barrier awaiting all incoming inbound edges",
+      "Aggregates branch outputs into a unified dictionary keyed by node name",
+      "Modular edge topology where adding research branches requires a single edge definition",
+    ],
+  },
+  {
+    name: "propose_directions",
+    kind: "agent",
+    step: "Step 4c · Agent nodes",
+    to: "/step/fan-out/c",
+    concepts: [
+      "Single-turn AgentNode executing Gemini structured inference",
+      "output_schema guarantees validated multi-candidate Pydantic models",
+      "before_model_callback injects personalized taste memories from Agent Runtime",
+    ],
+  },
+  {
+    name: "direction_gate",
+    kind: "human",
+    step: "Step 4d · Human-in-the-loop",
+    to: "/step/fan-out/d",
+    concepts: [
+      "RequestInput event suspends workflow execution asynchronously",
+      "Exposes response_schema, candidate payload, and unique interrupt_id",
+      "Execution resumes via FunctionResponse targeting matching call_id",
+    ],
+  },
+  {
+    name: "persist_direction",
+    kind: "func",
+    step: "Step 5a · Workflow State",
+    to: "/step/policy-gate/a",
+    concepts: [
+      "Event(state=...) commits variables to shared session state",
+      "parameter_binding injects state variables directly into node signatures",
+      "User-scoped keys persist across sessions; mirrored to disk for external workers",
+    ],
+  },
+  {
+    name: "policy_check",
+    kind: "router",
+    step: "Step 5b · The router node",
+    to: "/step/policy-gate/b",
+    concepts: [
+      "RouterNode emits Event(route=...) for deterministic conditional branching",
+      "Policy-as-data enforcement through dynamic evaluation against policy rules",
+      "Dictionary-based target routing maps outcome labels to downstream nodes",
+    ],
+  },
+  {
+    name: "scripter",
+    kind: "agent",
+    step: "Step 5b · The router node",
+    to: "/step/policy-gate/b",
+    concepts: [
+      "Downstream AgentNode generating complete video script and visual prompts",
+      "after_agent_callback commits selected direction to long-term Memory Bank",
+      "Pydantic-validated production script with shot breakdown and dialogue",
+    ],
+  },
+  {
+    name: "quarantine",
+    kind: "task",
+    step: "Step 5c · Agent modes and the task node",
+    to: "/step/policy-gate/c",
+    concepts: [
+      "Autonomous task-mode loop that iterates tool calls until finish_task is invoked",
+      "Interactive remediation that identifies violations and applies replacements",
+      "Sanitizes non-compliant directions before re-entering generation pipeline",
+    ],
+  },
+  {
+    name: "render_desk",
+    kind: "desk",
+    step: "Step 8a · A long-running tool",
+    to: "/step/video/a",
+    concepts: [
+      "LongRunningFunctionTool emits pending receipt without blocking worker thread",
+      "Workflow suspends waiting for asynchronous external tool completion",
+      "Resumed by call_id via external delivery poller or webhook",
+    ],
+  },
+  {
+    name: "store_video",
+    kind: "func",
+    step: "Step 8b · render_desk in the graph",
+    to: "/step/video/b",
+    concepts: [
+      "Persists final video asset URI and metadata into shared session state",
+      "Inter-process synchronization between background poller and workflow runner",
+      "Terminal node completing end-to-end multi-modal content generation",
+    ],
+  },
 ];
 
-
-
-const KIND_LABEL: Record<Kind, string> = { start: "", func: "function", join: "join", agent: "agent", human: "your pick", router: "router", task: "agent (mode: task)", desk: "long-running tool" };
+const KIND_LABEL: Record<Kind, string> = {
+  start: "entry sentinel",
+  func: "function node",
+  join: "join barrier",
+  agent: "agent node",
+  human: "human-in-the-loop gate",
+  router: "conditional router",
+  task: "task-mode agent",
+  desk: "long-running tool",
+};
 
 const STEP_ROWS = [
-  { step: "3 · Monolithic agent", covered: "An Agent with function tools; function_call and function_response events; why prose is a poor interface between steps" },
-  { step: "4 · Agentic workflow fundamentals", covered: "Workflow, START, edges as tuples; JoinNode; an Agent as a node with output_schema; RequestInput with response_schema, payload and interrupt_id" },
-  { step: "5 · State and the policy gate", covered: "Event(state=...), parameter binding, the user: prefix; a router node; policy as data; agent modes and a task agent with tools" },
-  { step: "6 · Memory Bank", covered: "Scope, extraction, consolidation, custom topics; memories.generate and retrieve; before_model_callback and after_agent_callback" },
-  { step: "7 · RAG Engine", covered: "A corpus, chunking, an embedding model, retrieval by meaning; a retrieval node as one more edge into the join; a model that varies" },
-  { step: "8 · The video", covered: "LongRunningFunctionTool, the pending receipt, a workflow suspended at an agent node, resume by id from another process, Veo with retries" },
-  { step: "9 · Deploy", covered: "The Runner and run_async; an app on top with one SSE stream; the finished agent as a byte-identical copy; a container on Cloud Run" },
+  {
+    step: "Step 3 · Monolithic Agent Architecture",
+    covered: "Single-agent orchestration with function tools; function_call and function_response mechanics; architectural limitations of unstructured natural language coordination between pipeline stages",
+  },
+  {
+    step: "Step 4 · Agentic Workflow Fundamentals",
+    covered: "Workflow DAG initialization, START sentinel, edge lists as chained tuples; JoinNode synchronization barriers; AgentNode with structured output_schema; RequestInput suspension with response_schema, candidate payload, and interrupt_id",
+  },
+  {
+    step: "Step 5 · State Management & Conditional Routing",
+    covered: "Event(state=...) mutation, parameter_binding injection, user-scoped persistence; deterministic RouterNode branching; policy-as-data enforcement; autonomous task-mode agents with tool remediation loops",
+  },
+  {
+    step: "Step 6 · Long-Term Memory Bank",
+    covered: "Memory Bank lifecycle covering episodic ingestion, LLM consolidation, and custom user-scoped topics; memories.generate and retrieve APIs; before_model_callback dynamic context injection and after_agent_callback preference extraction",
+  },
+  {
+    step: "Step 7 · Enterprise Retrieval (RAG Engine)",
+    covered: "GEAP RAG Engine infrastructure covering corpus management, document chunking, and text-embedding-004 vector search; parallel retrieval reader integrated into JoinNode synchronization; grounded multi-modal generation",
+  },
+  {
+    step: "Step 8 · Long-Running Video Generation",
+    covered: "LongRunningFunctionTool protocol, pending receipt generation, asynchronous workflow suspension at agent nodes; decoupled delivery resumption by call_id across independent processes; Veo video generation API with exponential backoff",
+  },
+  {
+    step: "Step 9 · Production Deployment Architecture",
+    covered: "ADK Runner orchestration with run_async; decoupled FastAPI server with Server-Sent Events (SSE) telemetry stream; containerized deployment to Google Cloud Run with session affinity and warm instances",
+  },
 ];
 
 export function Summary() {
@@ -60,20 +218,20 @@ export function Summary() {
       <StepHeader
         kicker="Step 10 · Summary"
         color={PURPLE}
-        title="The finished workflow and every concept in it."
-        blurb="This is the graph you built, node by node, from a single prompt to a published clip. Hover a node for what it taught and where. The pulse walks it the way a run does."
+        title="Complete workflow topology and architectural summary."
+        blurb="Comprehensive review of the production workflow topology, from initial idea fan-out to long-running video asset delivery. Inspect each node to review underlying architectural patterns, state contracts, and lifecycle hooks."
       />
 
       <In delay={0.1}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
-          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">The workflow</p>
-          <SnakeGraph hover={hover === "START" ? "__START__" : hover} onHover={(n) => setHover(n === "__START__" ? "START" : n)} label="The whole workflow, the way the app draws it: START fans out to scan_trends, read_backlog and read_feedback, then join_research, propose_directions, direction_gate, persist_direction, policy_check routing OK to scripter and BLOCK to quarantine, render_desk, store_video. Hover a node for what it taught." />
+          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Workflow Topology</p>
+          <SnakeGraph hover={hover === "START" ? "__START__" : hover} onHover={(n) => setHover(n === "__START__" ? "START" : n)} label="Complete production workflow topology where START fans out to scan_trends, read_backlog, and read_feedback, synchronizing at join_research before propose_directions. The direction_gate suspends for human review, followed by persist_direction and policy_check routing to either scripter or quarantine. The workflow concludes at render_desk and store_video. Select a node to inspect architectural details." />
           <div className="mt-4 min-h-[112px] rounded-2xl border border-hairline bg-overlay p-4">
             {node ? (
               <motion.div key={node.name} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <p className="font-mono text-sm text-fg">
-                    {node.name} <span className="text-fg-muted">· {KIND_LABEL[node.kind] || "entry"}</span>
+                    {node.name} <span className="text-fg-muted">· {KIND_LABEL[node.kind] || "entry sentinel"}</span>
                   </p>
                   <Link to={node.to} className="font-mono text-[11px] text-vibe-cyan hover:underline">
                     {node.step} →
@@ -88,7 +246,7 @@ export function Summary() {
                 </ul>
               </motion.div>
             ) : (
-              <p className="text-sm text-fg-muted">Hover a node. Each one links back to the step that built it.</p>
+              <p className="text-sm text-fg-muted">Select or hover a node to inspect its architectural pattern, implementation details, and learning module.</p>
             )}
           </div>
         </section>
@@ -96,8 +254,8 @@ export function Summary() {
 
       <In delay={0.2}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
-          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Step by step</p>
-          <h2 className="font-display mt-2 text-2xl">What each step covered.</h2>
+          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Curriculum Overview</p>
+          <h2 className="font-display mt-2 text-2xl">Core architectural concepts by module.</h2>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -121,26 +279,38 @@ export function Summary() {
 
       <In delay={0.3}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
-          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Design rules the graph follows</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Architectural design principles</p>
           <ul className="mt-3 grid gap-2 text-sm text-fg-muted md:grid-cols-2">
-            <li className="rounded-2xl border border-hairline bg-overlay p-3">Graphs pause for people and for receipts, never for a wait. RequestInput and the pending tool call both suspend the run; nothing stays alive on its behalf.</li>
-            <li className="rounded-2xl border border-hairline bg-overlay p-3">Every resume is one function_response carrying the call's id, whoever sends it: a page, a console, another process, after a restart.</li>
-            <li className="rounded-2xl border border-hairline bg-overlay p-3">Nodes share state by key name. candidates, direction, render_url move through the graph without being passed between nodes.</li>
-            <li className="rounded-2xl border border-hairline bg-overlay p-3">Routing is plain code and policy is data. The gate is a function and a text file, decided before any money is spent.</li>
-            <li className="rounded-2xl border border-hairline bg-overlay p-3">Context that belongs to one agent rides a callback on that agent. Research that produces data before the model runs is a node in the fan-out.</li>
-            <li className="rounded-2xl border border-hairline bg-overlay p-3">The app owns the loop, not the graph: a Runner drives it, an event stream shows it, the graph itself does not know a page exists.</li>
+            <li className="rounded-2xl border border-hairline bg-overlay p-3">
+              <strong className="text-fg">Stateless execution suspension.</strong> Workflows suspend cleanly for human review or long-running async tools. RequestInput and LongRunningFunctionTool yield execution without consuming worker resources or holding memory connections.
+            </li>
+            <li className="rounded-2xl border border-hairline bg-overlay p-3">
+              <strong className="text-fg">Deterministic ID-based resumption.</strong> Every suspended execution resumes via a standard FunctionResponse targeting the original call_id, whether dispatched by a web UI, background polling daemon, or webhook across process restarts.
+            </li>
+            <li className="rounded-2xl border border-hairline bg-overlay p-3">
+              <strong className="text-fg">Decoupled session state binding.</strong> Nodes communicate through shared session state. State variables (candidates, direction, render_url) are bound directly to function arguments by parameter name rather than passed manually across edges.
+            </li>
+            <li className="rounded-2xl border border-hairline bg-overlay p-3">
+              <strong className="text-fg">Deterministic pre-inference routing.</strong> Branching decisions and safety guardrails run as deterministic code inspecting structured policy data before triggering expensive downstream model inference or generation calls.
+            </li>
+            <li className="rounded-2xl border border-hairline bg-overlay p-3">
+              <strong className="text-fg">Separation of concerns in context assembly.</strong> Agent-specific context and preference extraction belong in lifecycle callbacks (before_model_callback, after_agent_callback). Heavy external data ingestion belongs in parallel research DAG nodes.
+            </li>
+            <li className="rounded-2xl border border-hairline bg-overlay p-3">
+              <strong className="text-fg">Inversion of control in runtime orchestration.</strong> The hosting application drives workflow execution through the ADK Runner and broadcasts updates over an event stream. The underlying graph remains completely decoupled from presentation and network layers.
+            </li>
           </ul>
         </section>
       </In>
 
       <In delay={0.4}>
         <section className="rounded-3xl border border-hairline bg-card p-6">
-          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Where to go next</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Production roadmap & enhancements</p>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-fg-muted">
-            <li>Replace DatabaseSessionService with VertexAiSessionService, so the app's sessions live beside the Memory Bank and instances can come and go.</li>
-            <li>Deliver the render by webhook instead of polling: the same function_response, sent by whoever hears from Veo first.</li>
-            <li>Add a second person to the graph: a reviewer's RequestInput before publish.</li>
-            <li>Give the audience's comments a way in: append new comments to the corpus after each publish, and watch the next run lean.</li>
+            <li>Migrate from DatabaseSessionService to a managed GEAP session service to colocate session state with Agent Runtime and support fully stateless autoscaling.</li>
+            <li>Implement webhook-driven asset delivery to eliminate background polling, delivering FunctionResponse notifications directly from asynchronous completion queues.</li>
+            <li>Introduce secondary human-in-the-loop review gates (e.g. executive compliance approval) prior to public media distribution.</li>
+            <li>Establish closed-loop audience feedback ingestion by appending user interaction metrics and published comments back into the RAG corpus to steer subsequent generation cycles.</li>
           </ul>
         </section>
       </In>

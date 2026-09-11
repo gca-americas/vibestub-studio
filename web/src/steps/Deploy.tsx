@@ -169,7 +169,7 @@ function DeployRunner() {
             ) : null}
           </p>
         </div>
-        <button onClick={run} disabled={running} className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-black transition-transform hover:scale-[1.03] disabled:opacity-50" style={{ background: GREEN }}>
+        <button onClick={run} disabled={running} className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition-transform hover:scale-[1.03] disabled:opacity-50" style={{ background: GREEN }}>
           {running ? <RefreshCw size={16} className="animate-spin" /> : <Rocket size={16} />}
           {running ? "Deploying…" : url ? "Deploy again" : "Deploy to Cloud Run"}
         </button>
@@ -213,7 +213,7 @@ function DeployRunner() {
               Access the live service endpoint to initiate end-to-end runs. Submit prompt concepts, resolve policy approval gates, monitor asynchronous video generation, and publish completed assets. The application executes the complete ADK workflow on serverless infrastructure.
             </p>
           </div>
-          <a href={url} target="_blank" rel="noreferrer" className="flex shrink-0 items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-black" style={{ background: GREEN }}>
+          <a href={url} target="_blank" rel="noreferrer" className="flex shrink-0 items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white" style={{ background: GREEN }}>
             Open Vibe Studio <ExternalLink size={14} />
           </a>
         </motion.div>

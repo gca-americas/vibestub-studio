@@ -61,7 +61,7 @@ export function FanOut() {
           <span />
         )}
         {idx < PARTS.length - 1 && (
-          <Link to={`/step/fan-out/${PARTS[idx + 1].id}`} className="flex items-center gap-2 rounded-full px-5 py-2 text-xs font-bold text-black" style={{ background: AMBER }}>
+          <Link to={`/step/fan-out/${PARTS[idx + 1].id}`} className="flex items-center gap-2 rounded-full px-5 py-2 text-xs font-bold text-white" style={{ background: AMBER }}>
             Continue to 4{PARTS[idx + 1].id} · {PARTS[idx + 1].label} <ArrowRight size={14} />
           </Link>
         )}
@@ -1588,7 +1588,7 @@ export function RunPanel({
               {inspector.up ? "adk web ready" : "adk web unavailable"}
             </span>
           )}
-          <button onClick={() => setOpen((o) => !o)} className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-black transition-transform hover:scale-[1.03]" style={{ background: BLUE }}>
+          <button onClick={() => setOpen((o) => !o)} className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition-transform hover:scale-[1.03]" style={{ background: BLUE }}>
             <TerminalSquare size={16} />
             {open ? "Hide adk web" : "Open adk web"}
           </button>
@@ -1671,7 +1671,7 @@ function Instruction({ n, title, children }: { n: number; title: string; childre
   return (
     <li className="rounded-2xl border border-hairline bg-card p-4">
       <div className="flex items-center gap-2 text-sm font-semibold">
-        <span className="flex h-6 w-6 items-center justify-center rounded-full font-mono text-[11px] font-bold text-black" style={{ background: BLUE }}>
+        <span className="flex h-6 w-6 items-center justify-center rounded-full font-mono text-[11px] font-bold text-white" style={{ background: BLUE }}>
           {n}
         </span>
         {title}

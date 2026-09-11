@@ -49,7 +49,7 @@ export function Video() {
           <span />
         )}
         {idx < PARTS.length - 1 && (
-          <Link to={`/step/video/${PARTS[idx + 1].id}`} className="flex items-center gap-2 rounded-full px-5 py-2 text-xs font-bold text-black" style={{ background: AMBER }}>
+          <Link to={`/step/video/${PARTS[idx + 1].id}`} className="flex items-center gap-2 rounded-full px-5 py-2 text-xs font-bold text-white" style={{ background: AMBER }}>
             Continue to 8{PARTS[idx + 1].id} · {PARTS[idx + 1].label} <ArrowRight size={14} />
           </Link>
         )}
@@ -652,7 +652,7 @@ function DeliverRunner({ onDone, onShow }: { onDone: () => void; onShow: () => v
                 <span className="truncate">{c.line}</span>
                 <span className="shrink-0 text-[10px] text-fg-muted">{copied === c.cmd ? "copied" : "copy"}</span>
               </button>
-              <button onClick={() => run(c.cmd)} disabled={running} className="shrink-0 rounded-lg px-3 py-2 font-mono text-xs font-bold text-black disabled:opacity-40" style={{ background: AMBER }}>
+              <button onClick={() => run(c.cmd)} disabled={running} className="shrink-0 rounded-lg px-3 py-2 font-mono text-xs font-bold text-white disabled:opacity-40" style={{ background: AMBER }}>
                 run
               </button>
             </div>
@@ -671,7 +671,7 @@ function DeliverRunner({ onDone, onShow }: { onDone: () => void; onShow: () => v
               <p className="text-xs text-fg-muted">
                 Delivered. adk web does not re-read a session on its own, so the frame above still shows the run ending at the receipt.
               </p>
-              <button onClick={onShow} className="flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 font-mono text-xs font-bold text-black" style={{ background: AMBER }}>
+              <button onClick={onShow} className="flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 font-mono text-xs font-bold text-white" style={{ background: AMBER }}>
                 <RefreshCw size={13} /> Refresh adk web
               </button>
             </div>
@@ -767,7 +767,7 @@ function DeliverOverlay({ cmd, lines, running, exit, onClose, onShow }: { cmd: V
               ? "The clip was delivered to the pending call and the run finished. adk web still shows the run ending at the receipt until the session is reloaded."
               : "That is every pending render in the session store. Run the delivery to answer the newest one."}
             extra={cmd !== "deliver" ? null : (
-              <button onClick={onShow} className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-black" style={{ background: AMBER }}>
+              <button onClick={onShow} className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white" style={{ background: AMBER }}>
                 <RefreshCw size={14} /> Refresh adk web
               </button>
             )}

@@ -1,9 +1,7 @@
-import { Link } from "react-router-dom";
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { In, StepHeader } from "../components/shared";
 import { COLORS, tint } from "./colors";
-import { STEPS } from "./registry";
 
 type Kind = "start" | "function" | "join" | "agent" | "human" | "router" | "task" | "desk";
 
@@ -215,7 +213,6 @@ const LEGEND: { kind: Kind; label: string }[] = [
 ];
 
 export function Overview() {
-  const labSteps = STEPS.slice(2);
   return (
     <div className="space-y-12">
       <StepHeader
@@ -249,7 +246,7 @@ export function Overview() {
             <ol className="mt-4 space-y-3">
               {YOU.map((t, i) => (
                 <li key={t} className="flex items-start gap-3 text-sm">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-vibe-amber text-[11px] font-bold text-black">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-vibe-amber text-[11px] font-bold text-white">
                     {i + 1}
                   </span>
                   <span>{t}</span>
@@ -271,21 +268,6 @@ export function Overview() {
         </div>
       </In>
 
-      {/* Step list */}
-      <In delay={0.65}>
-        <div className="grid gap-3 md:grid-cols-3">
-          {labSteps.map((s, i) => (
-            <Link key={s.slug} to={`/step/${s.slug}`} className="group rounded-2xl border border-hairline bg-card p-4 transition-all hover:-translate-y-1 hover:bg-card-hover">
-              <div className="flex items-center gap-2">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full font-mono text-[11px] font-bold text-black" style={{ background: s.color }}>
-                  {i + 3}
-                </span>
-                <span className="text-sm font-semibold group-hover:text-fg">{s.label}</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </In>
     </div>
   );
 }

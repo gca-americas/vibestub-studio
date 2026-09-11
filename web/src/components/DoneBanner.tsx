@@ -43,7 +43,7 @@ export function DoneBanner({
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {extra}
-        <button onClick={onClose} className="rounded-xl px-5 py-2.5 text-sm font-bold text-black" style={{ background: tone }} autoFocus>
+        <button onClick={onClose} className="rounded-xl px-5 py-2.5 text-sm font-bold text-white" style={{ background: tone }} autoFocus>
           Close
         </button>
       </div>

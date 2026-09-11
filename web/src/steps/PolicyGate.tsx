@@ -53,7 +53,7 @@ export function PolicyGate() {
           <span />
         )}
         {idx < PARTS.length - 1 && (
-          <Link to={`/step/policy-gate/${PARTS[idx + 1].id}`} className="flex items-center gap-2 rounded-full px-5 py-2 text-xs font-bold text-black" style={{ background: RED }}>
+          <Link to={`/step/policy-gate/${PARTS[idx + 1].id}`} className="flex items-center gap-2 rounded-full px-5 py-2 text-xs font-bold text-white" style={{ background: RED }}>
             Continue to 5{PARTS[idx + 1].id} · {PARTS[idx + 1].label} <ArrowRight size={14} />
           </Link>
         )}
@@ -937,7 +937,7 @@ function TaskNode() {
                     }
                   }}
                   disabled={skelBusy || status?.quarantine_kind !== "function"}
-                  className="flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-black disabled:opacity-40"
+                  className="flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white disabled:opacity-40"
                   style={{ background: AMBER }}
                 >
                   {skelBusy ? <RefreshCw size={15} className="animate-spin" /> : <ArrowRight size={15} />}

@@ -63,7 +63,7 @@ export function CatchUp({ needs, color }: { needs: string[]; color: string }) {
           )}
         </div>
         {open.length > 0 && (
-          <button onClick={fill} disabled={busy} className="flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-black disabled:opacity-50" style={{ background: color }}>
+          <button onClick={fill} disabled={busy} className="flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50" style={{ background: color }}>
             {busy ? <RefreshCw size={15} className="animate-spin" /> : <FastForward size={15} />}
             Fill them for me
           </button>

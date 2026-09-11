@@ -48,7 +48,7 @@ export function Rag() {
           <span />
         )}
         {idx < PARTS.length - 1 && (
-          <Link to={`/step/rag/${PARTS[idx + 1].id}`} className="flex items-center gap-2 rounded-full px-5 py-2 text-xs font-bold text-black" style={{ background: CYAN }}>
+          <Link to={`/step/rag/${PARTS[idx + 1].id}`} className="flex items-center gap-2 rounded-full px-5 py-2 text-xs font-bold text-white" style={{ background: CYAN }}>
             Continue to 7{PARTS[idx + 1].id} · {PARTS[idx + 1].label} <ArrowRight size={14} />
           </Link>
         )}
@@ -363,7 +363,7 @@ function RagRunner({ onDone }: { onDone: () => void }) {
                 <span className="truncate">{lineFor(c)}</span>
                 <span className="shrink-0 text-[10px] text-fg-muted">{copied === c.cmd ? "copied" : "copy"}</span>
               </button>
-              <button onClick={() => run(c.cmd)} disabled={running} className="shrink-0 rounded-lg px-3 py-2 font-mono text-xs font-bold text-black disabled:opacity-40" style={{ background: CYAN }}>
+              <button onClick={() => run(c.cmd)} disabled={running} className="shrink-0 rounded-lg px-3 py-2 font-mono text-xs font-bold text-white disabled:opacity-40" style={{ background: CYAN }}>
                 run
               </button>
             </div>

@@ -48,7 +48,7 @@ export function Memory() {
           <span />
         )}
         {idx < PARTS.length - 1 && (
-          <Link to={`/step/memory/${PARTS[idx + 1].id}`} className="flex items-center gap-2 rounded-full px-5 py-2 text-xs font-bold text-black" style={{ background: PURPLE }}>
+          <Link to={`/step/memory/${PARTS[idx + 1].id}`} className="flex items-center gap-2 rounded-full px-5 py-2 text-xs font-bold text-white" style={{ background: PURPLE }}>
             Continue to 6{PARTS[idx + 1].id} · {PARTS[idx + 1].label} <ArrowRight size={14} />
           </Link>
         )}
@@ -353,7 +353,7 @@ function BankRunner({ onDone }: { onDone: () => void }) {
               <button
                 onClick={() => run(c.cmd)}
                 disabled={running}
-                className="shrink-0 rounded-lg px-3 py-2 font-mono text-xs font-bold text-black disabled:opacity-40"
+                className="shrink-0 rounded-lg px-3 py-2 font-mono text-xs font-bold text-white disabled:opacity-40"
                 style={{ background: PURPLE }}
               >
                 run

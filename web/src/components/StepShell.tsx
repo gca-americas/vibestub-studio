@@ -49,7 +49,7 @@ export function StepShell() {
           {next ? (
             <Link
               to={`/step/${next.slug}`}
-              className="group flex items-center gap-2 rounded-full px-7 py-3 text-sm font-semibold uppercase tracking-widest text-black"
+              className="group flex items-center gap-2 rounded-full px-7 py-3 text-sm font-semibold uppercase tracking-widest text-white"
               style={{ background: step.color }}
             >
               {step.nextLabel ?? "Next"}

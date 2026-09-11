@@ -513,18 +513,6 @@ export function Summary() {
           <ShareImage />
         </section>
       </In>
-
-      <In delay={0.4}>
-        <section className="rounded-3xl border border-hairline bg-card p-6">
-          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-fg-muted">Production roadmap & enhancements</p>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-fg-muted">
-            <li>Migrate from DatabaseSessionService to a managed GEAP session service to colocate session state with Agent Runtime and support fully stateless autoscaling.</li>
-            <li>Implement webhook-driven asset delivery to eliminate background polling, delivering FunctionResponse notifications directly from asynchronous completion queues.</li>
-            <li>Introduce secondary human-in-the-loop review gates (e.g. executive compliance approval) prior to public media distribution.</li>
-            <li>Establish closed-loop audience feedback ingestion by appending user interaction metrics and published comments back into the RAG corpus to steer subsequent generation cycles.</li>
-          </ul>
-        </section>
-      </In>
     </div>
   );
 }

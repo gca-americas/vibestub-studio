@@ -889,7 +889,7 @@ Duration: 0:10:00
 
 In the **VibeStudio Workbench**, navigate to **Step 8 · The video**, parts **(8A)** and **(8B)**.
 
-Generating high-definition video with Google Veo requires several minutes per render. Blocking graph execution during this period wastes compute resources, locks thread pools, and exposes the run to HTTP connection dropouts. In this step, you make video rendering asynchronous using ADK's `LongRunningFunctionTool`.
+The render is asynchronous because Veo takes minutes and a graph should not wait that long. `render_submit` starts the job and returns its operation id immediately. The workflow pauses with that id in the session and resumes when the clip is ready. In this step, you build that with ADK's `LongRunningFunctionTool`.
 
 ### Long-running tools (8A)
 
